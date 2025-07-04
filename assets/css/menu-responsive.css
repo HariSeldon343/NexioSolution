@@ -1,0 +1,113 @@
+/* Menu responsive per la dashboard */
+
+/* Regolazioni generali del menu */
+.sidebar {
+  overflow-y: auto !important;
+  max-height: 100vh;
+}
+
+/* Adatta dimensioni dei font e spaziature */
+.menu-title, .menu-section-title {
+  font-size: 0.65rem !important; /* Riduzione font dei titoli sezione */
+  padding: 5px 10px !important;
+  margin-bottom: 2px !important;
+}
+
+.menu-items {
+  padding-left: 0 !important;
+  margin: 0 !important;
+}
+
+.menu-item {
+  margin: 1px 5px !important; /* Riduzione margini */
+}
+
+.menu-item a, .menu-item a span {
+  font-size: 0.8rem !important; /* Font più piccolo */
+  padding: 4px 8px !important; /* Padding più compatto */
+}
+
+.menu-item a i {
+  font-size: 0.9rem !important; /* Icone leggermente più piccole */
+  min-width: 18px;
+  width: 18px !important;
+}
+
+/* Compatta informazioni utente */
+.user-info {
+  padding: 8px !important;
+}
+
+.user-name {
+  font-size: 0.8rem !important;
+}
+
+.user-role {
+  font-size: 0.7rem !important;
+}
+
+/* Compatta intestazione */
+.sidebar-header {
+  padding: 10px !important;
+}
+
+/* Regolazioni per schermi più piccoli in altezza */
+@media (max-height: 700px) {
+  .menu-item {
+    margin: 0 4px !important;
+  }
+  
+  .menu-item a, .menu-item a span {
+    font-size: 0.75rem !important;
+    padding: 3px 6px !important;
+  }
+  
+  .menu-section {
+    margin-bottom: 5px !important;
+  }
+  
+  /* Riduzioni ulteriori per guadagnare spazio */
+  .sidebar-header {
+    padding: 5px !important;
+  }
+  
+  .user-info {
+    padding: 5px !important;
+  }
+}
+
+/* Regolazioni per schermi molto piccoli */
+@media (max-height: 600px) {
+  .sidebar .logo img {
+    max-width: 150px !important;
+  }
+  
+  /* Riduci ulteriormente spazi */
+  .menu-item a {
+    gap: 5px !important;
+  }
+}
+
+/* Rendere il menu scrollabile quando necessario ma solo su hover */
+.sidebar-menu {
+  overflow-y: auto;
+  max-height: calc(100vh - 150px);
+}
+
+/* Stile della scrollbar */
+.sidebar-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+} 

@@ -1,0 +1,38 @@
+{
+  "services": {
+    "CoAuthoring": {
+      "secret": {
+        "session": {
+          "string": "false"
+        }
+      },
+      "token": {
+        "enable": {
+          "browser": false,
+          "request": {
+            "inbox": false,
+            "outbox": false
+          }
+        }
+      },
+      "requestDefaults": {
+        "rejectUnauthorized": false
+      }
+    }
+  },
+  "server": {
+    "token": {
+      "enable": false,
+      "authorizationHeader": "Authorization"
+    }
+  },
+  "storage": {
+    "fs": {
+      "secretString": "false"
+    }
+  },
+  "wopi": {
+    "enable": false
+  },
+  "rejectUnauthorized": false
+} 

@@ -1,0 +1,44 @@
+{
+    "name": "nexio/piattaforma-collaborativa",
+    "type": "project",
+    "description": "Piattaforma Collaborativa Nexio - Sistema di gestione documenti e calendari multi-tenant",
+    "keywords": ["php", "gestione-documenti", "calendario", "multi-tenant", "nexio"],
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Nexio Platform",
+            "email": "info@nexio.it"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "dompdf/dompdf": "^2.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Nexio\\": "backend/",
+            "Nexio\\Models\\": "backend/models/",
+            "Nexio\\Controllers\\": "backend/controllers/",
+            "Nexio\\Middleware\\": "backend/middleware/",
+            "Nexio\\Utils\\": "backend/utils/"
+        },
+        "files": [
+            "backend/config/config.php"
+        ]
+    },
+    "scripts": {
+        "test": "phpunit",
+        "check-syntax": "php -l",
+        "install-deps": "composer install --no-dev --optimize-autoloader"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+} 

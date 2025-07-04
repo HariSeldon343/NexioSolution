@@ -1,0 +1,866 @@
+<?php
+require_once 'backend/config/config.php';
+require_once 'backend/utils/ActivityLogger.php';
+
+$auth = Auth::getInstance();
+$auth->requireAuth();
+
+$user = $auth->getUser();
+// Database instance handled by functions
+$logger = ActivityLogger::getInstance();
+$currentAzienda = $auth->getCurrentAzienda();
+
+// Solo admin possono accedere
+if (!$auth->canAccess('settings', 'read')) {
+    redirect(APP_PATH . '/dashboard.php');
+}
+
+// Gestione eliminazione log (solo super admin)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $auth->isSuperAdmin()) {
+    if (isset($_POST['action']) && $_POST['action'] === 'delete_logs') {
+        try {
+            db_connection()->beginTransaction();
+            
+            // Determina quali log eliminare
+            $deleteWhere = [];
+            $deleteParams = [];
+            
+            if (isset($_POST['delete_all']) && $_POST['delete_all'] === '1') {
+                // Elimina tutti i log TRANNE quelli di eliminazione log
+                $deleteWhere[] = "(azione != 'eliminazione_log' OR azione IS NULL)";
+                $dettagli = "Eliminati TUTTI i log di sistema (esclusi log di eliminazione)";
+            } else {
+                // Elimina log filtrati (sempre esclusi i log di eliminazione)
+                $deleteWhere[] = "(azione != 'eliminazione_log' OR azione IS NULL)";
+                
+                if (!empty($_POST['tipo_entita'])) {
+                    $deleteWhere[] = "tipo_entita = :tipo_entita";
+                    $deleteParams['tipo_entita'] = $_POST['tipo_entita'];
+                }
+                
+                if (!empty($_POST['delete_before'])) {
+                    $deleteWhere[] = "DATE(creato_il) < :delete_before";
+                    $deleteParams['delete_before'] = $_POST['delete_before'];
+                }
+                
+                if (count($deleteWhere) <= 1) { // Solo il filtro di esclusione eliminazione_log
+                    throw new Exception("Nessun criterio di eliminazione specificato");
+                }
+                
+                $dettagli = "Eliminati log con criteri: " . json_encode($_POST);
+            }
+            
+            // Conta quanti log verranno eliminati
+            $countSql = "SELECT COUNT(*) as count FROM log_attivita WHERE " . implode(" AND ", $deleteWhere);
+            $stmt = db_query($countSql, $deleteParams);
+            $countDeleted = $stmt->fetch()['count'];
+            
+            // Conta anche i log di eliminazione che rimarranno
+            $stmt = db_query("SELECT COUNT(*) as count FROM log_attivita WHERE azione = 'eliminazione_log'");
+            $countEliminazioniRimaste = $stmt->fetch()['count'];
+            
+            // Prima di eliminare, crea un log dell'eliminazione
+            $logger->log('sistema', 'eliminazione_log', null, 
+                "$dettagli. Totale record eliminati: $countDeleted");
+            
+            // Esegui l'eliminazione
+            $deleteSql = "DELETE FROM log_attivita WHERE " . implode(" AND ", $deleteWhere);
+            db_query($deleteSql, $deleteParams);
+            
+            db_connection()->commit();
+            
+            if ($countEliminazioniRimaste > 0) {
+                $_SESSION['success'] = "Eliminati $countDeleted log di attività. Conservati $countEliminazioniRimaste log di eliminazione per audit.";
+            } else {
+                $_SESSION['success'] = "Eliminati $countDeleted log di attività";
+            }
+            redirect(APP_PATH . '/log-attivita.php');
+            
+        } catch (Exception $e) {
+            db_connection()->rollback();
+            $_SESSION['error'] = "Errore durante l'eliminazione: " . $e->getMessage();
+        }
+    }
+}
+
+// Parametri filtro
+$tipo_entita = $_GET['tipo'] ?? '';
+$azione = $_GET['azione'] ?? '';
+$data_da = $_GET['data_da'] ?? date('Y-m-d', strtotime('-7 days'));
+$data_a = $_GET['data_a'] ?? date('Y-m-d');
+$page = max(1, intval($_GET['page'] ?? 1));
+$per_page = 50;
+$offset = ($page - 1) * $per_page;
+
+// Costruisci query con filtri
+$where = ["1=1"];
+$params = [];
+
+// Ottieni l'ID dell'azienda in modo sicuro
+$aziendaId = null;
+if ($currentAzienda) {
+    $aziendaId = isset($currentAzienda['azienda_id']) ? $currentAzienda['azienda_id'] : 
+                 (isset($currentAzienda['id']) ? $currentAzienda['id'] : null);
+}
+
+if ($aziendaId && !$auth->isSuperAdmin()) {
+    $where[] = "azienda_id = :azienda_id";
+    $params['azienda_id'] = $aziendaId;
+} elseif ($aziendaId && $auth->isSuperAdmin()) {
+    $where[] = "azienda_id = :azienda_id";
+    $params['azienda_id'] = $aziendaId;
+}
+
+if ($tipo_entita) {
+    $where[] = "tipo_entita = :tipo_entita";
+    $params['tipo_entita'] = $tipo_entita;
+}
+
+if ($azione) {
+    $where[] = "azione = :azione";
+    $params['azione'] = $azione;
+}
+
+if ($data_da) {
+    $where[] = "DATE(creato_il) >= :data_da";
+    $params['data_da'] = $data_da;
+}
+
+if ($data_a) {
+    $where[] = "DATE(creato_il) <= :data_a";
+    $params['data_a'] = $data_a;
+}
+
+$where_clause = implode(" AND ", $where);
+
+// Conta totale record
+$count_sql = "SELECT COUNT(*) as total FROM vista_log_attivita WHERE $where_clause";
+$stmt = db_query($count_sql, $params);
+$total = $stmt->fetch()['total'];
+$total_pages = ceil($total / $per_page);
+
+// Ottieni log
+$sql = "SELECT * FROM vista_log_attivita 
+        WHERE $where_clause 
+        ORDER BY creato_il DESC 
+        LIMIT $per_page OFFSET $offset";
+
+$stmt = db_query($sql, $params);
+$logs = $stmt->fetchAll();
+
+// Ottieni valori unici per filtri
+$stmt = db_query("SELECT DISTINCT tipo_entita FROM log_attivita ORDER BY tipo_entita");
+$tipi = $stmt->fetchAll();
+
+$stmt = db_query("SELECT DISTINCT azione FROM log_attivita ORDER BY azione");
+$azioni = $stmt->fetchAll();
+
+$pageTitle = 'Log Attività';
+require_once 'components/header.php';
+?>
+
+<style>
+    .filters-form {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        border: 1px solid #c7cad1;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .filters-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .log-table {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #c7cad1;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .log-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .log-table th {
+        background: #f8f9fa;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #2d3748;
+        border-bottom: 1px solid #c1c7d0;
+    }
+    
+    .log-table td {
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .log-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .action-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .action-badge.creazione {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .action-badge.modifica {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+    
+    .action-badge.eliminazione {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .action-badge.download {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .entity-type {
+        display: inline-block;
+        padding: 3px 8px;
+        background: #e2e8f0;
+        color: #4a5568;
+        border-radius: 8px;
+        font-size: 11px;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    
+    .user-info-cell {
+        font-size: 13px;
+    }
+    
+    .user-name {
+        font-weight: 500;
+        color: #2d3748;
+    }
+    
+    .user-email {
+        color: #718096;
+        font-size: 12px;
+    }
+    
+    .details-cell {
+        font-size: 13px;
+        color: #4a5568;
+        max-width: 300px;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 30px;
+    }
+    
+    .pagination a, .pagination span {
+        padding: 8px 12px;
+        border: 1px solid #c1c7d0;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #4a5568;
+        background: white;
+        transition: all 0.2s;
+    }
+    
+    .pagination a:hover {
+        background: #f7fafc;
+        border-color: #a0aec0;
+    }
+    
+    .pagination .current {
+        background: #4f46e5;
+        color: white;
+        border-color: #4f46e5;
+    }
+    
+    .pagination .disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-box {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid #c7cad1;
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        color: #718096;
+        font-size: 14px;
+    }
+</style>
+
+<div class="content-header">
+    <h1><i class="fas fa-file-alt"></i> Log Attività</h1>
+    <?php if ($auth->isSuperAdmin()): ?>
+    <div class="header-actions">
+        <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
+            <i class="fas fa-trash"></i> Elimina Log
+        </button>
+    </div>
+    <?php endif; ?>
+</div>
+
+<?php if (isset($_SESSION['success'])): ?>
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i> <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_SESSION['error'])): ?>
+    <div class="alert alert-error">
+        <i class="fas fa-exclamation-circle"></i> <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+    </div>
+<?php endif; ?>
+
+<!-- Statistiche rapide -->
+<div class="stats-row">
+    <div class="stat-box">
+        <div class="stat-value"><?php echo number_format($total); ?></div>
+        <div class="stat-label">Attività Totali</div>
+    </div>
+    
+    <?php
+    // Attività oggi - uso sintassi compatibile
+    $oggi = date('Y-m-d');
+    $sql = "SELECT COUNT(*) as count FROM vista_log_attivita WHERE DATE(creato_il) = ?";
+    $params = [$oggi];
+    if ($aziendaId) {
+        $sql .= " AND azienda_id = ?";
+        $params[] = $aziendaId;
+    }
+    $stmt = db_query($sql, $params);
+    $oggiCount = $stmt->fetch()['count'];
+    ?>
+    <div class="stat-box">
+        <div class="stat-value"><?php echo number_format($oggiCount); ?></div>
+        <div class="stat-label">Attività Oggi</div>
+    </div>
+    
+    <?php
+    // Documenti creati questa settimana
+    $settimanaFa = date('Y-m-d', strtotime('-7 days'));
+    $sql = "SELECT COUNT(*) as count FROM vista_log_attivita 
+        WHERE tipo_entita = 'documento' AND azione = 'creazione' 
+        AND DATE(creato_il) >= ?";
+    $params = [$settimanaFa];
+    if ($aziendaId) {
+        $sql .= " AND azienda_id = ?";
+        $params[] = $aziendaId;
+    }
+    $stmt = db_query($sql, $params);
+    $doc_settimana = $stmt->fetch()['count'];
+    ?>
+    <div class="stat-box">
+        <div class="stat-value"><?php echo number_format($doc_settimana); ?></div>
+        <div class="stat-label">Documenti Creati (7gg)</div>
+    </div>
+    
+    <?php
+    // Utenti attivi questa settimana
+    $sql = "SELECT COUNT(DISTINCT COALESCE(utente_id, 0)) as count 
+        FROM vista_log_attivita 
+        WHERE DATE(creato_il) >= ?";
+    $params = [$settimanaFa];
+    if ($aziendaId) {
+        $sql .= " AND azienda_id = ?";
+        $params[] = $aziendaId;
+    }
+    $stmt = db_query($sql, $params);
+    $utenti_attivi = $stmt->fetch()['count'];
+    ?>
+    <div class="stat-box">
+        <div class="stat-value"><?php echo number_format($utenti_attivi); ?></div>
+        <div class="stat-label">Utenti Attivi (7gg)</div>
+    </div>
+</div>
+
+<!-- Filtri -->
+<div class="filters-form">
+    <form method="get" action="">
+        <div class="filters-row">
+            <div class="form-group">
+                <label for="tipo">Tipo Entità</label>
+                <select id="tipo" name="tipo">
+                    <option value="">Tutti</option>
+                    <?php foreach ($tipi as $t): ?>
+                        <option value="<?php echo htmlspecialchars($t['tipo_entita']); ?>" 
+                                <?php echo $tipo_entita === $t['tipo_entita'] ? 'selected' : ''; ?>>
+                            <?php echo ucfirst($t['tipo_entita']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="azione">Azione</label>
+                <select id="azione" name="azione">
+                    <option value="">Tutte</option>
+                    <?php foreach ($azioni as $a): ?>
+                        <option value="<?php echo htmlspecialchars($a['azione']); ?>" 
+                                <?php echo $azione === $a['azione'] ? 'selected' : ''; ?>>
+                            <?php echo ucfirst($a['azione']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="data_da">Data Da</label>
+                <input type="date" id="data_da" name="data_da" value="<?php echo $data_da; ?>">
+            </div>
+            
+            <div class="form-group">
+                <label for="data_a">Data A</label>
+                <input type="date" id="data_a" name="data_a" value="<?php echo $data_a; ?>">
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i>🔍</i> Filtra
+            </button>
+            <a href="<?php echo APP_PATH; ?>/log-attivita.php" class="btn btn-secondary">
+                <i>🔄</i> Reset
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabella log -->
+<?php if (empty($logs)): ?>
+    <div class="empty-state">
+        <i>📋</i>
+        <h2>Nessuna attività trovata</h2>
+        <p>Non ci sono attività che corrispondono ai criteri di ricerca.</p>
+    </div>
+<?php else: ?>
+    <div class="log-table">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 150px;">Data/Ora</th>
+                    <th>Utente</th>
+                    <th>Tipo</th>
+                    <th>Azione</th>
+                    <th>Dettagli</th>
+                    <?php if ($auth->isSuperAdmin() && !$currentAzienda): ?>
+                        <th>Azienda</th>
+                    <?php endif; ?>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($logs as $log): ?>
+                    <tr>
+                        <td>
+                            <div><?php echo date('d/m/Y', strtotime($log['creato_il'])); ?></div>
+                            <div style="font-size: 12px; color: #718096;">
+                                <?php echo date('H:i:s', strtotime($log['creato_il'])); ?>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="user-info-cell">
+                                <div class="user-name"><?php echo htmlspecialchars($log['nome_completo'] ?? 'Sistema'); ?></div>
+                                <div class="user-email"><?php echo htmlspecialchars($log['email_utente'] ?? ''); ?></div>
+                                <?php if ($log['tipo_utente'] === 'referente_azienda'): ?>
+                                    <span style="font-size: 11px; color: #9f7aea;">Referente</span>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="entity-type"><?php echo htmlspecialchars($log['tipo_entita']); ?></span>
+                        </td>
+                        <td>
+                            <span class="action-badge <?php echo $log['azione']; ?>">
+                                <?php echo ucfirst($log['azione']); ?>
+                            </span>
+                        </td>
+                        <td class="details-cell">
+                            <?php echo htmlspecialchars($log['dettagli'] ?? '-'); ?>
+                            <?php if ($log['ip_address']): ?>
+                                <div style="font-size: 11px; color: #a0aec0; margin-top: 4px;">
+                                    IP: <?php echo htmlspecialchars($log['ip_address']); ?>
+                                </div>
+                            <?php endif; ?>
+                        </td>
+                        <?php if ($auth->isSuperAdmin() && !$currentAzienda): ?>
+                            <td>
+                                <div style="font-size: 13px;">
+                                    <?php echo htmlspecialchars($log['nome_azienda'] ?? '-'); ?>
+                                </div>
+                            </td>
+                        <?php endif; ?>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Paginazione -->
+    <?php if ($total_pages > 1): ?>
+        <div class="pagination">
+            <?php if ($page > 1): ?>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => 1])); ?>">
+                    &laquo; Prima
+                </a>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page - 1])); ?>">
+                    &lsaquo; Prec
+                </a>
+            <?php else: ?>
+                <span class="disabled">&laquo; Prima</span>
+                <span class="disabled">&lsaquo; Prec</span>
+            <?php endif; ?>
+            
+            <?php
+            $start = max(1, $page - 2);
+            $end = min($total_pages, $page + 2);
+            
+            for ($i = $start; $i <= $end; $i++): ?>
+                <?php if ($i == $page): ?>
+                    <span class="current"><?php echo $i; ?></span>
+                <?php else: ?>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $i])); ?>">
+                        <?php echo $i; ?>
+                    </a>
+                <?php endif; ?>
+            <?php endfor; ?>
+            
+            <?php if ($page < $total_pages): ?>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $page + 1])); ?>">
+                    Succ &rsaquo;
+                </a>
+                <a href="?<?php echo http_build_query(array_merge($_GET, ['page' => $total_pages])); ?>">
+                    Ultima &raquo;
+                </a>
+            <?php else: ?>
+                <span class="disabled">Succ &rsaquo;</span>
+                <span class="disabled">Ultima &raquo;</span>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
+
+<?php if ($auth->isSuperAdmin()): ?>
+<!-- Modal Eliminazione Log -->
+<div id="deleteModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-exclamation-triangle" style="color: #dc2626;"></i> Elimina Log Attività</h2>
+            <button type="button" class="close-modal" onclick="closeDeleteModal()">×</button>
+        </div>
+        
+        <form method="POST" action="" id="deleteLogsForm">
+            <input type="hidden" name="action" value="delete_logs">
+            
+            <div class="modal-body">
+                <div class="warning-box">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <strong>ATTENZIONE:</strong> Questa operazione è irreversibile!
+                </div>
+                
+                <div style="background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; padding: 12px; margin-top: 10px; color: #1565c0;">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Nota:</strong> I log delle eliminazioni precedenti vengono sempre conservati per motivi di sicurezza e audit.
+                </div>
+                
+                <div class="delete-options">
+                    <h3>Seleziona cosa eliminare:</h3>
+                    
+                    <label class="radio-option">
+                        <input type="radio" name="delete_type" value="all" onchange="toggleDeleteOptions()">
+                        <span class="option-text">
+                            <strong>Elimina TUTTI i log</strong>
+                            <small>Rimuove tutti i log di sistema, eccetto i log delle eliminazioni precedenti</small>
+                        </span>
+                    </label>
+                    
+                    <label class="radio-option">
+                        <input type="radio" name="delete_type" value="filtered" checked onchange="toggleDeleteOptions()">
+                        <span class="option-text">
+                            <strong>Elimina con criteri</strong>
+                            <small>Rimuove solo i log che corrispondono ai criteri selezionati</small>
+                        </span>
+                    </label>
+                    
+                    <div id="filterOptions" class="filter-options">
+                        <div class="form-group">
+                            <label>Tipo Entità</label>
+                            <select name="tipo_entita">
+                                <option value="">Tutti i tipi</option>
+                                <?php foreach ($tipi as $t): ?>
+                                    <option value="<?php echo htmlspecialchars($t['tipo_entita']); ?>">
+                                        <?php echo ucfirst($t['tipo_entita']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Elimina log più vecchi di</label>
+                            <input type="date" name="delete_before" max="<?php echo date('Y-m-d'); ?>">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="log-count-info" id="logCountInfo" style="display:none;">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="logCountText"></span>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-danger" onclick="return confirmDelete()">
+                    <i class="fas fa-trash"></i> Conferma Eliminazione
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">
+                    Annulla
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Modal styles */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: none;
+    overflow-y: auto;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    margin-bottom: 5%;
+    padding: 0;
+    border: 1px solid #c1c7d0;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #2d3748;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #718096;
+}
+
+.close-modal:hover {
+    color: #2d3748;
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+    max-height: calc(90vh - 180px); /* Altezza modal meno header e footer approssimativi */
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.warning-box {
+    background: #fee;
+    border: 1px solid #fcc;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #c00;
+}
+
+.delete-options {
+    margin: 20px 0;
+}
+
+.radio-option {
+    display: block;
+    padding: 15px;
+    margin: 10px 0;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.radio-option:hover {
+    border-color: #a0aec0;
+    background: #f7fafc;
+}
+
+.radio-option input[type="radio"] {
+    margin-right: 10px;
+}
+
+.option-text {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.option-text strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.option-text small {
+    color: #718096;
+}
+
+.filter-options {
+    margin: 20px 0 20px 30px;
+    padding: 15px;
+    background: #f7fafc;
+    border-radius: 8px;
+}
+
+.log-count-info {
+    background: #e6f7ff;
+    border: 1px solid #91d5ff;
+    border-radius: 8px;
+    padding: 10px 15px;
+    color: #0050b3;
+    margin-top: 15px;
+}
+</style>
+
+<script>
+function showDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'block';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+function toggleDeleteOptions() {
+    const deleteType = document.querySelector('input[name="delete_type"]:checked').value;
+    const filterOptions = document.getElementById('filterOptions');
+    
+    if (deleteType === 'all') {
+        filterOptions.style.display = 'none';
+        document.getElementById('deleteLogsForm').elements.delete_all.value = '1';
+    } else {
+        filterOptions.style.display = 'block';
+        if (document.getElementById('deleteLogsForm').elements.delete_all) {
+            document.getElementById('deleteLogsForm').elements.delete_all.remove();
+        }
+    }
+}
+
+function confirmDelete() {
+    const deleteType = document.querySelector('input[name="delete_type"]:checked').value;
+    
+    if (deleteType === 'all') {
+        return confirm('⚠️ ATTENZIONE ⚠️\n\nStai per eliminare TUTTI i log del sistema.\nQuesta operazione è IRREVERSIBILE!\n\nSei assolutamente sicuro di voler procedere?');
+    } else {
+        const tipo = document.querySelector('select[name="tipo_entita"]').value;
+        const dataBefore = document.querySelector('input[name="delete_before"]').value;
+        
+        if (!tipo && !dataBefore) {
+            alert('Seleziona almeno un criterio di eliminazione.');
+            return false;
+        }
+        
+        let message = 'Stai per eliminare i log con i seguenti criteri:\n';
+        if (tipo) message += `\n- Tipo: ${tipo}`;
+        if (dataBefore) message += `\n- Più vecchi di: ${dataBefore}`;
+        message += '\n\nConfermi?';
+        
+        return confirm(message);
+    }
+}
+
+// Aggiungi campo delete_all quando necessario
+document.getElementById('deleteLogsForm').addEventListener('submit', function(e) {
+    const deleteType = document.querySelector('input[name="delete_type"]:checked').value;
+    
+    if (deleteType === 'all') {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'delete_all';
+        input.value = '1';
+        this.appendChild(input);
+    }
+});
+
+// Chiudi modal cliccando fuori
+window.onclick = function(event) {
+    const modal = document.getElementById('deleteModal');
+    if (event.target == modal) {
+        closeDeleteModal();
+    }
+}
+</script>
+<?php endif; ?>
+
+<?php require_once 'components/footer.php'; ?> 

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <!-- Meta tag SEO e sicurezza -->
+    <meta name="description" content="Piattaforma Collaborativa - Sistema di gestione documenti e calendari ISO compliant">
+    <meta name="keywords" content="gestione documenti, ISO 9001, calendario aziendale, piattaforma collaborativa">
+    <meta name="author" content="<?php echo APP_NAME; ?>">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <!-- Sicurezza -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.ckeditor.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.ckeditor.com; font-src 'self' https://cdnjs.cloudflare.com;">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <!-- PWA e Mobile -->
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="<?php echo APP_NAME; ?>">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="<?php echo APP_PATH; ?>/assets/images/favicon.svg">
+    <link rel="icon" type="image/png" href="<?php echo APP_PATH; ?>/assets/images/favicon.svg">
+    <link rel="apple-touch-icon" href="<?php echo APP_PATH; ?>/assets/images/nexio-icon.svg">
+    
+    <title><?php echo $pageTitle ?? 'Dashboard'; ?> - <?php echo APP_NAME; ?></title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/style.css?v=<?php echo filemtime(ROOT_PATH . '/assets/css/style.css'); ?>">
+    
+    <!-- Modern Theme CSS -->
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/modern-theme.css?v=<?php echo time(); ?>">
+    
+    <!-- Layout Fix CSS -->
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/layout-fix.css?v=<?php echo time(); ?>">
+    
+    <!-- Page Layouts CSS -->
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/page-layouts.css?v=<?php echo time(); ?>">
+    
+    <!-- CSS moderno -->
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/modern-theme.css">
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/layout-fix.css">
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/menu-responsive.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- JavaScript Variabili Globali -->
+    <script>
+        window.APP_PATH = '<?php echo APP_PATH; ?>';
+        window.APP_URL = '<?php echo APP_URL; ?>';
+        window.CSRF_TOKEN = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
+        window.USER_ID = <?php echo $auth->getUserId() ?? 'null'; ?>;
+        window.CHECK_NOTIFICATIONS = <?php echo $auth->isAuthenticated() ? 'true' : 'false'; ?>;
+        window.PRODUCTION = <?php echo defined('APP_ENV') && APP_ENV === 'production' ? 'true' : 'false'; ?>;
+    </script>
+</head>
+<body>
+    <!-- Contenitore App -->
+    <div class="app-container">
+        
+        <!-- Pulsante Menu Mobile -->
+        <button class="mobile-menu-btn" aria-label="Apri menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <!-- Overlay per Menu Mobile -->
+        <div class="sidebar-overlay"></div>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar" role="navigation">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <span class="logo-star">✦</span>
+                    <h2>Nexio</h2>
+                    <p>Semplifica, Connetti, Cresci Insieme</p>
+                </div>
+            </div>
+            
+            <!-- Menu Navigazione -->
+            <nav class="sidebar-menu">
+                <div class="menu-section">
+                    <div class="menu-section-title">MENU PRINCIPALE</div>
+                    <?php
+                    $currentPage = basename($_SERVER['PHP_SELF']);
+                    $menuItems = [];
+                    
+                    // Menu items basati sul ruolo
+                    if ($auth->isSuperAdmin()) {
+                        $menuItems = [
+                            ['url' => 'dashboard.php', 'icon' => 'fas fa-home', 'label' => 'Dashboard'],
+                            ['url' => 'aziende.php', 'icon' => 'fas fa-building', 'label' => 'Aziende'],
+                            ['url' => 'calendario.php', 'icon' => 'fas fa-calendar', 'label' => 'Calendario'],
+                            ['url' => 'documenti.php', 'icon' => 'fas fa-folder-tree', 'label' => 'Documenti'],
+                            ['url' => 'gestione-classificazioni.php', 'icon' => 'fas fa-sitemap', 'label' => 'Classificazioni'],
+                            ['url' => 'gestione-moduli-template.php', 'icon' => 'fas fa-file-code', 'label' => 'Template Documenti'],
+                            ['url' => 'tickets.php', 'icon' => 'fas fa-ticket-alt', 'label' => 'Tickets'],
+                            ['url' => 'gestione-utenti.php', 'icon' => 'fas fa-user-cog', 'label' => 'Gestione Utenti'],
+                            ['url' => 'gestione-moduli.php', 'icon' => 'fas fa-puzzle-piece', 'label' => 'Moduli'],
+                            ['url' => 'log-attivita.php', 'icon' => 'fas fa-file-alt', 'label' => 'Log'],
+                            ['url' => 'impostazioni.php', 'icon' => 'fas fa-cog', 'label' => 'Impostazioni'],
+                        ];
+                    } elseif ($auth->hasRoleInAzienda('proprietario') || $auth->hasRoleInAzienda('admin')) {
+                        $menuItems = [
+                            ['url' => 'dashboard.php', 'icon' => 'fas fa-home', 'label' => 'Dashboard'],
+                            ['url' => 'documenti.php', 'icon' => 'fas fa-folder-tree', 'label' => 'Documenti'],
+                            ['url' => 'gestione-classificazioni.php', 'icon' => 'fas fa-sitemap', 'label' => 'Classificazioni'],
+                            ['url' => 'gestione-moduli-template.php', 'icon' => 'fas fa-file-code', 'label' => 'Template Documenti'],
+                            ['url' => 'calendario.php', 'icon' => 'fas fa-calendar', 'label' => 'Calendario'],
+                            ['url' => 'eventi.php', 'icon' => 'fas fa-calendar-check', 'label' => 'Eventi'],
+                            ['url' => 'tickets.php', 'icon' => 'fas fa-ticket-alt', 'label' => 'Supporto'],
+                            ['url' => 'log-attivita.php', 'icon' => 'fas fa-file-alt', 'label' => 'Log'],
+                            ['url' => 'impostazioni.php', 'icon' => 'fas fa-cog', 'label' => 'Impostazioni'],
+                        ];
+                    } else {
+                        $menuItems = [
+                            ['url' => 'dashboard.php', 'icon' => 'fas fa-home', 'label' => 'Dashboard'],
+                            ['url' => 'documenti.php', 'icon' => 'fas fa-folder-tree', 'label' => 'Documenti'],
+                            ['url' => 'calendario.php', 'icon' => 'fas fa-calendar', 'label' => 'Calendario'],
+                            ['url' => 'tickets.php', 'icon' => 'fas fa-ticket-alt', 'label' => 'Supporto'],
+                            ['url' => 'impostazioni.php', 'icon' => 'fas fa-cog', 'label' => 'Impostazioni'],
+                        ];
+                    }
+                    
+                    // Aggiungi sempre profilo e logout
+                    $menuItems[] = ['url' => 'profilo.php', 'icon' => 'fas fa-user', 'label' => 'Profilo'];
+                    
+                    // Render menu items
+                    foreach ($menuItems as $item):
+                        $isActive = $currentPage == $item['url'] ? 'active' : '';
+                    ?>
+                        <div class="menu-item">
+                            <a href="<?php echo APP_PATH . '/' . $item['url']; ?>" class="<?php echo $isActive; ?>">
+                                <i class="<?php echo $item['icon']; ?>"></i>
+                                <span><?php echo $item['label']; ?></span>
+                            </a>
+                        </div>
+                    <?php endforeach; ?>
+                    
+                    <div class="menu-item">
+                        <a href="<?php echo APP_PATH; ?>/logout.php" onclick="return confirm('Sei sicuro di voler uscire?');">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- Info Utente -->
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name"><?php echo htmlspecialchars(($user['nome'] ?? '') . ' ' . ($user['cognome'] ?? '')); ?></div>
+                    <div class="user-role"><?php echo htmlspecialchars($user['ruolo'] ?? 'Utente'); ?></div>
+                    <?php if (isset($currentAzienda) && is_array($currentAzienda) && isset($currentAzienda['azienda_nome'])): ?>
+                        <div class="user-company">
+                            <i class="fas fa-building"></i> <?php echo htmlspecialchars($currentAzienda['azienda_nome']); ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Contenuto Principale -->
+        <main class="main-content" role="main"> 

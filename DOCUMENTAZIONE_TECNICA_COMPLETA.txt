@@ -1,0 +1,618 @@
+========================================================================
+            DOCUMENTAZIONE TECNICA COMPLETA
+                PIATTAFORMA COLLABORATIVA NEXIO
+========================================================================
+
+INDICE
+------
+1. PANORAMICA DEL SISTEMA
+2. ARCHITETTURA TECNICA
+3. STRUTTURA DATABASE
+4. COMPONENTI PRINCIPALI
+5. FUNZIONALITÀ IMPLEMENTATE
+6. SISTEMA DI AUTENTICAZIONE E SICUREZZA
+7. SISTEMA EMAIL E NOTIFICHE
+8. GESTIONE DOCUMENTI
+9. API E INTEGRAZIONI
+10. REQUISITI DI SISTEMA
+11. CONFIGURAZIONE E DEPLOYMENT
+12. MANUTENZIONE E TROUBLESHOOTING
+
+========================================================================
+1. PANORAMICA DEL SISTEMA
+========================================================================
+
+Nome Progetto: Piattaforma Collaborativa Nexio
+Versione: 1.0.0
+Tipo: Web Application Multi-tenant per gestione aziendale
+Stack Tecnologico: PHP 7.4+, MySQL 5.7+, JavaScript (Vanilla), HTML5, CSS3
+
+Descrizione:
+La piattaforma è un sistema completo di gestione aziendale che permette:
+- Gestione multi-azienda (multi-tenant)
+- Gestione documenti con editor avanzato
+- Sistema di ticketing
+- Gestione eventi e calendario
+- Gestione referenti e contatti
+- Sistema di notifiche email automatiche
+- Dashboard con statistiche in tempo reale
+
+========================================================================
+2. ARCHITETTURA TECNICA
+========================================================================
+
+2.1 PATTERN ARCHITETTURALE
+-------------------------
+- MVC (Model-View-Controller) modificato
+- Singleton per Database e servizi core
+- Dependency Injection per componenti modulari
+- Repository Pattern per l'accesso ai dati
+
+2.2 STRUTTURA DIRECTORY
+-----------------------
+/piattaforma-collaborativa/
+├── /assets/              # Risorse statiche (CSS, JS, immagini)
+│   ├── /css/
+│   ├── /js/
+│   └── /vendor/         # Librerie esterne (Quill, TinyMCE)
+├── /backend/            # Logica di business
+│   ├── /api/           # Endpoint API
+│   ├── /config/        # Configurazioni
+│   ├── /controllers/   # Controller (non utilizzati attualmente)
+│   ├── /cron/          # Script per job schedulati
+│   ├── /functions/     # Funzioni helper
+│   ├── /middleware/    # Middleware (Auth)
+│   ├── /models/        # Modelli dati
+│   └── /utils/         # Utilità (Mailer, Logger, etc.)
+├── /components/         # Componenti UI riutilizzabili
+├── /database/          # Script SQL e migrazioni
+├── /logs/              # File di log
+├── /temp/              # File temporanei
+├── /uploads/           # File caricati dagli utenti
+└── /                   # File PHP principali (viste/pagine)
+
+2.3 COMPONENTI CORE
+-------------------
+- Database.php: Gestione connessione database (Singleton PDO)
+- Auth.php: Sistema di autenticazione e autorizzazione
+- Mailer.php: Gestione invio email SMTP
+- SimpleSMTP.php: Implementazione SMTP nativa
+- NotificationManager.php: Gestione notifiche
+- ActivityLogger.php: Logging attività utenti
+- DataEncryption.php: Crittografia dati sensibili
+
+========================================================================
+3. STRUTTURA DATABASE
+========================================================================
+
+3.1 TABELLE PRINCIPALI
+----------------------
+
+users (utenti sistema)
+- id: INT PRIMARY KEY
+- username: VARCHAR(50) UNIQUE
+- password: VARCHAR(255) - bcrypt hash
+- email: VARCHAR(100)
+- nome/cognome: VARCHAR(100)
+- ruolo: ENUM('admin','operatore','cliente')
+- is_super_admin: BOOLEAN
+- azienda_ids: TEXT - JSON array aziende associate
+- active: BOOLEAN
+
+aziende (multi-tenant)
+- id: INT PRIMARY KEY
+- nome: VARCHAR(255)
+- codice: VARCHAR(50) UNIQUE
+- partita_iva: VARCHAR(20)
+- indirizzo/città/cap: VARCHAR
+- configurazioni: TEXT - JSON settings
+- active: BOOLEAN
+
+documenti
+- id: INT PRIMARY KEY
+- azienda_id: INT FOREIGN KEY
+- titolo: VARCHAR(255)
+- contenuto: LONGTEXT - HTML
+- tipo: ENUM('documento','modulo','template')
+- stato: ENUM('bozza','pubblicato','archiviato')
+- versione: INT
+- created_by/updated_by: INT FOREIGN KEY
+
+eventi
+- id: INT PRIMARY KEY
+- azienda_id: INT FOREIGN KEY
+- titolo: VARCHAR(255)
+- data_inizio/data_fine: DATETIME
+- tipo: VARCHAR(50)
+- stato: ENUM('programmato','in_corso','completato','annullato')
+- partecipanti: TEXT - JSON array
+
+tickets
+- id: INT PRIMARY KEY
+- azienda_id: INT FOREIGN KEY
+- oggetto: VARCHAR(255)
+- descrizione: TEXT
+- priorita: ENUM('bassa','media','alta','urgente')
+- stato: ENUM('aperto','in_lavorazione','risolto','chiuso')
+- assegnato_a: INT FOREIGN KEY
+
+referenti
+- id: INT PRIMARY KEY
+- azienda_id: INT FOREIGN KEY
+- nome/cognome: VARCHAR(100)
+- email: VARCHAR(100)
+- telefono: VARCHAR(50)
+- ruolo: VARCHAR(100)
+- permissions: TEXT - JSON permissions
+
+3.2 TABELLE DI SUPPORTO
+-----------------------
+- classificazioni: Categorizzazione documenti
+- moduli_template: Template predefiniti
+- documenti_versioni: Storico versioni documenti
+- documenti_moduli: Associazione documenti-moduli
+- log_attivita: Log di tutte le azioni
+- notifiche_email: Coda email da inviare
+- configurazioni: Impostazioni sistema key-value
+- sessioni: Gestione sessioni utente
+
+========================================================================
+4. COMPONENTI PRINCIPALI
+========================================================================
+
+4.1 SISTEMA DI AUTENTICAZIONE (Auth.php)
+-----------------------------------------
+- Login con username/password
+- Hashing password con bcrypt (cost=12)
+- Gestione sessioni PHP sicure
+- Controllo permessi multi-livello
+- Supporto multi-azienda per utente
+- Protezione CSRF con token
+- Rate limiting tentativi login
+- Remember me con cookie sicuro
+
+4.2 GESTIONE DATABASE (Database.php)
+------------------------------------
+- Singleton pattern per connessione unica
+- PDO con prepared statements
+- Supporto transazioni
+- Query builder semplificato
+- Error handling centralizzato
+- Connection pooling
+- Automatic reconnection
+
+4.3 SISTEMA EMAIL (Mailer.php + SimpleSMTP.php)
+------------------------------------------------
+- SMTP nativo senza dipendenze esterne
+- Supporto SSL/TLS
+- Autenticazione LOGIN/PLAIN
+- Template email HTML
+- Coda email asincrona
+- Retry automatico su fallimento
+- Log completo invii
+
+4.4 GESTIONE DOCUMENTI
+----------------------
+- Editor WYSIWYG (Quill.js)
+- Versioning automatico
+- Template predefiniti
+- Moduli dinamici componibili
+- Generazione PDF
+- Ricerca full-text
+- Permessi granulari
+
+========================================================================
+5. FUNZIONALITÀ IMPLEMENTATE
+========================================================================
+
+5.1 DASHBOARD
+-------------
+- Statistiche in tempo reale
+- Grafici interattivi
+- Widget personalizzabili
+- Attività recenti
+- Notifiche sistema
+- Accesso rapido funzioni
+
+5.2 GESTIONE AZIENDE
+--------------------
+- Multi-tenant isolation
+- Configurazioni per azienda
+- Logo e branding custom
+- Gestione utenti azienda
+- Import/export dati
+
+5.3 DOCUMENTI
+-------------
+- Editor avanzato stile Google Docs
+- Collaborazione real-time (base)
+- Template predefiniti ISO
+- Gestione frontespizio
+- Indice automatico
+- Numerazione pagine
+- Intestazioni/piè pagina
+
+5.4 EVENTI E CALENDARIO
+-----------------------
+- Vista mensile/settimanale/giornaliera
+- Drag & drop eventi
+- Inviti partecipanti
+- Notifiche automatiche
+- Ricorrenze
+- Export iCal
+
+5.5 TICKETS
+-----------
+- Apertura ticket guidata
+- Assegnazione automatica/manuale
+- Tracking stato e priorità
+- Storico conversazioni
+- Allegati
+- SLA tracking
+- Report statistici
+
+5.6 REFERENTI
+-------------
+- Anagrafica completa
+- Ruoli e permessi custom
+- Associazione multi-azienda
+- Import CSV/Excel
+- Comunicazioni massive
+- Storico interazioni
+
+========================================================================
+6. SISTEMA DI AUTENTICAZIONE E SICUREZZA
+========================================================================
+
+6.1 MISURE DI SICUREZZA
+-----------------------
+- Password hashing: bcrypt con salt automatico
+- Session hijacking prevention
+- CSRF token su tutti i form
+- XSS protection con output escaping
+- SQL injection prevention (prepared statements)
+- File upload validation
+- Directory traversal protection
+- Rate limiting su endpoint critici
+
+6.2 GESTIONE SESSIONI
+---------------------
+- Session storage sicuro
+- Regenerazione ID sessione su login
+- Timeout automatico (1 ora default)
+- Controllo IP/User-Agent
+- Single sign-on per multi-azienda
+
+6.3 PERMESSI E RUOLI
+---------------------
+Ruoli predefiniti:
+- Super Admin: accesso completo sistema
+- Admin Azienda: gestione completa azienda
+- Operatore: accesso limitato funzioni operative  
+- Cliente: solo visualizzazione
+
+Permessi granulari per:
+- Documenti (lettura/scrittura/eliminazione)
+- Eventi (creazione/modifica/cancellazione)
+- Tickets (apertura/gestione/chiusura)
+- Referenti (visualizzazione/modifica)
+
+========================================================================
+7. SISTEMA EMAIL E NOTIFICHE
+========================================================================
+
+7.1 CONFIGURAZIONE SMTP
+-----------------------
+Server supportati:
+- Gmail (smtp.gmail.com:587 TLS)
+- Outlook (smtp.office365.com:587 TLS)
+- Server custom (qualsiasi SMTP standard)
+
+Configurazione attuale:
+- Server: mail.nexiosolution.it
+- Porta: 465 (SSL)
+- Autenticazione: LOGIN
+
+7.2 TIPI DI NOTIFICHE
+---------------------
+- Eventi: creazione, modifica, promemoria
+- Tickets: nuovo, cambio stato, assegnazione
+- Documenti: condivisione, modifica, approvazione
+- Sistema: backup, errori, manutenzione
+- Custom: definibili da admin
+
+7.3 GESTIONE CODA EMAIL
+-----------------------
+- Tabella notifiche_email per accodamento
+- Processamento asincrono via cron
+- Retry automatico (max 3 tentativi)
+- Log dettagliato invii
+- Throttling per evitare spam
+
+========================================================================
+8. GESTIONE DOCUMENTI
+========================================================================
+
+8.1 EDITOR DOCUMENTI
+--------------------
+- Basato su Quill.js
+- Toolbar personalizzabile
+- Formattazione avanzata
+- Inserimento immagini/tabelle
+- Stili predefiniti corporate
+- Autocompletamento
+- Spell check
+
+8.2 TEMPLATE SISTEMA
+--------------------
+Template ISO predefiniti:
+- Politica Qualità
+- Manuale Operativo  
+- Procedure
+- Istruzioni Operative
+- Moduli registrazione
+
+Personalizzazione:
+- Variabili dinamiche {{nome_azienda}}
+- Sezioni condizionali
+- Blocchi riutilizzabili
+- Stili custom CSS
+
+8.3 GESTIONE VERSIONI
+---------------------
+- Salvataggio automatico bozze
+- Storico completo modifiche
+- Confronto versioni
+- Rollback versione precedente
+- Commenti revisione
+- Approvazione workflow
+
+========================================================================
+9. API E INTEGRAZIONI
+========================================================================
+
+9.1 API INTERNE
+---------------
+Endpoint principali:
+- /backend/api/documento-autosave.php - Salvataggio automatico
+- /backend/api/get-referenti.php - Lista referenti
+- /backend/api/save-frontespizio.php - Salva dati frontespizio
+- /backend/api/delete-document.php - Eliminazione documenti
+- /api-save-template.php - Gestione template
+
+Autenticazione: Session-based
+Formato: JSON
+Metodi: GET, POST, PUT, DELETE
+
+9.2 WEBHOOK E EVENTI
+--------------------
+Eventi disponibili:
+- document.created
+- document.updated
+- ticket.created
+- ticket.statusChanged
+- user.login
+- user.logout
+
+9.3 INTEGRAZIONI FUTURE
+-----------------------
+- OAuth2 per login social
+- API REST completa
+- Webhook configurabili
+- Import/export formati standard
+- Integrazione calendar esterne
+- Storage cloud (S3, Drive)
+
+========================================================================
+10. REQUISITI DI SISTEMA
+========================================================================
+
+10.1 REQUISITI SERVER
+---------------------
+Minimi:
+- PHP 7.4+ (consigliato 8.0+)
+- MySQL 5.7+ o MariaDB 10.3+
+- Apache 2.4+ con mod_rewrite
+- 2GB RAM
+- 10GB spazio disco
+
+Consigliati:
+- PHP 8.1+
+- MySQL 8.0+
+- 4GB+ RAM
+- 50GB+ spazio disco
+- SSL certificato
+
+10.2 ESTENSIONI PHP RICHIESTE
+------------------------------
+- PDO + PDO_MySQL
+- mbstring
+- json
+- session
+- openssl
+- fileinfo
+- gd o imagick
+- zip
+- curl (opzionale)
+
+10.3 BROWSER SUPPORTATI
+-----------------------
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+- Opera 76+
+
+Mobile:
+- iOS Safari 14+
+- Chrome Android 90+
+
+========================================================================
+11. CONFIGURAZIONE E DEPLOYMENT
+========================================================================
+
+11.1 INSTALLAZIONE
+------------------
+1. Clonare repository in document root
+2. Importare database da /database/schema.sql
+3. Configurare /backend/config/config.php:
+   - Parametri database
+   - URL base applicazione
+   - Timezone
+4. Configurare permessi:
+   - /uploads: 755
+   - /logs: 755
+   - /temp: 755
+5. Configurare SMTP da interfaccia admin
+
+11.2 CONFIGURAZIONI APACHE
+--------------------------
+.htaccess incluso con:
+- URL rewriting
+- Sicurezza headers
+- Compressione gzip
+- Cache control
+- Blocco accesso file sensibili
+
+VirtualHost consigliato:
+```
+<VirtualHost *:80>
+    ServerName piattaforma.esempio.com
+    DocumentRoot /var/www/piattaforma-collaborativa
+    
+    <Directory /var/www/piattaforma-collaborativa>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+    
+    ErrorLog ${APACHE_LOG_DIR}/piattaforma-error.log
+    CustomLog ${APACHE_LOG_DIR}/piattaforma-access.log combined
+</VirtualHost>
+```
+
+11.3 CRON JOBS
+--------------
+Configurare in crontab:
+```
+# Processa coda email ogni 5 minuti
+*/5 * * * * php /path/to/processa-email.php --cron
+
+# Pulizia file temporanei ogni notte
+0 3 * * * php /path/to/backend/cron/cleanup.php
+
+# Backup database quotidiano
+0 2 * * * php /path/to/backend/cron/backup.php
+```
+
+11.4 VARIABILI AMBIENTE
+-----------------------
+Configurabili in config.php o .env:
+- DB_HOST, DB_NAME, DB_USER, DB_PASS
+- APP_URL, APP_NAME, APP_ENV
+- SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
+- LOG_LEVEL, DEBUG_MODE
+- SESSION_LIFETIME, REMEMBER_ME_LIFETIME
+
+========================================================================
+12. MANUTENZIONE E TROUBLESHOOTING
+========================================================================
+
+12.1 LOG FILES
+--------------
+Posizione log:
+- /logs/error.log - Errori PHP
+- /logs/access.log - Accessi utenti
+- /logs/email.log - Invii email
+- /logs/activity.log - Azioni utenti
+
+Rotazione log consigliata: giornaliera con logrotate
+
+12.2 PROBLEMI COMUNI
+--------------------
+
+Email non arrivano:
+- Verificare configurazione SMTP
+- Controllare /logs/email.log
+- Verificare coda in notifiche_email
+- Testare con test-email-quick.php
+
+Login non funziona:
+- Verificare sessioni PHP attive
+- Controllare permessi /temp
+- Verificare cookie domain
+- Pulire cache browser
+
+Upload file fallisce:
+- Verificare upload_max_filesize
+- Controllare permessi /uploads
+- Verificare spazio disco
+- Check post_max_size
+
+Performance lente:
+- Ottimizzare query con EXPLAIN
+- Abilitare query cache MySQL
+- Verificare indici database
+- Abilitare OPcache PHP
+
+12.3 BACKUP E RESTORE
+---------------------
+
+Backup completo:
+```bash
+# Database
+mysqldump -u root -p piattaforma_collaborativa > backup_db_$(date +%Y%m%d).sql
+
+# Files
+tar -czf backup_files_$(date +%Y%m%d).tar.gz uploads/ logs/ backend/config/
+```
+
+Restore:
+```bash
+# Database
+mysql -u root -p piattaforma_collaborativa < backup_db_20250101.sql
+
+# Files
+tar -xzf backup_files_20250101.tar.gz
+```
+
+12.4 MONITORAGGIO
+-----------------
+Metriche da monitorare:
+- Uptime applicazione
+- Tempo risposta pagine
+- Utilizzo CPU/RAM
+- Spazio disco
+- Query lente MySQL
+- Errori PHP/Apache
+- Email fallite
+- Login falliti
+
+Tools consigliati:
+- New Relic / AppDynamics
+- Grafana + Prometheus
+- ELK Stack
+- Sentry per error tracking
+
+12.5 SICUREZZA
+--------------
+Checklist sicurezza:
+□ SSL/TLS attivo
+□ Headers sicurezza configurati
+□ Backup automatici attivi
+□ Monitoring attivo
+□ Password policy applicata
+□ 2FA abilitato (futuro)
+□ Audit log attivo
+□ Penetration test periodici
+□ Update PHP/MySQL regolari
+□ Firewall configurato
+
+========================================================================
+                              FINE DOCUMENTAZIONE
+========================================================================
+
+Per supporto tecnico: support@nexiosolution.it
+Repository: [URL repository Git]
+Versione documento: 1.0.0
+Ultimo aggiornamento: 16/06/2025

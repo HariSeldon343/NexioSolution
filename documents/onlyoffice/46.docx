@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        .header { padding: 20px; border-bottom: 2px solid #0078d4; margin-bottom: 30px; }
+        .content { padding: 0 20px; min-height: 500px; }
+        .footer { padding: 20px; border-top: 1px solid #ccc; margin-top: 30px; }
+        @page { margin: 2cm; }
+    </style>
+</head>
+<body>
+    <div class="header">
+                    <div style="text-align: center; border-bottom: 2px solid #0078d4; padding: 15px;">
+                        <h2 style="color: #0078d4; margin: 0;">Nexio Platform</h2>
+                        <p style="margin: 5px 0; font-size: 12px; color: #666;">24/06/2025</p>
+                    </div></div>
+    <div class="content"><h1>Manuale Utente</h1><p>Questo è il manuale utente del sistema Nexio.</p></div>
+    <div class="footer">
+                    <div style="text-align: center; border-top: 1px solid #ccc; padding: 10px; font-size: 11px; color: #666;">
+                        <p>© 2025 Nexio Platform | Pagina 1</p>
+                    </div></div>
+</body>
+</html>

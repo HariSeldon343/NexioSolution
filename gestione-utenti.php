@@ -23,6 +23,69 @@ if (!$auth->isSuperAdmin()) {
 // Database instance handled by functions
 $user = $auth->getUser();
 
+/**
+ * Auto-associa un nuovo utente ad un'azienda basandosi sul dominio email
+ */
+function autoAssociateNewUser($userId, $email, $ruolo) {
+    try {
+        // Non applicare per super admin o utenti speciali
+        if (in_array($ruolo, ['super_admin', 'utente_speciale'])) {
+            return;
+        }
+        
+        // Estrai il dominio dall'email
+        if (!$email || strpos($email, '@') === false) {
+            return;
+        }
+        
+        $domain = strtolower(substr($email, strpos($email, '@') + 1));
+        
+        // Mappatura domini -> aziende
+        $domainMapping = [
+            'romolohospital.com' => 'Romolo Hospital',
+            // Aggiungi altre mappature qui se necessario
+        ];
+        
+        if (!isset($domainMapping[$domain])) {
+            return;
+        }
+        
+        $aziendaNome = $domainMapping[$domain];
+        
+        // Trova l'azienda
+        $stmt = db_query("SELECT id FROM aziende WHERE nome = ? AND stato = 'attiva'", [$aziendaNome]);
+        $azienda = $stmt->fetch();
+        
+        if (!$azienda) {
+            return;
+        }
+        
+        // Crea l'associazione
+        $ruolo_azienda = 'referente'; // Ruolo default
+        if (strpos($email, 'admin') !== false) {
+            $ruolo_azienda = 'responsabile_aziendale';
+        }
+        
+        db_insert('utenti_aziende', [
+            'utente_id' => $userId,
+            'azienda_id' => $azienda['id'],
+            'ruolo_azienda' => $ruolo_azienda,
+            'assegnato_da' => 1, // Sistema
+            'attivo' => 1
+        ]);
+        
+        // Log attività
+        if (class_exists('ActivityLogger')) {
+            ActivityLogger::getInstance()->log('sistema', 'auto_associazione', $userId, 
+                "Auto-associato nuovo utente {$email} a {$aziendaNome}");
+        }
+        
+    } catch (Exception $e) {
+        // Log errore ma non bloccare la creazione utente
+        error_log("Errore auto-associazione nuovo utente: " . $e->getMessage());
+    }
+}
+
 // Gestione azioni AJAX per migliori performance
 if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') {
     header('Content-Type: application/json');
@@ -78,7 +141,7 @@ function createUser($data) {
         return ['success' => false, 'message' => 'Email non valida'];
     }
     
-    if (!in_array($ruolo, ['admin', 'utente', 'super_admin'])) {
+    if (!in_array($ruolo, ['admin', 'utente', 'super_admin', 'utente_speciale'])) {
         return ['success' => false, 'message' => 'Ruolo non valido'];
     }
     
@@ -109,12 +172,12 @@ function createUser($data) {
     db_connection()->beginTransaction();
     
     try {
-        // Verifica email con query preparata cached
-        $stmt = db_query("SELECT id FROM utenti WHERE email = ? LIMIT 1", [$email]);
+        // Verifica email - permetti riutilizzo se utente non attivo
+        $stmt = db_query("SELECT id FROM utenti WHERE email = ? AND attivo = 1 LIMIT 1", [$email]);
         
         if ($stmt->fetch()) {
             db_connection()->rollback();
-            return ['success' => false, 'message' => 'Email già esistente nel sistema!'];
+            return ['success' => false, 'message' => 'Email già utilizzata da un utente attivo!'];
         }
         
         // Validazioni per ruoli aziendali
@@ -135,920 +198,637 @@ function createUser($data) {
                     return ['success' => false, 'message' => 'Esiste già un Responsabile Aziendale per questa azienda.'];
                 }
             } elseif ($ruolo_azienda === 'referente') {
-                // Verifica limite massimo referenti
+                // Verifica numero massimo di referenti
                 $stmt = db_query("SELECT COUNT(*) as count FROM utenti_aziende WHERE azienda_id = ? AND ruolo_azienda = 'referente' AND attivo = 1", 
                                [$azienda_id]);
                 $existing_referenti = $stmt->fetch()['count'];
                 
                 if ($existing_referenti >= $max_referenti) {
                     db_connection()->rollback();
-                    return ['success' => false, 'message' => "Limite massimo di $max_referenti referenti raggiunto per questa azienda."];
+                    return ['success' => false, 'message' => "Numero massimo di referenti raggiunto per questa azienda ({$max_referenti})."];
                 }
             }
         }
         
-        // Hash password
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-        $passwordScadenza = date('Y-m-d', strtotime('+60 days')); // Cambiato da 90 a 60 giorni
+        $passwordHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
         
-        // Genera username dall'email (parte prima di @)
-        $baseUsername = explode('@', $email)[0];
-        $username = $baseUsername;
+        // Controlla se esiste un utente inattivo con la stessa email
+        $stmt = db_query("SELECT id FROM utenti WHERE email = ? AND attivo = 0", [$email]);
+        $inactiveUser = $stmt->fetch();
         
-        // Verifica unicità username e aggiungi numero se necessario
-        $counter = 1;
-        while (true) {
-            $stmt = db_query("SELECT id FROM utenti WHERE username = ? LIMIT 1", [$username]);
-            if (!$stmt->fetch()) {
-                break; // Username disponibile
+        if ($inactiveUser) {
+            // Riattiva l'utente esistente
+            db_update('utenti', [
+                'nome' => $nome,
+                'cognome' => $cognome,
+                'data_nascita' => $data_nascita,
+                'password' => $passwordHash,
+                'ruolo' => $ruolo,
+                'attivo' => 1,
+                'last_password_change' => date('Y-m-d H:i:s'),
+                'primo_accesso' => 1
+            ], ['id' => $inactiveUser['id']]);
+            
+            $userId = $inactiveUser['id'];
+            
+            // Pulisci vecchie associazioni aziendali
+            db_query("DELETE FROM utenti_aziende WHERE utente_id = ?", [$userId]);
+        } else {
+            // Crea nuovo utente
+            $insertId = db_insert('utenti', [
+                'nome' => $nome,
+                'cognome' => $cognome,
+                'email' => $email,
+                'data_nascita' => $data_nascita,
+                'password' => $passwordHash,
+                'ruolo' => $ruolo,
+                'attivo' => 1,
+                'data_registrazione' => date('Y-m-d H:i:s'),
+                'last_password_change' => date('Y-m-d H:i:s'),
+                'primo_accesso' => 1
+            ]);
+            
+            if (!$insertId) {
+                db_connection()->rollback();
+                return ['success' => false, 'message' => 'Errore durante la creazione dell\'utente'];
             }
-            $username = $baseUsername . $counter;
-            $counter++;
+            
+            $userId = $insertId;
         }
         
-        // Inserisci utente
-        db_query("
-            INSERT INTO utenti (username, nome, cognome, email, password, data_nascita, ruolo, 
-                               primo_accesso, password_scadenza, attivo) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, TRUE, ?, 1)
-        ", [$username, $nome, $cognome, $email, $passwordHash, $data_nascita, $ruolo, $passwordScadenza]);
-        $userId = db_connection()->lastInsertId();
-        
-        // Associa utente all'azienda se specificato
+        // Crea associazione aziendale se specificata
         if ($azienda_id && $ruolo_azienda) {
-            $auth = Auth::getInstance();
-            $current_user = $auth->getUser();
-            
             db_insert('utenti_aziende', [
                 'utente_id' => $userId,
                 'azienda_id' => $azienda_id,
                 'ruolo_azienda' => $ruolo_azienda,
-                'assegnato_da' => $current_user['id'],
+                'assegnato_da' => $user['id'] ?? 1,
                 'attivo' => 1
             ]);
+        } else {
+            // Auto-associazione basata su dominio email
+            autoAssociateNewUser($userId, $email, $ruolo);
         }
         
-        // Log attività (asincrono)
+        // Log attività
         if (class_exists('ActivityLogger')) {
-            ActivityLogger::getInstance()->log('utente', 'creazione', $userId, "Nuovo utente: $email");
+            ActivityLogger::getInstance()->log('utente', 'create', $userId, 
+                "Creato nuovo utente: {$nome} {$cognome} ({$email}) con ruolo {$ruolo}");
         }
         
         db_connection()->commit();
         
-        // Invia email di benvenuto con password
-        try {
-            // Recupera dati completi dell'utente
-            $stmt = db_query("SELECT * FROM utenti WHERE id = ?", [$userId]);
-            $utente = $stmt->fetch();
-            
-            // Invia email con template unificato
-            require_once 'backend/utils/NotificationCenter.php';
-            $notificationCenter = NotificationCenter::getInstance();
-            $notificationCenter->notifyWelcomeUser($utente, $password);
-            
-        } catch (Exception $e) {
-            // Log errore ma non bloccare il processo
-            error_log('Errore invio email benvenuto: ' . $e->getMessage());
+        // Invia email se richiesto
+        if (isset($data['send_email']) && $data['send_email'] === 'on') {
+            $emailSent = sendWelcomeEmail($email, $nome, $password);
+            $emailMessage = $emailSent ? ' Email di benvenuto inviata.' : ' (Email non inviata)';
+        } else {
+            $emailMessage = '';
         }
         
-        // Notifica super admin della creazione utente
-        try {
-            $auth = Auth::getInstance();
-            $current_user = $auth->getUser();
-            $creator_name = $current_user ? "{$current_user['nome']} {$current_user['cognome']}" : "Sistema";
-            
-            $notificationManager = NotificationManager::getInstance();
-            $notificationManager->notificaSuperAdmin(
-                'utente_creato',
-                "Nuovo utente creato: {$data['nome']} {$data['cognome']}",
-                "
-                <h3>Nuovo utente creato</h3>
-                <p><strong>Nome:</strong> {$data['nome']} {$data['cognome']}</p>
-                <p><strong>Email:</strong> {$data['email']}</p>
-                <p><strong>Ruolo:</strong> {$data['ruolo']}</p>
-                <p><strong>Creato da:</strong> $creator_name</p>
-                "
-            );
-        } catch (Exception $e) {
-            error_log('Errore notifica super admin: ' . $e->getMessage());
-        }
-        
-        $message = "Utente creato con successo!";
-        if ($data['password_type'] === 'generate') {
-            $message .= " Password: <strong>$password</strong>";
-        }
-        if ($azienda_id && $ruolo_azienda) {
-            $ruoli_nomi = [
-                'responsabile_aziendale' => 'Responsabile Aziendale',
-                'referente' => 'Referente',
-                'ospite' => 'Ospite'
-            ];
-            $nome_ruolo = $ruoli_nomi[$ruolo_azienda] ?? $ruolo_azienda;
-            $message .= " Assegnato come $nome_ruolo all'azienda.";
-        }
-        
-        return ['success' => true, 'message' => $message, 'userId' => $userId];
+        return [
+            'success' => true, 
+            'message' => "Utente creato con successo!{$emailMessage}",
+            'password' => $password,
+            'userId' => $userId
+        ];
         
     } catch (Exception $e) {
-        db_connection()->rollback();
-        error_log('Errore creazione utente: ' . $e->getMessage());
-        return ['success' => false, 'message' => 'Errore nella creazione dell\'utente: ' . $e->getMessage()];
+        if (db_connection()->inTransaction()) {
+            db_connection()->rollback();
+        }
+        error_log("Errore creazione utente: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Errore durante la creazione dell\'utente: ' . $e->getMessage()];
+    }
+}
+
+function sendWelcomeEmail($email, $nome, $password) {
+    global $baseUrl;
+    
+    try {
+        $mailer = Mailer::getInstance();
+        
+        $subject = "Benvenuto su Nexio - Le tue credenziali di accesso";
+        
+        $body = "
+        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+            <h2 style='color: #2d5a9f;'>Benvenuto su Nexio, {$nome}!</h2>
+            
+            <p>Il tuo account è stato creato con successo. Di seguito trovi le tue credenziali di accesso:</p>
+            
+            <div style='background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                <p><strong>Email:</strong> {$email}</p>
+                <p><strong>Password temporanea:</strong> {$password}</p>
+            </div>
+            
+            <p style='color: #d97706;'><strong>Importante:</strong> Al primo accesso ti verrà richiesto di cambiare la password.</p>
+            
+            <p>Per accedere alla piattaforma, clicca sul link seguente:</p>
+            <p><a href='{$baseUrl}/login.php' style='background: #2d5a9f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;'>Accedi a Nexio</a></p>
+            
+            <p style='color: #666; font-size: 12px; margin-top: 30px;'>
+                Questo messaggio è stato inviato automaticamente. Per assistenza, contatta l'amministratore del sistema.
+            </p>
+        </div>
+        ";
+        
+        return $mailer->send($email, $subject, $body);
+        
+    } catch (Exception $e) {
+        error_log("Errore invio email benvenuto: " . $e->getMessage());
+        return false;
     }
 }
 
 function resetPassword($userId) {
-    $newPassword = generateRandomPassword();
-    $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
-    $passwordScadenza = date('Y-m-d', strtotime('+60 days')); // Cambiato da 90 a 60 giorni
-    
-    $stmt = db_query("
-        UPDATE utenti 
-        SET password = ?, primo_accesso = TRUE, password_scadenza = ?,
-            last_password_change = NOW()
-        WHERE id = ?
-    ", [$passwordHash, $passwordScadenza, $userId]);
-    
-    if ($stmt && $stmt->rowCount() > 0) {
-        // Log attività
-        if (class_exists('ActivityLogger')) {
-            ActivityLogger::getInstance()->log('utente', 'reset_password', $userId, "Password resettata da super admin");
-        }
-        
-        // Recupera dati utente per invio email
-        $stmt = db_query("SELECT * FROM utenti WHERE id = ?", [$userId]);
-        $utente = $stmt->fetch();
-        
-        if ($utente) {
-            // Invia email con nuova password
-            try {
-                require_once 'backend/utils/Mailer.php';
-                $mailer = Mailer::getInstance();
-                
-                if ($mailer->isNotificationEnabled('password_reset')) {
-                    $mailer->sendPasswordResetNotification($utente, $newPassword);
-                    return ['success' => true, 'message' => "Password resettata e inviata via email a: " . $utente['email']];
-                } else {
-                    return ['success' => true, 'message' => "Password resettata: <strong>$newPassword</strong><br><small>Nota: L'invio email è disabilitato</small>"];
-                }
-            } catch (Exception $e) {
-                error_log('Errore invio email reset password: ' . $e->getMessage());
-                return ['success' => true, 'message' => "Password resettata: <strong>$newPassword</strong><br><small>Errore nell'invio email: " . $e->getMessage() . "</small>"];
-            }
-        }
-        
-        return ['success' => true, 'message' => "Password resettata: <strong>$newPassword</strong>"];
-    }
-    
-    return ['success' => false, 'message' => 'Errore durante il reset della password'];
-}
-
-function toggleUserStatus($userId, $newStatus) {
-    $stmt = db_query("UPDATE utenti SET attivo = ? WHERE id = ?", [$newStatus, $userId]);
-    if ($stmt && $stmt->rowCount() > 0) {
-        return ['success' => true, 'message' => 'Stato utente aggiornato!'];
-    }
-    
-    return ['success' => false, 'message' => 'Errore nell\'aggiornamento dello stato'];
-}
-
-function checkEmailExists($email) {
-    $stmt = db_query("SELECT 1 FROM utenti WHERE email = ? LIMIT 1", [trim($email)]);
-    
-    return ['exists' => (bool)$stmt->fetch()];
-}
-
-function deleteUser($userId) {
-    // Get current user info
-    $auth = Auth::getInstance();
-    $currentUser = $auth->getUser();
-    
-    // Non permettere l'eliminazione del proprio account
-    if ($userId == $currentUser['id']) {
-        return ['success' => false, 'message' => 'Non puoi eliminare il tuo stesso account!'];
-    }
-    
-    // Verifica che l'utente da eliminare esista
-    $stmt = db_query("SELECT nome, cognome, email, ruolo FROM utenti WHERE id = ?", [$userId]);
-    $userToDelete = $stmt->fetch();
-    
-    if (!$userToDelete) {
-        return ['success' => false, 'message' => 'Utente non trovato!'];
-    }
-    
-    // Non permettere MAI l'eliminazione di asamodeo@fortibyte.it
-    if ($userToDelete['email'] === 'asamodeo@fortibyte.it') {
-        return ['success' => false, 'message' => 'Questo utente è protetto e non può essere eliminato!'];
-    }
-    
-    // Solo asamodeo@fortibyte.it può eliminare altri super admin
-    if ($userToDelete['ruolo'] === 'super_admin' && $currentUser['email'] !== 'asamodeo@fortibyte.it') {
-        return ['success' => false, 'message' => 'Non hai i permessi per eliminare altri Super Admin!'];
-    }
-    
-    db_connection()->beginTransaction();
+    global $user;
     
     try {
-        // Prima elimina le associazioni con le aziende
-        $stmt = db_query("DELETE FROM utenti_aziende WHERE utente_id = ?", [$userId]);
+        // Verifica che l'utente esista
+        $stmt = db_query("SELECT email, nome FROM utenti WHERE id = ?", [$userId]);
+        $targetUser = $stmt->fetch();
         
-        // Poi elimina eventuali documenti assegnati all'utente
-        $stmt = db_query("UPDATE documenti SET assegnato_a = NULL WHERE assegnato_a = ?", [$userId]);
+        if (!$targetUser) {
+            return ['success' => false, 'message' => 'Utente non trovato'];
+        }
         
-        // Infine elimina l'utente
-        $stmt = db_query("DELETE FROM utenti WHERE id = ?", [$userId]);
+        // Genera nuova password
+        $newPassword = generateRandomPassword(12);
+        $passwordHash = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => 12]);
+        
+        // Aggiorna password
+        db_update('utenti', [
+            'password' => $passwordHash,
+            'last_password_change' => date('Y-m-d H:i:s'),
+            'primo_accesso' => 1
+        ], ['id' => $userId]);
         
         // Log attività
         if (class_exists('ActivityLogger')) {
-            ActivityLogger::getInstance()->log('utente', 'eliminazione', $userId, 
-                "Eliminato utente: {$userToDelete['nome']} {$userToDelete['cognome']} ({$userToDelete['email']})");
+            ActivityLogger::getInstance()->log('utente', 'reset_password', $userId, 
+                "Reset password per utente ID: {$userId}");
         }
         
-        db_connection()->commit();
-        return ['success' => true, 'message' => 'Utente eliminato con successo!'];
-        
-    } catch (Exception $e) {
-        db_connection()->rollback();
-        error_log('Errore eliminazione utente: ' . $e->getMessage());
-        return ['success' => false, 'message' => 'Errore durante l\'eliminazione dell\'utente: ' . $e->getMessage()];
-    }
-}
-
-// Funzione generateRandomPassword ora definita in config.php
-
-// Funzione per verificare i limiti aziendali
-function checkAziendaLimits($aziendaId) {
-    if (!$aziendaId) {
-        return ['success' => false, 'message' => 'ID azienda non fornito'];
-    }
-    
-    try {
-        // Carica informazioni azienda
-        $stmt = db_query("SELECT max_referenti FROM aziende WHERE id = ?", [$aziendaId]);
-        $azienda = $stmt->fetch();
-        
-        if (!$azienda) {
-            return ['success' => false, 'message' => 'Azienda non trovata'];
+        // Invia email con nuova password
+        $emailSent = false;
+        try {
+            $mailer = Mailer::getInstance();
+            $subject = "Reset Password - Nexio";
+            $body = "
+            <div style='font-family: Arial, sans-serif;'>
+                <h2>Reset Password</h2>
+                <p>Ciao {$targetUser['nome']},</p>
+                <p>La tua password è stata reimpostata. La nuova password temporanea è:</p>
+                <p style='background: #f5f5f5; padding: 10px; font-family: monospace;'><strong>{$newPassword}</strong></p>
+                <p>Ti verrà richiesto di cambiarla al prossimo accesso.</p>
+            </div>
+            ";
+            
+            $emailSent = $mailer->send($targetUser['email'], $subject, $body);
+        } catch (Exception $e) {
+            error_log("Errore invio email reset password: " . $e->getMessage());
         }
-        
-        $max_referenti = $azienda['max_referenti'] ?? 5;
-        
-        // Verifica responsabile aziendale esistente
-        $stmt = db_query("SELECT COUNT(*) as count FROM utenti_aziende WHERE azienda_id = ? AND ruolo_azienda = 'responsabile_aziendale' AND attivo = 1", 
-                       [$aziendaId]);
-        $responsabile_exists = $stmt->fetch()['count'] > 0;
-        
-        // Verifica numero referenti attuali
-        $stmt = db_query("SELECT COUNT(*) as count FROM utenti_aziende WHERE azienda_id = ? AND ruolo_azienda = 'referente' AND attivo = 1", 
-                       [$aziendaId]);
-        $referenti_count = $stmt->fetch()['count'];
-        $referenti_full = $referenti_count >= $max_referenti;
         
         return [
-            'success' => true,
-            'responsabile_exists' => $responsabile_exists,
-            'referenti_full' => $referenti_full,
-            'referenti_count' => $referenti_count,
-            'max_referenti' => $max_referenti
+            'success' => true, 
+            'message' => 'Password reimpostata con successo. ' . ($emailSent ? 'Email inviata all\'utente.' : 'Errore invio email.'),
+            'password' => $newPassword
         ];
         
     } catch (Exception $e) {
-        error_log('Errore verifica limiti azienda: ' . $e->getMessage());
-        return ['success' => false, 'message' => 'Errore durante la verifica'];
+        error_log("Errore reset password: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Errore durante il reset della password'];
     }
 }
 
-// Query ottimizzata con indici e limit
-$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$perPage = 50;
-$offset = ($page - 1) * $perPage;
-$azienda_filter = $_GET['azienda'] ?? '';
-
-// Recupera lista aziende per filtro
-$aziendeStmt = db_query("SELECT id, nome FROM aziende ORDER BY nome");
-$aziende = $aziendeStmt->fetchAll();
-
-// Verifica quali colonne esistono nella tabella utenti
-$available_columns = [];
-try {
-    $check_columns = db_query("DESCRIBE utenti");
-    while ($column = $check_columns->fetch()) {
-        $available_columns[] = $column['Field'];
-    }
-} catch (Exception $e) {
-    // Usa colonne base se la verifica fallisce
-    $available_columns = ['id', 'nome', 'cognome', 'email', 'ruolo', 'attivo'];
-}
-
-// Costruisci la lista delle colonne disponibili
-$user_columns = ['u.id', 'u.nome', 'u.cognome', 'u.email', 'u.ruolo', 'u.attivo'];
-$group_columns = ['u.id', 'u.nome', 'u.cognome', 'u.email', 'u.ruolo', 'u.attivo'];
-
-// Aggiungi colonne opzionali se esistono
-if (in_array('data_nascita', $available_columns)) {
-    $user_columns[] = 'u.data_nascita';
-    $group_columns[] = 'u.data_nascita';
-}
-
-if (in_array('primo_accesso', $available_columns)) {
-    $user_columns[] = 'u.primo_accesso';
-    $group_columns[] = 'u.primo_accesso';
-}
-
-if (in_array('password_scadenza', $available_columns)) {
-    $user_columns[] = 'u.password_scadenza';
-    $user_columns[] = 'DATEDIFF(u.password_scadenza, CURDATE()) as giorni_scadenza';
-    $group_columns[] = 'u.password_scadenza';
-}
-
-// Costruisci query con filtro azienda
-$baseQuery = "SELECT COUNT(DISTINCT u.id) as total";
-$selectQuery = "SELECT DISTINCT " . implode(', ', $user_columns) . ",
-           GROUP_CONCAT(DISTINCT a.nome ORDER BY a.nome SEPARATOR ', ') as aziende";
-
-$fromQuery = " FROM utenti u
-               LEFT JOIN utenti_aziende ua ON u.id = ua.utente_id AND ua.attivo = 1
-               LEFT JOIN aziende a ON ua.azienda_id = a.id";
-
-$whereQuery = " WHERE 1=1";
-$params = [];
-
-if ($azienda_filter) {
-    $whereQuery .= " AND ua.azienda_id = ?";
-    $params[] = $azienda_filter;
-}
-
-$groupQuery = " GROUP BY " . implode(', ', $group_columns);
-$orderQuery = " ORDER BY u.id DESC";
-
-// Conta totale utenti con filtro
-try {
-    $totalStmt = db_query($baseQuery . $fromQuery . $whereQuery, $params);
-    $totalUsers = $totalStmt->fetchColumn();
-    $totalPages = ceil($totalUsers / $perPage);
-} catch (Exception $e) {
-    error_log("Errore nel conteggio utenti: " . $e->getMessage());
-    $totalUsers = 0;
-    $totalPages = 1;
-}
-
-// Recupera utenti con paginazione e filtro - usa LIMIT con parametri posizionali
-try {
-    $finalParams = $params;
-    $finalParams[] = $perPage;
-    $finalParams[] = $offset;
-
-    $finalQuery = $selectQuery . $fromQuery . $whereQuery . $groupQuery . $orderQuery . " LIMIT ? OFFSET ?";
-    $stmt = db_query($finalQuery, $finalParams);
-    $utenti = $stmt->fetchAll();
-} catch (Exception $e) {
-    error_log("Errore nel recupero utenti: " . $e->getMessage());
-    // Fallback: query semplificata senza GROUP_CONCAT
+function toggleUserStatus($userId, $newStatus) {
+    global $user;
+    
     try {
-        $simpleQuery = "SELECT u.id, u.nome, u.cognome, u.email, u.ruolo, u.attivo 
-                       FROM utenti u 
-                       ORDER BY u.id DESC 
-                       LIMIT ? OFFSET ?";
-        $stmt = db_query($simpleQuery, [$perPage, $offset]);
-        $utenti = $stmt->fetchAll();
+        // Protezione utente principale
+        $stmt = db_query("SELECT email FROM utenti WHERE id = ?", [$userId]);
+        $targetUser = $stmt->fetch();
         
-        // Aggiungi aziende vuote per compatibilità
-        foreach ($utenti as &$utente) {
-            $utente['aziende'] = '';
-            $utente['primo_accesso'] = false;
-            $utente['giorni_scadenza'] = null;
+        if ($targetUser && $targetUser['email'] === 'asamodeo@fortibyte.it') {
+            return ['success' => false, 'message' => 'Non è possibile modificare lo stato di questo utente'];
         }
+        
+        $newStatus = intval($newStatus);
+        
+        // Aggiorna stato
+        db_update('utenti', ['attivo' => $newStatus], ['id' => $userId]);
+        
+        // Log attività
+        if (class_exists('ActivityLogger')) {
+            $action = $newStatus ? 'activate' : 'deactivate';
+            ActivityLogger::getInstance()->log('utente', $action, $userId, 
+                "Cambiato stato utente ID: {$userId} a " . ($newStatus ? 'attivo' : 'inattivo'));
+        }
+        
+        return [
+            'success' => true, 
+            'message' => 'Stato utente aggiornato con successo'
+        ];
+        
+    } catch (Exception $e) {
+        error_log("Errore toggle status: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Errore durante l\'aggiornamento dello stato'];
+    }
+}
+
+function checkEmailExists($email) {
+    try {
+        $email = filter_var(trim($email), FILTER_VALIDATE_EMAIL);
+        if (!$email) {
+            return ['exists' => false];
+        }
+        
+        $stmt = db_query("SELECT id FROM utenti WHERE email = ? AND attivo = 1", [$email]);
+        
+        return ['exists' => $stmt->fetch() ? true : false];
+        
+    } catch (Exception $e) {
+        return ['exists' => false];
+    }
+}
+
+function deleteUser($userId) {
+    global $user;
+    
+    try {
+        // Protezione utente principale
+        $stmt = db_query("SELECT email FROM utenti WHERE id = ?", [$userId]);
+        $targetUser = $stmt->fetch();
+        
+        if ($targetUser && $targetUser['email'] === 'asamodeo@fortibyte.it') {
+            return ['success' => false, 'message' => 'Non è possibile eliminare questo utente'];
+        }
+        
+        // Non eliminiamo fisicamente, ma disattiviamo
+        db_update('utenti', ['attivo' => 0], ['id' => $userId]);
+        
+        // Disattiva anche le associazioni aziendali
+        db_query("UPDATE utenti_aziende SET attivo = 0 WHERE utente_id = ?", [$userId]);
+        
+        // Log attività
+        if (class_exists('ActivityLogger')) {
+            ActivityLogger::getInstance()->log('utente', 'delete', $userId, 
+                "Eliminato (disattivato) utente ID: {$userId}");
+        }
+        
+        return [
+            'success' => true, 
+            'message' => 'Utente eliminato con successo'
+        ];
+        
+    } catch (Exception $e) {
+        error_log("Errore eliminazione utente: " . $e->getMessage());
+        return ['success' => false, 'message' => 'Errore durante l\'eliminazione dell\'utente'];
+    }
+}
+
+function checkAziendaLimits($aziendaId) {
+    try {
+        if (!$aziendaId) {
+            return ['success' => true, 'hasResponsabile' => false, 'referentiCount' => 0, 'maxReferenti' => 5];
+        }
+        
+        // Verifica responsabile aziendale
+        $stmt = db_query("SELECT COUNT(*) as count FROM utenti_aziende WHERE azienda_id = ? AND ruolo_azienda = 'responsabile_aziendale' AND attivo = 1", 
+                       [$aziendaId]);
+        $hasResponsabile = $stmt->fetch()['count'] > 0;
+        
+        // Conta referenti
+        $stmt = db_query("SELECT COUNT(*) as count FROM utenti_aziende WHERE azienda_id = ? AND ruolo_azienda = 'referente' AND attivo = 1", 
+                       [$aziendaId]);
+        $referentiCount = $stmt->fetch()['count'];
+        
+        // Ottieni limite massimo
+        $stmt = db_query("SELECT max_referenti FROM aziende WHERE id = ?", [$aziendaId]);
+        $azienda = $stmt->fetch();
+        $maxReferenti = $azienda['max_referenti'] ?? 5;
+        
+        return [
+            'success' => true,
+            'hasResponsabile' => $hasResponsabile,
+            'referentiCount' => $referentiCount,
+            'maxReferenti' => $maxReferenti
+        ];
+        
+    } catch (Exception $e) {
+        return ['success' => false, 'message' => 'Errore verifica limiti azienda'];
+    }
+}
+
+// Recupera dati per la pagina
+$page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+$limit = 20; // Ridotto per performance
+$offset = ($page - 1) * $limit;
+$search = isset($_GET['search']) ? sanitize_input($_GET['search']) : '';
+$azienda_filter = isset($_GET['azienda']) ? intval($_GET['azienda']) : 0;
+
+// Inizializza variabili per evitare undefined
+$utenti = [];
+$totalUsers = 0;
+$aziende = [];
+
+// Query ottimizzata con indici
+try {
+    // Count query semplificata
+    $countQuery = "SELECT COUNT(DISTINCT u.id) as total FROM utenti u";
+    $whereConditions = [];
+    $params = [];
+    
+    if ($search) {
+        $searchPattern = "%{$search}%";
+        $whereConditions[] = "(u.nome LIKE ? OR u.cognome LIKE ? OR u.email LIKE ?)";
+        $params = array_merge($params, [$searchPattern, $searchPattern, $searchPattern]);
+    }
+    
+    if ($azienda_filter) {
+        $countQuery .= " JOIN utenti_aziende ua ON u.id = ua.utente_id";
+        $whereConditions[] = "ua.azienda_id = ? AND ua.attivo = 1";
+        $params[] = $azienda_filter;
+    }
+    
+    if (!empty($whereConditions)) {
+        $countQuery .= " WHERE " . implode(" AND ", $whereConditions);
+    }
+    
+    $stmt = db_query($countQuery, $params);
+    $totalUsers = $stmt->fetch()['total'];
+    
+    // Main query con JOIN ottimizzati
+    $mainQuery = "
+        SELECT DISTINCT u.*, 
+               GROUP_CONCAT(DISTINCT CONCAT(a.nome, ' (', ua.ruolo_azienda, ')') SEPARATOR ', ') as aziende,
+               CASE 
+                   WHEN u.primo_accesso = 1 THEN 1
+                   ELSE 0
+               END as primo_accesso,
+               DATEDIFF(DATE_ADD(COALESCE(u.last_password_change, u.data_registrazione), INTERVAL 60 DAY), CURDATE()) as giorni_scadenza
+        FROM utenti u
+        LEFT JOIN utenti_aziende ua ON u.id = ua.utente_id AND ua.attivo = 1
+        LEFT JOIN aziende a ON ua.azienda_id = a.id
+    ";
+    
+    $whereConditions = [];
+    $params = [];
+    
+    if ($search) {
+        $searchPattern = "%{$search}%";
+        $whereConditions[] = "(u.nome LIKE ? OR u.cognome LIKE ? OR u.email LIKE ?)";
+        $params = array_merge($params, [$searchPattern, $searchPattern, $searchPattern]);
+    }
+    
+    if ($azienda_filter) {
+        $whereConditions[] = "ua.azienda_id = ?";
+        $params[] = $azienda_filter;
+    }
+    
+    if (!empty($whereConditions)) {
+        $mainQuery .= " WHERE " . implode(" AND ", $whereConditions);
+    }
+    
+    $mainQuery .= " GROUP BY u.id ORDER BY u.data_registrazione DESC LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $offset;
+    
+    $stmt = db_query($mainQuery, $params);
+    $utenti = $stmt->fetchAll();
+    
+    // Carica lista aziende per filtro
+    $stmt = db_query("SELECT id, nome FROM aziende WHERE stato = 'attiva' ORDER BY nome");
+    $aziende = $stmt->fetchAll();
+    
+} catch (Exception $e) {
+    error_log("Errore caricamento utenti: " . $e->getMessage());
+    
+    // Fallback con query più semplice
+    try {
+        $stmt = db_query("SELECT * FROM utenti ORDER BY data_registrazione DESC LIMIT ? OFFSET ?", [$limit, $offset]);
+        $utenti = $stmt->fetchAll();
+        $totalUsers = db_query("SELECT COUNT(*) as total FROM utenti")->fetch()['total'];
+        $aziende = [];
     } catch (Exception $e2) {
         error_log("Errore anche con query semplificata: " . $e2->getMessage());
         $utenti = [];
+        $totalUsers = 0;
+        $aziende = [];
     }
 }
 
 $pageTitle = 'Gestione Utenti';
 include 'components/header.php';
+require_once 'components/page-header.php';
 ?>
 
+<!-- Clean Dashboard Styles -->
+<link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/dashboard-clean.css">
+
 <style>
-    /* Variabili CSS Nexio */
-    :root {
-        --primary-color: #2d5a9f;
-        --primary-dark: #0f2847;
-        --primary-light: #2a5a9f;
-        --border-color: #e8e8e8;
-        --text-primary: #2c2c2c;
-        --text-secondary: #6b6b6b;
-        --bg-primary: #faf8f5;
-        --bg-secondary: #ffffff;
-        --success-color: #059669;
-        --danger-color: #dc2626;
-        --warning-color: #d97706;
-        --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    }
-
-    body {
-        font-family: var(--font-sans);
-        color: var(--text-primary);
-        background: var(--bg-primary);
-    }
-
-    .content-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-    
-    .content-header h1 {
-        margin: 0;
-        color: var(--text-primary);
-        font-size: 1.875rem;
-        font-weight: 700;
-    }
-    
-    .content-header h1 small {
-        font-size: 1rem;
-        color: var(--text-secondary);
-        font-weight: 400;
-    }
-    
-    .header-actions {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-    
-    .filter-container {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-    
-    .quick-search {
-        position: relative;
-        width: 300px;
-    }
-    
-    .quick-search input {
-        padding-right: 2.5rem;
-    }
-    
-    .quick-search .search-icon {
-        position: absolute;
-        right: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-secondary);
-    }
-    
-    .btn {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 10px;
-        font-size: 15px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        text-decoration: none;
-    }
-    
-    .btn-primary {
-        background: var(--primary-color);
-        color: white;
-    }
-    
-    .btn-primary:hover {
-        background: var(--primary-dark);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(43, 87, 154, 0.3);
-    }
-    
-    .btn-secondary {
-        background: var(--bg-primary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-    }
-    
-    .btn-secondary:hover {
-        background: var(--border-color);
-    }
-    
-    .btn-success {
-        background: var(--success-color);
-        color: white;
-    }
-    
-    .btn-success:hover {
-        background: #047857;
-    }
-    
-    .btn-danger {
-        background: var(--danger-color);
-        color: white;
-    }
-    
-    .btn-danger:hover {
-        background: #b91c1c;
-    }
-    
-    .btn-small {
-        padding: 0.5rem 1rem;
-        font-size: 14px;
-    }
-    
-    .btn-group {
-        display: flex;
-        gap: 0.5rem;
-    }
-    
-    /* Table Layout */
-    .users-table-container {
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        overflow: hidden;
-        margin-bottom: 30px;
-        position: relative;
-    }
-    
-    .users-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-    }
-    
-    .users-table th {
-        background: #2d5a9f;
-        color: white;
-        padding: 16px 12px;
-        text-align: left;
-        font-weight: 600;
-        font-size: 13px;
-        text-transform: uppercase;
-        letter-spacing: 0.025em;
-        border-bottom: 2px solid #2d5a9f;
-    }
-    
-    .users-table td {
-        padding: 16px 12px;
-        border-bottom: 1px solid var(--border-color);
-        vertical-align: middle;
-        line-height: 1.4;
-    }
-    
-    .users-table tbody tr {
-        transition: background-color 0.2s ease;
-    }
-    
-    .users-table tbody tr:hover {
-        background: #f8fafc;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-    
-    .users-table tbody tr:nth-child(even) {
-        background: rgba(248, 250, 252, 0.3);
-    }
-    
-    .users-table tbody tr:nth-child(even):hover {
-        background: #f8fafc;
-    }
-    
-    .user-info-cell {
-        min-width: 200px;
-    }
-    
-    .user-name {
-        font-size: 16px;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 4px;
-        line-height: 1.3;
-    }
-    
-    .user-email {
-        font-size: 13px;
-        color: var(--text-secondary);
-        font-weight: 500;
-    }
-    
-    .user-actions {
-        display: flex;
-        gap: 6px;
-        justify-content: center;
-        min-width: 160px;
-    }
-    
-    .user-actions .btn {
-        min-width: 32px;
-        height: 32px;
-        padding: 6px;
-        justify-content: center;
-        align-items: center;
-        font-size: 12px;
-    }
-    
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 6px 12px;
-        font-size: 12px;
-        font-weight: 600;
-        border-radius: 20px;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        border: 1px solid transparent;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .status-attivo {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-    
-    .status-archiviato {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-    
-    .status-confermato {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-    
-    .status-pubblicato {
-        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-        color: white;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-    
-    .status-invitato {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-    
-    .status-rifiutato {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: white;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-    
-    /* Modal Styles */
+    /* Modal positioning fix */
     .modal {
         display: none;
         position: fixed;
-        top: 0;
+        z-index: 9999;
         left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0,0,0,0.5);
-        z-index: 1000;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .modal.active {
-        display: flex;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+        /* Flexbox per centrare il contenuto */
         align-items: center;
         justify-content: center;
-        opacity: 1;
+    }
+    
+    /* Quando il modal è visibile */
+    .modal[style*="display: block"] {
+        display: flex !important;
     }
     
     .modal-content {
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        max-width: 600px;
-        width: 90%;
+        background-color: #fff;
+        margin: auto;
+        padding: 0;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        position: relative;
         max-height: 90vh;
         overflow-y: auto;
-        transform: scale(0.9);
-        transition: transform 0.3s ease;
     }
     
-    .modal.active .modal-content {
-        transform: scale(1);
+    /* Pulsante chiudi */
+    .close {
+        color: #6b7280;
+        font-size: 28px;
+        font-weight: normal;
+        line-height: 1;
+        cursor: pointer;
+        transition: color 0.2s;
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0;
     }
     
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1.5rem;
-        border-bottom: 1px solid var(--border-color);
+    .close:hover,
+    .close:focus {
+        color: #111827;
+        text-decoration: none;
     }
     
-    /* Password requirements styles */
-    .password-requirements {
-        margin-top: 10px;
-        padding: 10px;
-        background: #f8f9fa;
-        border-radius: 6px;
-        border-left: 4px solid #e2e8f0;
-    }
+    /* Additional styles specific to user management */
     
-    .requirements-list {
-        margin: 5px 0 0 0;
-        padding-left: 20px;
-        list-style: none;
-    }
-    
-    .requirement {
+    /* Keep only custom styles not in dashboard-clean.css */
+    .btn-small {
+        padding: 6px 12px;
         font-size: 12px;
-        margin: 3px 0;
-        transition: color 0.3s ease;
     }
     
-    .requirement.valid {
-        color: #22c55e;
+    /* User info cell styles */
+    .user-info-cell {
+        min-width: 250px;
     }
     
-    .requirement.invalid {
+    .user-name {
+        font-weight: 600;
+        color: #111827;
+        font-size: 14px;
+        margin-bottom: 2px;
+    }
+    
+    .user-email {
+        color: #6b7280;
+        font-size: 12px;
+    }
+    
+    /* User actions */
+    .user-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    /* Status badges - clean design without gradients */
+    .status-attivo {
+        background: #d1fae5;
+        color: #047857;
+    }
+    
+    .status-archiviato {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+    
+    .status-confermato {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .status-pubblicato {
+        background: #e9d5ff;
+        color: #6b21a8;
+    }
+    
+    .status-invitato {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .status-rifiutato {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+    
+    .status-info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    /* Badge utenti protetti */
+    .status-badge[title*="protetto"] {
+        background: #f3f4f6;
+        color: #4b5563;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .status-badge[title*="protetto"] i {
+        margin-right: 3px;
+    }
+    
+    /* Form styles for modals */
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .required {
         color: #ef4444;
     }
     
-    .password-options {
-        margin-bottom: 15px;
-    }
-    
-    .password-options label {
-        display: block;
-        margin: 8px 0;
-        font-weight: normal;
-        cursor: pointer;
-    }
-    
-    .password-options input[type="radio"] {
-        margin-right: 8px;
-    }
-    
-    .modal-header h2 {
-        margin: 0;
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-    
-    .modal-close {
-        background: none;
+    /* Modal overrides for clean style */
+    .modal-content {
         border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-        color: var(--text-secondary);
-        padding: 0.5rem;
-        border-radius: 6px;
-        transition: background 0.2s ease;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
     
-    .modal-close:hover {
-        background: var(--bg-primary);
+    .modal-header {
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+        border-radius: 8px 8px 0 0;
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .modal-header h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #111827;
+        margin: 0;
     }
     
     .modal-body {
         padding: 1.5rem;
     }
     
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-    
-    .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        color: var(--text-primary);
-        font-weight: 600;
-        font-size: 14px;
-    }
-    
-    .form-control,
-    .form-group input,
-    .form-group select {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border: 2px solid var(--border-color);
-        border-radius: 10px;
-        font-size: 15px;
-        transition: all 0.3s ease;
-        background: var(--bg-secondary);
-        font-family: var(--font-sans);
-    }
-    
-    .form-control:focus,
-    .form-group input:focus,
-    .form-group select:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(43, 87, 154, 0.1);
-    }
-    
-    .form-row {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-    }
-    
-    .form-actions {
-        display: flex;
-        gap: 1rem;
-        margin-top: 2rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--border-color);
-    }
-    
-    .password-options {
-        display: flex;
-        gap: 2rem;
-        margin: 1rem 0;
-    }
-    
-    .password-options label {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: normal;
-        cursor: pointer;
-    }
-    
-    .required {
-        color: var(--danger-color);
-    }
-    
-    .form-text {
-        display: block;
-        margin-top: 0.25rem;
-        font-size: 13px;
-        color: var(--text-secondary);
-    }
-    
-    /* Alert Styles */
-    .alert {
+    .modal-footer {
+        background: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+        border-radius: 0 0 8px 8px;
         padding: 1rem 1.5rem;
-        border-radius: 10px;
-        margin-bottom: 1.5rem;
         display: flex;
-        align-items: center;
-        gap: 0.75rem;
+        justify-content: flex-end;
+        gap: 10px;
     }
     
-    .alert-success {
-        background: #d1fae5;
-        color: #065f46;
-        border: 1px solid #a7f3d0;
-    }
-    
-    .alert-error {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fecaca;
-    }
-    
-    .fade-in {
-        animation: fadeIn 0.3s ease;
-    }
-    
-    .fade-out {
-        animation: fadeOut 0.3s ease;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    @keyframes fadeOut {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-10px); }
-    }
-    
-    /* Loading Spinner */
+    /* Loader styles */
     .loader {
         display: none;
         position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
         z-index: 9999;
+        justify-content: center;
+        align-items: center;
     }
     
     .loader.active {
-        display: block;
+        display: flex;
     }
     
     .spinner {
-        width: 40px;
-        height: 40px;
-        border: 4px solid var(--border-color);
-        border-top: 4px solid var(--primary-color);
+        width: 50px;
+        height: 50px;
+        border: 3px solid #f3f4f6;
+        border-top: 3px solid #2d5a9f;
         border-radius: 50%;
         animation: spin 1s linear infinite;
     }
@@ -1058,77 +838,42 @@ include 'components/header.php';
         100% { transform: rotate(360deg); }
     }
     
-    /* Pagination */
-    .pagination {
-        display: flex;
-        justify-content: center;
-        gap: 0.5rem;
-        margin-top: 2rem;
+    /* Password requirements */
+    .password-requirements {
+        margin-top: 10px;
+        background: #f9fafb;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
     }
     
-    .pagination a,
-    .pagination span {
-        padding: 0.5rem 1rem;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        text-decoration: none;
-        color: var(--text-primary);
-        transition: all 0.2s ease;
+    .requirements-list {
+        margin: 5px 0 0 0;
+        padding-left: 20px;
+        font-size: 13px;
     }
     
-    .pagination a:hover {
-        background: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
+    .requirement {
+        color: #6b7280;
+        margin-bottom: 3px;
     }
     
-    .pagination .active {
-        background: var(--primary-color);
-        color: white;
-        border-color: var(--primary-color);
-    }
-    
-    /* Empty State */
-    .empty-state {
-        text-align: center;
-        padding: 4rem 2rem;
-        color: var(--text-secondary);
-    }
-    
-    .empty-state i {
-        font-size: 4rem;
-        margin-bottom: 1rem;
-        opacity: 0.3;
-    }
-    
-    .empty-state h2 {
-        color: var(--text-primary);
-        margin-bottom: 0.5rem;
+    .requirement.valid {
+        color: #10b981;
     }
     
     /* Responsive */
     @media (max-width: 768px) {
-        .content-header {
+        .hide-mobile {
+            display: none;
+        }
+        
+        .action-bar {
             flex-direction: column;
-            gap: 1rem;
-            text-align: center;
+            gap: 10px;
         }
         
-        .filter-container {
-            flex-direction: column;
-            width: 100%;
-        }
-        
-        .quick-search {
-            width: 100%;
-        }
-        
-        .form-row {
-            grid-template-columns: 1fr;
-        }
-        
-        .header-actions {
-            flex-direction: column;
+        .search-box {
             width: 100%;
         }
         
@@ -1136,63 +881,30 @@ include 'components/header.php';
             flex-wrap: wrap;
         }
         
-        /* Table responsive */
-        .users-table-container {
-            overflow-x: auto;
-        }
-        
-        .users-table {
-            min-width: 800px;
-        }
-        
-        .users-table th,
-        .users-table td {
-            padding: 12px 8px;
+        .table-clean {
             font-size: 12px;
         }
         
-        .user-name {
-            font-size: 14px;
+        .table-clean th,
+        .table-clean td {
+            padding: 8px;
         }
         
-        .user-email {
-            font-size: 11px;
+        /* Modal responsive */
+        .modal-content {
+            margin: 10px;
+            width: calc(100% - 20px);
+            max-width: calc(100% - 20px);
+            max-height: calc(100vh - 20px);
         }
         
-        .status-badge {
-            font-size: 10px;
-            padding: 4px 8px;
+        .modal-body {
+            padding: 1rem;
         }
         
-        .user-actions .btn {
-            min-width: 28px;
-            height: 28px;
-            padding: 4px;
-            font-size: 11px;
+        .form-row {
+            grid-template-columns: 1fr;
         }
-    }
-    
-    /* Nascondere elementi su mobile */
-    @media (max-width: 768px) {
-        .hide-mobile {
-            display: none;
-        }
-    }
-    
-    /* Badge utenti protetti */
-    .status-badge[title*="protetto"] {
-        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-        color: white;
-    }
-    
-    .status-badge[title*="protetto"] i {
-        margin-right: 3px;
-    }
-    
-    /* Overflow control per tabella */
-    .users-table-container {
-        overflow: hidden;
-        position: relative;
     }
 </style>
 
@@ -1202,24 +914,32 @@ include 'components/header.php';
 </div>
 
 <!-- Contenuto principale -->
-<div class="content-header">
-    <h1><i class="fas fa-users"></i> Gestione Utenti <small>(<?php echo $totalUsers; ?> totali)</small></h1>
-    <div class="header-actions">
-        <div class="filter-container">
-            <select id="filterAzienda" class="form-control" onchange="filterByAzienda(this.value)">
-                <option value="">Tutte le aziende</option>
-                <?php foreach ($aziende as $azienda): ?>
-                    <option value="<?php echo $azienda['id']; ?>" <?php echo $azienda_filter == $azienda['id'] ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($azienda['nome']); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            
-            <div class="quick-search">
-                <input type="text" id="searchUsers" class="form-control" placeholder="Cerca utente...">
-                <i class="fas fa-search search-icon"></i>
-            </div>
+<div class="page-header">
+    <h1><i class="fas fa-users"></i> Gestione Utenti</h1>
+    <div class="page-subtitle">Gestisci gli utenti del sistema • <?php echo $totalUsers; ?> utenti totali</div>
+</div>
+
+<div class="content-card">
+    <div class="panel-header">
+        <h2><i class="fas fa-filter"></i> Filtri e Azioni</h2>
+    </div>
+    <div class="action-bar">
+        <select id="filterAzienda" class="form-control" onchange="filterByAzienda(this.value)" style="max-width: 300px;">
+            <option value="">Tutte le aziende</option>
+            <?php foreach ($aziende as $azienda): ?>
+                <option value="<?php echo $azienda['id']; ?>" <?php echo $azienda_filter == $azienda['id'] ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($azienda['nome']); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+        
+        <div class="search-box">
+            <input type="text" id="searchUsers" class="form-control" placeholder="Cerca utente..." value="<?php echo htmlspecialchars($search); ?>">
+            <button class="btn btn-secondary" type="button" onclick="searchUsers()">
+                <i class="fas fa-search"></i>
+            </button>
         </div>
+        
         <button class="btn btn-primary" onclick="openCreateUserModal()">
             <i class="fas fa-user-plus"></i>
             <span class="hide-mobile">Nuovo Utente</span>
@@ -1230,272 +950,277 @@ include 'components/header.php';
 <div id="messageContainer"></div>
 
 <?php if (empty($utenti)): ?>
-    <div class="empty-state">
-        <i class="fas fa-users"></i>
-        <h2>Nessun utente trovato</h2>
-        <p>Non ci sono utenti che corrispondono ai criteri di ricerca.</p>
-        <button class="btn btn-primary" onclick="openCreateUserModal()">
-            <i class="fas fa-user-plus"></i> Crea il primo utente
-        </button>
+    <div class="content-card">
+        <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <h3>Nessun utente trovato</h3>
+            <p>Non ci sono utenti che corrispondono ai criteri di ricerca.</p>
+            <button class="btn btn-primary" onclick="openCreateUserModal()">
+                <i class="fas fa-user-plus"></i> Crea il primo utente
+            </button>
+        </div>
     </div>
 <?php else: ?>
-    <div class="users-table-container" id="usersTableContainer">
-        <table class="users-table">
-            <thead>
-                <tr>
-                    <th>Utente</th>
-                    <th>Ruolo Sistema</th>
-                    <th>Stato</th>
-                    <th>Data Nascita</th>
-                    <th>Aziende</th>
-                    <th>Password</th>
-                    <th>Azioni</th>
-                </tr>
-            </thead>
-            <tbody id="usersTableBody">
-                <?php foreach ($utenti as $utente): ?>
-                    <tr data-user-id="<?php echo $utente['id']; ?>">
-                        <td class="user-info-cell">
-                            <div class="user-name"><?php echo htmlspecialchars($utente['nome'] . ' ' . $utente['cognome']); ?></div>
-                            <div class="user-email"><?php echo htmlspecialchars($utente['email']); ?></div>
-                            <?php if ($utente['email'] === 'asamodeo@fortibyte.it'): ?>
-                                <span class="status-badge status-confermato" title="Utente protetto - non eliminabile" style="margin-top: 4px;">
-                                    <i class="fas fa-shield-alt"></i> Protetto
-                                </span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <span class="status-badge status-<?php echo $utente['ruolo'] === 'super_admin' ? 'confermato' : 'pubblicato'; ?>">
-                                <?php echo ucfirst(str_replace('_', ' ', $utente['ruolo'])); ?>
-                            </span>
-                            <?php if ($utente['email'] === 'asamodeo@fortibyte.it'): ?>
-                                <span class="status-badge" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); color: white; margin-left: 5px;" title="Super Amministratore principale">
-                                    <i class="fas fa-crown"></i>
-                                </span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <span class="status-badge status-<?php echo $utente['attivo'] ? 'attivo' : 'archiviato'; ?>">
-                                <?php echo $utente['attivo'] ? 'Attivo' : 'Inattivo'; ?>
-                            </span>
-                        </td>
-                        <td>
-                            <?php if ($utente['data_nascita']): ?>
-                                <?php echo date('d/m/Y', strtotime($utente['data_nascita'])); ?>
-                            <?php else: ?>
-                                <span style="color: var(--text-secondary);">-</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php if (!empty($utente['aziende'])): ?>
-                                <span title="<?php echo htmlspecialchars($utente['aziende']); ?>">
-                                    <?php 
-                                    $aziende_text = htmlspecialchars($utente['aziende']);
-                                    echo strlen($aziende_text) > 30 ? substr($aziende_text, 0, 30) . '...' : $aziende_text; 
-                                    ?>
-                                </span>
-                            <?php else: ?>
-                                <span style="color: var(--text-secondary);">-</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php 
-                            $primo_accesso = isset($utente['primo_accesso']) ? $utente['primo_accesso'] : false;
-                            $giorni_scadenza = isset($utente['giorni_scadenza']) ? $utente['giorni_scadenza'] : null;
-                            ?>
-                            <?php if ($primo_accesso): ?>
-                                <span class="status-badge status-invitato">Primo accesso</span>
-                            <?php elseif ($giorni_scadenza !== null && $giorni_scadenza < 0): ?>
-                                <span class="status-badge status-rifiutato">Scaduta</span>
-                            <?php elseif ($giorni_scadenza !== null && $giorni_scadenza <= 7): ?>
-                                <span class="status-badge status-invitato">Scade tra <?php echo $giorni_scadenza; ?>g</span>
-                            <?php elseif ($giorni_scadenza !== null): ?>
-                                <span style="color: var(--success-color); font-size: 12px;">Valida (<?php echo $giorni_scadenza; ?>g)</span>
-                            <?php else: ?>
-                                <span style="color: var(--text-secondary);">-</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <div class="user-actions">
-                                <button class="btn btn-small btn-secondary" onclick="resetPassword(<?php echo $utente['id']; ?>)" 
-                                        title="Reset Password">
-                                    <i class="fas fa-key"></i>
-                                </button>
-                                
-                                <button class="btn btn-small btn-<?php echo $utente['attivo'] ? 'danger' : 'success'; ?>" 
-                                        onclick="toggleUserStatus(<?php echo $utente['id']; ?>, <?php echo $utente['attivo'] ? '0' : '1'; ?>)"
-                                        title="<?php echo $utente['attivo'] ? 'Disattiva' : 'Attiva'; ?>">
-                                    <i class="fas fa-<?php echo $utente['attivo'] ? 'ban' : 'check'; ?>"></i>
-                                </button>
-                                
-                                <a href="modifica-utente.php?id=<?php echo $utente['id']; ?>" class="btn btn-small btn-primary" title="Modifica">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                
-                                <?php 
-                                // Mostra il pulsante elimina solo se:
-                                // 1. Non è il proprio account
-                                // 2. Non è asamodeo@fortibyte.it (protetto)
-                                // 3. Se è un super admin, solo asamodeo@fortibyte.it può eliminarlo
-                                $canDelete = ($utente['id'] != $user['id']) && 
-                                            ($utente['email'] !== 'asamodeo@fortibyte.it') &&
-                                            ($utente['ruolo'] !== 'super_admin' || $user['email'] === 'asamodeo@fortibyte.it');
-                                
-                                if ($canDelete): ?>
-                                <button class="btn btn-small btn-danger" onclick="deleteUser(<?php echo $utente['id']; ?>, '<?php echo htmlspecialchars($utente['nome'] . ' ' . $utente['cognome']); ?>')" 
-                                        title="Elimina Utente">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                                <?php endif; ?>
-                            </div>
-                        </td>
+    <div class="content-card" style="padding: 0;">
+        <div class="users-table-container" id="usersTableContainer">
+            <table class="table-clean">
+                <thead>
+                    <tr>
+                        <th>Utente</th>
+                        <th>Ruolo Sistema</th>
+                        <th>Stato</th>
+                        <th>Data Nascita</th>
+                        <th>Aziende</th>
+                        <th>Password</th>
+                        <th>Azioni</th>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody id="usersTableBody">
+                    <?php foreach ($utenti as $utente): ?>
+                        <tr data-user-id="<?php echo $utente['id']; ?>">
+                            <td class="user-info-cell">
+                                <div class="user-name"><?php echo htmlspecialchars($utente['nome'] . ' ' . $utente['cognome']); ?></div>
+                                <div class="user-email"><?php echo htmlspecialchars($utente['email']); ?></div>
+                                <?php if ($utente['email'] === 'asamodeo@fortibyte.it'): ?>
+                                    <span class="badge badge-secondary" title="Utente protetto - non eliminabile" style="margin-top: 4px;">
+                                        <i class="fas fa-shield-alt"></i> Protetto
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <span class="badge status-<?php 
+                                    if ($utente['ruolo'] === 'super_admin') echo 'confermato';
+                                    elseif ($utente['ruolo'] === 'utente_speciale') echo 'info';
+                                    else echo 'pubblicato';
+                                ?>">
+                                    <?php echo ucfirst(str_replace('_', ' ', $utente['ruolo'])); ?>
+                                </span>
+                                <?php if ($utente['email'] === 'asamodeo@fortibyte.it'): ?>
+                                    <span class="badge badge-danger" style="margin-left: 5px;" title="Super Amministratore principale">
+                                        <i class="fas fa-crown"></i>
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <span class="badge status-<?php echo $utente['attivo'] ? 'attivo' : 'archiviato'; ?>">
+                                    <?php echo $utente['attivo'] ? 'Attivo' : 'Inattivo'; ?>
+                                </span>
+                            </td>
+                            <td>
+                                <?php if ($utente['data_nascita']): ?>
+                                    <?php echo date('d/m/Y', strtotime($utente['data_nascita'])); ?>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if (!empty($utente['aziende'])): ?>
+                                    <span title="<?php echo htmlspecialchars($utente['aziende']); ?>">
+                                        <?php 
+                                        $aziende_text = htmlspecialchars($utente['aziende']);
+                                        echo strlen($aziende_text) > 30 ? substr($aziende_text, 0, 30) . '...' : $aziende_text; 
+                                        ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php 
+                                $primo_accesso = isset($utente['primo_accesso']) ? $utente['primo_accesso'] : false;
+                                $giorni_scadenza = isset($utente['giorni_scadenza']) ? $utente['giorni_scadenza'] : null;
+                                ?>
+                                <?php if ($primo_accesso): ?>
+                                    <span class="badge status-invitato">Primo accesso</span>
+                                <?php elseif ($giorni_scadenza !== null && $giorni_scadenza < 0): ?>
+                                    <span class="badge status-rifiutato">Scaduta</span>
+                                <?php elseif ($giorni_scadenza !== null && $giorni_scadenza <= 7): ?>
+                                    <span class="badge status-invitato">Scade tra <?php echo $giorni_scadenza; ?>g</span>
+                                <?php elseif ($giorni_scadenza !== null): ?>
+                                    <span class="text-success text-small">Valida (<?php echo $giorni_scadenza; ?>g)</span>
+                                <?php else: ?>
+                                    <span class="text-muted">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <div class="user-actions">
+                                    <button class="btn btn-sm btn-secondary" onclick="resetPassword(<?php echo $utente['id']; ?>)" 
+                                            title="Reset Password">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                    
+                                    <button class="btn btn-sm btn-<?php echo $utente['attivo'] ? 'danger' : 'success'; ?>" 
+                                            onclick="toggleUserStatus(<?php echo $utente['id']; ?>, <?php echo $utente['attivo'] ? '0' : '1'; ?>)"
+                                            title="<?php echo $utente['attivo'] ? 'Disattiva' : 'Attiva'; ?>">
+                                        <i class="fas fa-<?php echo $utente['attivo'] ? 'ban' : 'check'; ?>"></i>
+                                    </button>
+                                    
+                                    <a href="modifica-utente.php?id=<?php echo $utente['id']; ?>" 
+                                       class="btn btn-sm btn-primary" title="Modifica">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    
+                                    <?php if ($utente['email'] !== 'asamodeo@fortibyte.it'): ?>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteUser(<?php echo $utente['id']; ?>)" 
+                                                title="Elimina">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
-<?php endif; ?>
-
-<!-- Paginazione -->
-<?php if ($totalPages > 1): ?>
-<div class="pagination">
-    <?php if ($page > 1): ?>
-        <a href="?page=1">«</a>
-        <a href="?page=<?php echo $page - 1; ?>">‹</a>
-    <?php endif; ?>
     
-    <?php
-    $start = max(1, $page - 2);
-    $end = min($totalPages, $page + 2);
-    
-    for ($i = $start; $i <= $end; $i++):
+    <!-- Paginazione -->
+    <?php 
+    $totalPages = ceil($totalUsers / $limit); 
+    if ($totalPages > 1): 
     ?>
-        <?php if ($i == $page): ?>
-            <span class="active"><?php echo $i; ?></span>
-        <?php else: ?>
-            <a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
+    <div class="pagination">
+        <?php if ($page > 1): ?>
+            <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&azienda=<?php echo $azienda_filter; ?>" class="btn btn-sm btn-secondary">
+                <i class="fas fa-chevron-left"></i> Precedente
+            </a>
         <?php endif; ?>
-    <?php endfor; ?>
-    
-    <?php if ($page < $totalPages): ?>
-        <a href="?page=<?php echo $page + 1; ?>">›</a>
-        <a href="?page=<?php echo $totalPages; ?>">»</a>
+        
+        <span style="margin: 0 15px;">
+            Pagina <?php echo $page; ?> di <?php echo $totalPages; ?>
+        </span>
+        
+        <?php if ($page < $totalPages): ?>
+            <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&azienda=<?php echo $azienda_filter; ?>" class="btn btn-sm btn-secondary">
+                Successiva <i class="fas fa-chevron-right"></i>
+            </a>
+        <?php endif; ?>
+    </div>
     <?php endif; ?>
-</div>
 <?php endif; ?>
 
-<!-- Modal creazione utente ottimizzato -->
-<div class="modal" id="create-user-modal">
-    <div class="modal-content">
+<!-- Modal Crea Utente -->
+<div id="create-user-modal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
         <div class="modal-header">
-            <h2><i class="fas fa-user-plus"></i> Nuovo Utente</h2>
-            <button class="modal-close" onclick="closeModal('create-user-modal')">&times;</button>
+            <h3>Crea Nuovo Utente</h3>
+            <button type="button" class="close" onclick="closeModal('create-user-modal')">&times;</button>
         </div>
         <div class="modal-body">
             <form id="create-user-form" onsubmit="return createUserAjax(event)">
                 <input type="hidden" name="action" value="create_user">
                 
-                <h3 style="margin-bottom: 1rem; color: var(--text-primary); font-size: 1.125rem;">Informazioni Personali</h3>
+                <h3 style="margin-bottom: 1rem; color: #111827; font-size: 1.125rem;">Informazioni Personali</h3>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="nome">Nome <span class="required">*</span></label>
+                        <label class="form-label" for="nome">Nome <span class="required">*</span></label>
                         <input type="text" name="nome" id="nome" class="form-control" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="cognome">Cognome <span class="required">*</span></label>
+                        <label class="form-label" for="cognome">Cognome <span class="required">*</span></label>
                         <input type="text" name="cognome" id="cognome" class="form-control" required>
                     </div>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="email">Email <span class="required">*</span> <span id="emailCheck" style="font-size: 0.875rem;"></span></label>
+                        <label class="form-label" for="email">Email <span class="required">*</span> <span id="emailCheck" style="font-size: 0.875rem;"></span></label>
                         <input type="email" name="email" id="email" class="form-control" required onblur="checkEmail(this.value)">
                     </div>
                     
                     <div class="form-group">
-                        <label for="data_nascita">Data di Nascita <span class="required">*</span></label>
-                        <input type="date" name="data_nascita" id="data_nascita" class="form-control" required>
+                        <label class="form-label" for="data_nascita">Data di Nascita</label>
+                        <input type="date" name="data_nascita" id="data_nascita" class="form-control">
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="ruolo">Ruolo Sistema <span class="required">*</span></label>
-                    <select name="ruolo" id="ruolo" class="form-control" required>
-                        <option value="">-- Seleziona ruolo --</option>
+                    <label class="form-label" for="ruolo">Ruolo Sistema <span class="required">*</span></label>
+                    <select name="ruolo" id="ruolo" class="form-control" required onchange="checkRolePermissions(this.value)">
+                        <option value="">Seleziona un ruolo</option>
                         <option value="utente">Utente</option>
+                        <option value="admin">Amministratore</option>
+                        <option value="utente_speciale">Utente Speciale</option>
                         <option value="super_admin">Super Admin</option>
                     </select>
-                    <small class="form-text">Il ruolo sistema determina i permessi di base dell'utente</small>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> 
+                        Super Admin e Utenti Speciali possono vedere tutte le aziende
+                    </small>
                 </div>
                 
-                <h3 style="margin: 2rem 0 1rem 0; color: var(--text-primary); font-size: 1.125rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">Associazione Aziendale</h3>
+                <h3 style="margin: 2rem 0 1rem 0; color: #111827; font-size: 1.125rem; border-top: 1px solid #e5e7eb; padding-top: 1.5rem;">Associazione Aziendale</h3>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="azienda_id">Azienda (opzionale)</label>
-                        <select name="azienda_id" id="azienda_id" class="form-control" onchange="updateRuoliAziendali()">
-                            <option value="">-- Nessuna associazione --</option>
+                        <label class="form-label" for="azienda_id">Azienda</label>
+                        <select name="azienda_id" id="azienda_id" class="form-control" onchange="checkAziendaLimits(this.value)">
+                            <option value="">Nessuna azienda</option>
                             <?php foreach ($aziende as $azienda): ?>
                                 <option value="<?php echo $azienda['id']; ?>">
                                     <?php echo htmlspecialchars($azienda['nome']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
-                        <small class="form-text">Seleziona un'azienda per associare l'utente direttamente durante la creazione</small>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Lascia vuoto per auto-associazione basata sul dominio email
+                        </small>
                     </div>
                     
                     <div class="form-group">
-                        <label for="ruolo_azienda">Ruolo Aziendale</label>
-                        <select name="ruolo_azienda" id="ruolo_azienda" class="form-control" disabled>
-                            <option value="">-- Prima seleziona un'azienda --</option>
-                            <option value="responsabile_aziendale">Responsabile Aziendale (max 1 per azienda)</option>
-                            <option value="referente">Referente (limitato)</option>
-                            <option value="ospite">Ospite (solo visualizzazione)</option>
+                        <label class="form-label" for="ruolo_azienda">Ruolo in Azienda</label>
+                        <select name="ruolo_azienda" id="ruolo_azienda" class="form-control">
+                            <option value="">Seleziona un ruolo</option>
+                            <option value="responsabile_aziendale">Responsabile Aziendale</option>
+                            <option value="referente">Referente</option>
+                            <option value="utente">Utente</option>
                         </select>
-                        <small class="form-text">
-                            <strong>Responsabile:</strong> Accesso completo all'azienda<br>
-                            <strong>Referente:</strong> Gestione documenti e operazioni<br>
-                            <strong>Ospite:</strong> Solo visualizzazione documenti
-                        </small>
                     </div>
                 </div>
                 
-                <div id="ruolo-warning" style="display: none; background: #fef3cd; border: 1px solid #fde68a; border-radius: 8px; padding: 10px; margin: 10px 0; color: #92400e;">
+                <div id="ruolo-warning" class="alert alert-warning" style="display: none;">
                     <i class="fas fa-exclamation-triangle"></i> <span id="warning-text"></span>
                 </div>
                 
-                <h3 style="margin: 2rem 0 1rem 0; color: var(--text-primary); font-size: 1.125rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">Credenziali di Accesso</h3>
+                <h3 style="margin: 2rem 0 1rem 0; color: #111827; font-size: 1.125rem; border-top: 1px solid #e5e7eb; padding-top: 1.5rem;">Credenziali di Accesso</h3>
                 
                 <div class="form-group">
-                    <label>Password <span class="required">*</span></label>
-                    <div class="password-options">
-                        <label>
-                            <input type="radio" name="password_type" value="generate" checked onchange="togglePasswordInput()">
-                            Genera automaticamente (consigliato)
+                    <label class="form-label">Password <span class="required">*</span></label>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label style="display: flex; align-items: center; font-weight: normal;">
+                            <input type="radio" name="password_type" value="auto" checked onchange="togglePasswordInput()">
+                            <span style="margin-left: 8px;">Genera password automatica (consigliato)</span>
                         </label>
-                        <label>
+                        <label style="display: flex; align-items: center; font-weight: normal;">
                             <input type="radio" name="password_type" value="manual" onchange="togglePasswordInput()">
-                            Inserisci manualmente
+                            <span style="margin-left: 8px;">Inserisci password manualmente</span>
                         </label>
                     </div>
                     <input type="password" name="password" id="manual-password" class="form-control" 
-                           style="display: none;" minlength="8" placeholder="Minimo 8 caratteri" 
+                           style="display: none; margin-top: 10px;" minlength="8" placeholder="Minimo 8 caratteri" 
                            oninput="validatePassword()">
                     <div id="password-requirements" style="display: none;" class="password-requirements">
-                        <small class="form-text">Requisiti password:</small>
+                        <small class="text-muted">Requisiti password:</small>
                         <ul class="requirements-list">
                             <li id="req-length" class="requirement">✗ Almeno 8 caratteri</li>
-                            <li id="req-uppercase" class="requirement">✗ Almeno 1 lettera maiuscola</li>
-                            <li id="req-special" class="requirement">✗ Almeno 1 carattere speciale (!@#$%^&*(),.?":{}|<>)</li>
+                            <li id="req-uppercase" class="requirement">✗ Almeno una lettera maiuscola</li>
+                            <li id="req-special" class="requirement">✗ Almeno un carattere speciale (!@#$%^&*)</li>
                         </ul>
                     </div>
-                    <small class="form-text">La password generata automaticamente è complessa e di 8 caratteri</small>
                 </div>
                 
-                <div class="form-actions">
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; font-weight: normal;">
+                        <input type="checkbox" name="send_email" id="send_email" checked>
+                        <span style="margin-left: 8px;">Invia email con credenziali all'utente</span>
+                    </label>
+                </div>
+                
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('create-user-modal')">Annulla</button>
                     <button type="submit" class="btn btn-primary" id="createUserBtn">
                         <span>Crea Utente</span>
@@ -1507,79 +1232,36 @@ include 'components/header.php';
     </div>
 </div>
 
-<!-- Script ottimizzato con AJAX -->
-<script>
-// Fix per conflitti con app.js - previeni errori di elementi non esistenti
-window.addEventListener('load', function() {
-    // Override delle funzioni problematiche di app.js
-    if (typeof initMobileMenu === 'function') {
-        const originalInitMobileMenu = initMobileMenu;
-        window.initMobileMenu = function() {
-            const menuBtn = document.querySelector('.mobile-menu-btn');
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.querySelector('.sidebar-overlay');
-            
-            if (!menuBtn || !sidebar || !overlay) {
-                return; // Esci se gli elementi non esistono
-            }
-            
-            originalInitMobileMenu();
-        };
-    }
-});
-
-// Aggiungi elementi dummy per evitare errori se mancano
-document.addEventListener('DOMContentLoaded', function() {
-    if (!document.querySelector('.sidebar-overlay')) {
-        const overlay = document.createElement('div');
-        overlay.className = 'sidebar-overlay';
-        overlay.style.display = 'none';
-        document.body.appendChild(overlay);
-    }
-    
-    if (!document.querySelector('.mobile-menu-btn')) {
-        const btn = document.createElement('div');
-        btn.className = 'mobile-menu-btn';
-        btn.style.display = 'none';
-        document.body.appendChild(btn);
-    }
-});
-
-// Gestione errori JavaScript globale per debug
-window.addEventListener('error', function(e) {
-    console.error('Errore JavaScript:', e.error);
-    // Non bloccare l'esecuzione per errori di app.js
-    return false;
-});
-</script>
 <script>
 // Cache DOM elements
 const messageContainer = document.getElementById('messageContainer');
 const globalLoader = document.getElementById('globalLoader');
 const usersTableContainer = document.getElementById('usersTableContainer');
-const usersTableBody = document.getElementById('usersTableBody');
 const searchInput = document.getElementById('searchUsers');
 
-// Debounce function per search
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
+// Utility functions
+function showLoader() {
+    globalLoader.classList.add('active');
 }
 
-// Funzione per mostrare messaggi
+function hideLoader() {
+    globalLoader.classList.remove('active');
+}
+
 function showMessage(message, type = 'success') {
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'error' ? 'alert-danger' : 
+                      type === 'warning' ? 'alert-warning' : 'alert-info';
+    
+    const icon = type === 'success' ? 'fa-check-circle' : 
+                type === 'error' ? 'fa-exclamation-circle' : 
+                type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+    
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} fade-in`;
+    alertDiv.className = `alert ${alertClass}`;
     alertDiv.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-        ${message}
+        <i class="fas ${icon}"></i>
+        <span>${message}</span>
     `;
     
     messageContainer.innerHTML = '';
@@ -1587,184 +1269,58 @@ function showMessage(message, type = 'success') {
     
     // Auto-hide dopo 5 secondi
     setTimeout(() => {
-        alertDiv.classList.add('fade-out');
+        alertDiv.style.opacity = '0';
         setTimeout(() => alertDiv.remove(), 300);
     }, 5000);
 }
 
-// Apertura modal ottimizzata (sovrascrivi quella di app.js se necessario)
-if (typeof openModal !== 'undefined') {
-    // Salva la funzione originale per altri usi
-    window.originalOpenModal = openModal;
-}
-
+// User management functions
 function openCreateUserModal() {
-    const modal = document.getElementById('create-user-modal');
-    modal.classList.add('active');
+    document.getElementById('create-user-modal').style.display = 'block';
     document.getElementById('create-user-form').reset();
     document.getElementById('emailCheck').innerHTML = '';
-    
-    // Reset ruolo aziendale
-    const ruoloAziendaSelect = document.getElementById('ruolo_azienda');
-    if (ruoloAziendaSelect) {
-        ruoloAziendaSelect.disabled = true;
-        ruoloAziendaSelect.selectedIndex = 0;
-    }
-    
-    // Nascondi warning
-    const warning = document.getElementById('ruolo-warning');
-    if (warning) {
-        warning.style.display = 'none';
-    }
-}
-
-// Chiusura modal (sovrascrivi quella di app.js se necessario)
-if (typeof closeModal !== 'undefined') {
-    // Salva la funzione originale per altri usi
-    window.originalCloseModal = closeModal;
+    document.getElementById('ruolo-warning').style.display = 'none';
+    togglePasswordInput();
 }
 
 function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    document.getElementById(modalId).style.display = 'none';
 }
 
-// Toggle password input
-function togglePasswordInput() {
-    const passwordInput = document.getElementById('manual-password');
-    const passwordRequirements = document.getElementById('password-requirements');
-    const passwordType = document.querySelector('input[name="password_type"]:checked').value;
+async function createUserAjax(event) {
+    event.preventDefault();
     
-    if (passwordType === 'manual') {
-        passwordInput.style.display = 'block';
-        passwordRequirements.style.display = 'block';
-        passwordInput.required = true;
-        validatePassword(); // Valida subito se c'è già testo
-    } else {
-        passwordInput.style.display = 'none';
-        passwordRequirements.style.display = 'none';
-        passwordInput.required = false;
-        passwordInput.value = '';
-    }
-}
-
-// Validate password requirements in real-time
-function validatePassword() {
-    const passwordInput = document.getElementById('manual-password');
-    const password = passwordInput.value;
+    const form = event.target;
+    const submitBtn = document.getElementById('createUserBtn');
+    const btnText = submitBtn.querySelector('span');
+    const btnSpinner = submitBtn.querySelector('i');
     
-    // Get requirement elements
-    const reqLength = document.getElementById('req-length');
-    const reqUppercase = document.getElementById('req-uppercase');
-    const reqSpecial = document.getElementById('req-special');
-    
-    // Check length (8+ characters)
-    if (password.length >= 8) {
-        reqLength.textContent = '✓ Almeno 8 caratteri';
-        reqLength.className = 'requirement valid';
-    } else {
-        reqLength.textContent = '✗ Almeno 8 caratteri';
-        reqLength.className = 'requirement invalid';
-    }
-    
-    // Check uppercase letter
-    if (/[A-Z]/.test(password)) {
-        reqUppercase.textContent = '✓ Almeno 1 lettera maiuscola';
-        reqUppercase.className = 'requirement valid';
-    } else {
-        reqUppercase.textContent = '✗ Almeno 1 lettera maiuscola';
-        reqUppercase.className = 'requirement invalid';
-    }
-    
-    // Check special character
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-        reqSpecial.textContent = '✓ Almeno 1 carattere speciale';
-        reqSpecial.className = 'requirement valid';
-    } else {
-        reqSpecial.textContent = '✗ Almeno 1 carattere speciale (!@#$%^&*(),.?":{}|<>)';
-        reqSpecial.className = 'requirement invalid';
-    }
-    
-    // Update border color based on validation
-    const allValid = password.length >= 8 && /[A-Z]/.test(password) && /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    
-    if (password.length > 0) {
-        passwordInput.style.borderColor = allValid ? '#22c55e' : '#ef4444';
-    } else {
-        passwordInput.style.borderColor = '';
-    }
-}
-
-// Check email esistente (con debounce)
-const checkEmail = debounce(async (email) => {
-    if (!email) return;
-    
-    const emailCheck = document.getElementById('emailCheck');
-    emailCheck.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    
-    try {
-        const response = await fetch('gestione-utenti.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: `action=check_email&email=${encodeURIComponent(email)}`
-        });
-        
-        const data = await response.json();
-        
-        if (data.exists) {
-            emailCheck.innerHTML = '<span style="color: var(--danger-color);">Email già esistente!</span>';
-        } else {
-            emailCheck.innerHTML = '<span style="color: var(--success-color);">Email disponibile</span>';
-        }
-    } catch (error) {
-        emailCheck.innerHTML = '';
-    }
-}, 500);
-
-// Creazione utente AJAX
-async function createUserAjax(e) {
-    e.preventDefault();
-    
-    const form = e.target;
-    const btn = document.getElementById('createUserBtn');
-    const spinner = btn.querySelector('.fa-spinner');
-    const btnText = btn.querySelector('span');
-    
-    // Validazione password prima dell'invio
-    const passwordType = form.querySelector('input[name="password_type"]:checked').value;
-    if (passwordType === 'manual') {
-        const password = form.querySelector('input[name="password"]').value;
-        if (!password) {
-            showMessage('Inserisci una password', 'error');
-            return;
-        }
-        if (password.length < 8) {
+    // Validazione password manuale
+    if (form.password_type.value === 'manual') {
+        const password = form.password.value;
+        if (!password || password.length < 8) {
             showMessage('La password deve essere di almeno 8 caratteri', 'error');
-            return;
+            return false;
         }
         if (!/[A-Z]/.test(password)) {
             showMessage('La password deve contenere almeno una lettera maiuscola', 'error');
-            return;
+            return false;
         }
         if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
             showMessage('La password deve contenere almeno un carattere speciale', 'error');
-            return;
+            return false;
         }
     }
     
-    // Disabilita form
-    btn.disabled = true;
-    spinner.style.display = 'inline-block';
+    // Disabilita pulsante e mostra spinner
+    submitBtn.disabled = true;
     btnText.textContent = 'Creazione in corso...';
+    btnSpinner.style.display = 'inline-block';
     
     try {
         const formData = new FormData(form);
-        const response = await fetch('gestione-utenti.php', {
+        
+        const response = await fetch(window.location.href, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
@@ -1776,252 +1332,245 @@ async function createUserAjax(e) {
         
         if (data.success) {
             showMessage(data.message, 'success');
+            
+            // Mostra password generata se disponibile
+            if (data.password) {
+                const passwordAlert = document.createElement('div');
+                passwordAlert.className = 'alert alert-info';
+                passwordAlert.style.marginTop = '10px';
+                passwordAlert.innerHTML = `
+                    <i class="fas fa-key"></i>
+                    <strong>Password generata:</strong> <code>${data.password}</code>
+                    <button onclick="copyToClipboard('${data.password}')" class="btn btn-sm btn-secondary" style="margin-left: 10px;">
+                        <i class="fas fa-copy"></i> Copia
+                    </button>
+                `;
+                messageContainer.appendChild(passwordAlert);
+            }
+            
             closeModal('create-user-modal');
             
-            // Ricarica tabella dopo 1 secondo
+            // Ricarica la pagina dopo 2 secondi
             setTimeout(() => {
-                location.reload();
-            }, 1000);
+                window.location.reload();
+            }, 2000);
         } else {
-            showMessage(data.message, 'error');
+            showMessage(data.message || 'Errore durante la creazione dell\'utente', 'error');
         }
     } catch (error) {
-        showMessage('Errore durante la creazione dell\'utente', 'error');
+        showMessage('Errore di connessione: ' + error.message, 'error');
     } finally {
-        btn.disabled = false;
-        spinner.style.display = 'none';
+        // Ripristina pulsante
+        submitBtn.disabled = false;
         btnText.textContent = 'Crea Utente';
+        btnSpinner.style.display = 'none';
     }
+    
+    return false;
 }
 
-// Reset password AJAX
 async function resetPassword(userId) {
-    if (!confirm('Resettare la password per questo utente?')) return;
-    
-    globalLoader.classList.add('active');
-    
-    try {
-        const response = await fetch('gestione-utenti.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: `action=reset_password&user_id=${userId}`
-        });
-        
-        const data = await response.json();
-        showMessage(data.message, data.success ? 'success' : 'error');
-    } catch (error) {
-        showMessage('Errore durante il reset della password', 'error');
-    } finally {
-        globalLoader.classList.remove('active');
-    }
-}
-
-// Toggle stato utente AJAX
-async function toggleUserStatus(userId, newStatus) {
-    globalLoader.classList.add('active');
-    
-    try {
-        const response = await fetch('gestione-utenti.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: `action=toggle_status&user_id=${userId}&new_status=${newStatus}`
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showMessage(data.message, 'success');
-            // Aggiorna solo la riga interessata
-            updateUserRow(userId);
-        } else {
-            showMessage(data.message, 'error');
-        }
-    } catch (error) {
-        showMessage('Errore durante l\'aggiornamento dello stato', 'error');
-    } finally {
-        globalLoader.classList.remove('active');
-    }
-}
-
-// Elimina utente AJAX
-async function deleteUser(userId, userName) {
-    if (!confirm(`Sei sicuro di voler eliminare l'utente "${userName}"?\n\nQuesta azione è irreversibile!`)) {
+    if (!confirm('Sei sicuro di voler reimpostare la password per questo utente?')) {
         return;
     }
     
-    globalLoader.classList.add('active');
+    showLoader();
     
     try {
-        const response = await fetch('gestione-utenti.php', {
+        const formData = new FormData();
+        formData.append('action', 'reset_password');
+        formData.append('user_id', userId);
+        
+        const response = await fetch(window.location.href, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: `action=delete_user&user_id=${userId}`
+            body: formData
         });
         
         const data = await response.json();
         
         if (data.success) {
             showMessage(data.message, 'success');
-            // Rimuovi la riga dalla tabella con animazione
+            
+            // Mostra nuova password
+            if (data.password) {
+                const passwordAlert = document.createElement('div');
+                passwordAlert.className = 'alert alert-info';
+                passwordAlert.style.marginTop = '10px';
+                passwordAlert.innerHTML = `
+                    <i class="fas fa-key"></i>
+                    <strong>Nuova password:</strong> <code>${data.password}</code>
+                    <button onclick="copyToClipboard('${data.password}')" class="btn btn-sm btn-secondary" style="margin-left: 10px;">
+                        <i class="fas fa-copy"></i> Copia
+                    </button>
+                `;
+                messageContainer.appendChild(passwordAlert);
+            }
+        } else {
+            showMessage(data.message || 'Errore durante il reset della password', 'error');
+        }
+    } catch (error) {
+        showMessage('Errore di connessione: ' + error.message, 'error');
+    } finally {
+        hideLoader();
+    }
+}
+
+async function toggleUserStatus(userId, newStatus) {
+    const action = newStatus === 0 ? 'disattivare' : 'attivare';
+    
+    if (!confirm(`Sei sicuro di voler ${action} questo utente?`)) {
+        return;
+    }
+    
+    showLoader();
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'toggle_status');
+        formData.append('user_id', userId);
+        formData.append('new_status', newStatus);
+        
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage(data.message, 'success');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            showMessage(data.message || 'Errore durante l\'aggiornamento dello stato', 'error');
+        }
+    } catch (error) {
+        showMessage('Errore di connessione: ' + error.message, 'error');
+    } finally {
+        hideLoader();
+    }
+}
+
+async function deleteUser(userId) {
+    if (!confirm('Sei sicuro di voler eliminare questo utente? L\'azione è irreversibile.')) {
+        return;
+    }
+    
+    showLoader();
+    
+    try {
+        const formData = new FormData();
+        formData.append('action', 'delete_user');
+        formData.append('user_id', userId);
+        
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage(data.message, 'success');
+            
+            // Rimuovi riga dalla tabella con animazione
             const row = document.querySelector(`tr[data-user-id="${userId}"]`);
             if (row) {
-                // Aggiungi classe per animazione
-                row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                 row.style.opacity = '0';
-                row.style.transform = 'translateX(-20px)';
-                
                 setTimeout(() => {
                     row.remove();
-                    // Controlla se ci sono ancora righe nella tabella
-                    const tbody = document.querySelector('.users-table tbody');
-                    if (tbody && tbody.children.length === 0) {
-                        // Ricarica la pagina dopo un breve delay
-                        setTimeout(() => {
-                            location.reload();
-                        }, 500);
+                    
+                    // Se non ci sono più righe, mostra empty state
+                    if (document.querySelectorAll('#usersTableBody tr').length === 0) {
+                        window.location.reload();
                     }
                 }, 300);
-            } else {
-                // Se la riga non esiste, ricarica comunque dopo un delay
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
             }
         } else {
-            showMessage(data.message, 'error');
+            showMessage(data.message || 'Errore durante l\'eliminazione dell\'utente', 'error');
         }
     } catch (error) {
-        showMessage('Errore durante l\'eliminazione dell\'utente', 'error');
+        showMessage('Errore di connessione: ' + error.message, 'error');
     } finally {
-        globalLoader.classList.remove('active');
+        hideLoader();
     }
 }
 
-// Aggiorna singola riga utente
-async function updateUserRow(userId) {
-    const row = document.querySelector(`tr[data-user-id="${userId}"]`);
-    if (row) {
-        // Qui potresti fare una chiamata AJAX per ottenere i dati aggiornati
-        // Per ora facciamo un reload della pagina dopo 1 secondo
-        setTimeout(() => location.reload(), 1000);
-    }
-}
-
-// Ricerca live utenti nella tabella
-if (searchInput) {
-    searchInput.addEventListener('input', debounce(function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        
-        if (usersTableBody) {
-            const rows = usersTableBody.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-        }
-    }, 300));
-}
-
-// Gestione ESC per chiudere modal
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        const activeModal = document.querySelector('.modal.active');
-        if (activeModal) {
-            activeModal.classList.remove('active');
-        }
-    }
-});
-
-// Preload per migliorare performance
-document.addEventListener('DOMContentLoaded', () => {
-    // Preconnect to external resources
-    const preconnect = document.createElement('link');
-    preconnect.rel = 'preconnect';
-    preconnect.href = 'https://cdnjs.cloudflare.com';
-    document.head.appendChild(preconnect);
-});
-
-// Funzione per filtrare per azienda
-function filterByAzienda(aziendaId) {
-    const currentUrl = new URL(window.location.href);
-    if (aziendaId) {
-        currentUrl.searchParams.set('azienda', aziendaId);
-    } else {
-        currentUrl.searchParams.delete('azienda');
-    }
-    currentUrl.searchParams.set('page', '1'); // Reset alla prima pagina
-    window.location.href = currentUrl.toString();
-}
-
-// Funzione per aggiornare i ruoli aziendali basati sull'azienda selezionata
-async function updateRuoliAziendali() {
-    const aziendaSelect = document.getElementById('azienda_id');
-    const ruoloSelect = document.getElementById('ruolo_azienda');
-    const warning = document.getElementById('ruolo-warning');
-    const warningText = document.getElementById('warning-text');
+async function checkEmail(email) {
+    const emailCheck = document.getElementById('emailCheck');
     
-    if (!aziendaSelect || !ruoloSelect) return;
-    
-    const aziendaId = aziendaSelect.value;
-    
-    if (!aziendaId) {
-        ruoloSelect.disabled = true;
-        ruoloSelect.selectedIndex = 0;
-        warning.style.display = 'none';
+    if (!email) {
+        emailCheck.innerHTML = '';
         return;
     }
     
-    ruoloSelect.disabled = false;
-    warning.style.display = 'none';
+    try {
+        const formData = new FormData();
+        formData.append('action', 'check_email');
+        formData.append('email', email);
+        
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.exists) {
+            emailCheck.innerHTML = '<span style="color: #ef4444;">Email già esistente!</span>';
+        } else {
+            emailCheck.innerHTML = '<span style="color: #10b981;">Email disponibile</span>';
+        }
+    } catch (error) {
+        emailCheck.innerHTML = '';
+    }
+}
+
+async function checkAziendaLimits(aziendaId) {
+    const warningDiv = document.getElementById('ruolo-warning');
+    const warningText = document.getElementById('warning-text');
+    const ruoloAziendaSelect = document.getElementById('ruolo_azienda');
     
-    // Reset opzioni
-    const options = ruoloSelect.options;
-    for (let i = 1; i < options.length; i++) {
-        options[i].disabled = false;
-        options[i].style.color = '';
-        options[i].text = options[i].text.replace(' (Non disponibile)', '').replace(' (Limite raggiunto)', '');
+    if (!aziendaId) {
+        warningDiv.style.display = 'none';
+        return;
     }
     
     try {
-        // Verifica limiti aziendali via AJAX
-        const response = await fetch('gestione-utenti.php', {
+        const formData = new FormData();
+        formData.append('action', 'check_azienda_limits');
+        formData.append('azienda_id', aziendaId);
+        
+        const response = await fetch(window.location.href, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: `action=check_azienda_limits&azienda_id=${aziendaId}`
+            body: formData
         });
         
-        if (response.ok) {
-            const data = await response.json();
-            
-            if (data.responsabile_exists) {
-                const responsabileOption = ruoloSelect.querySelector('option[value="responsabile_aziendale"]');
-                if (responsabileOption) {
-                    responsabileOption.disabled = true;
-                    responsabileOption.style.color = '#9ca3af';
-                    responsabileOption.text += ' (Non disponibile)';
-                }
-            }
-            
-            if (data.referenti_full) {
-                const referenteOption = ruoloSelect.querySelector('option[value="referente"]');
-                if (referenteOption) {
-                    referenteOption.disabled = true;
-                    referenteOption.style.color = '#9ca3af';
-                    referenteOption.text += ' (Limite raggiunto)';
-                }
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.hasResponsabile && ruoloAziendaSelect.value === 'responsabile_aziendale') {
+                warningText.textContent = 'Questa azienda ha già un Responsabile Aziendale. Solo un responsabile è consentito per azienda.';
+                warningDiv.style.display = 'block';
+            } else if (data.referentiCount >= data.maxReferenti && ruoloAziendaSelect.value === 'referente') {
+                warningText.textContent = `Questa azienda ha raggiunto il limite massimo di ${data.maxReferenti} referenti.`;
+                warningDiv.style.display = 'block';
+            } else {
+                warningDiv.style.display = 'none';
             }
         }
     } catch (error) {
@@ -2029,121 +1578,123 @@ async function updateRuoliAziendali() {
     }
 }
 
-// Mostra avviso quando selezionato un ruolo
-document.addEventListener('DOMContentLoaded', function() {
-    const ruoloSelect = document.getElementById('ruolo_azienda');
-    if (ruoloSelect) {
-        ruoloSelect.addEventListener('change', function() {
-            const warning = document.getElementById('ruolo-warning');
-            const warningText = document.getElementById('warning-text');
-            
-            if (!warning || !warningText) return;
-            
-            const selectedValue = this.value;
-            
-            if (selectedValue === 'responsabile_aziendale') {
-                warningText.textContent = 'Il Responsabile Aziendale avrà accesso completo all\'azienda e potrà gestire tutti i documenti e referenti.';
-                warning.style.display = 'block';
-            } else if (selectedValue === 'referente') {
-                warningText.textContent = 'Il Referente potrà gestire documenti e operazioni aziendali ma non altri utenti.';
-                warning.style.display = 'block';
-            } else if (selectedValue === 'ospite') {
-                warningText.textContent = 'L\'Ospite avrà accesso solo in visualizzazione ai documenti dell\'azienda.';
-                warning.style.display = 'block';
-            } else {
-                warning.style.display = 'none';
-            }
-        });
+function checkRolePermissions(role) {
+    const aziendaSelect = document.getElementById('azienda_id');
+    const ruoloAziendaSelect = document.getElementById('ruolo_azienda');
+    
+    if (role === 'super_admin' || role === 'utente_speciale') {
+        // Disabilita selezione azienda per ruoli globali
+        aziendaSelect.value = '';
+        aziendaSelect.disabled = true;
+        ruoloAziendaSelect.value = '';
+        ruoloAziendaSelect.disabled = true;
+    } else {
+        aziendaSelect.disabled = false;
+        ruoloAziendaSelect.disabled = false;
     }
+}
+
+function togglePasswordInput() {
+    const passwordType = document.querySelector('input[name="password_type"]:checked').value;
+    const manualPasswordInput = document.getElementById('manual-password');
+    const passwordRequirements = document.getElementById('password-requirements');
+    
+    if (passwordType === 'manual') {
+        manualPasswordInput.style.display = 'block';
+        passwordRequirements.style.display = 'block';
+        manualPasswordInput.required = true;
+    } else {
+        manualPasswordInput.style.display = 'none';
+        passwordRequirements.style.display = 'none';
+        manualPasswordInput.required = false;
+        manualPasswordInput.value = '';
+    }
+}
+
+function validatePassword() {
+    const password = document.getElementById('manual-password').value;
+    const reqLength = document.getElementById('req-length');
+    const reqUppercase = document.getElementById('req-uppercase');
+    const reqSpecial = document.getElementById('req-special');
+    
+    // Check length
+    if (password.length >= 8) {
+        reqLength.classList.add('valid');
+        reqLength.innerHTML = '✓ Almeno 8 caratteri';
+    } else {
+        reqLength.classList.remove('valid');
+        reqLength.innerHTML = '✗ Almeno 8 caratteri';
+    }
+    
+    // Check uppercase
+    if (/[A-Z]/.test(password)) {
+        reqUppercase.classList.add('valid');
+        reqUppercase.innerHTML = '✓ Almeno una lettera maiuscola';
+    } else {
+        reqUppercase.classList.remove('valid');
+        reqUppercase.innerHTML = '✗ Almeno una lettera maiuscola';
+    }
+    
+    // Check special characters
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        reqSpecial.classList.add('valid');
+        reqSpecial.innerHTML = '✓ Almeno un carattere speciale (!@#$%^&*)';
+    } else {
+        reqSpecial.classList.remove('valid');
+        reqSpecial.innerHTML = '✗ Almeno un carattere speciale (!@#$%^&*)';
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showMessage('Password copiata negli appunti', 'success');
+    }).catch(err => {
+        console.error('Errore copia:', err);
+    });
+}
+
+function filterByAzienda(aziendaId) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('azienda', aziendaId);
+    if (!aziendaId) {
+        url.searchParams.delete('azienda');
+    }
+    window.location.href = url.toString();
+}
+
+function searchUsers() {
+    const searchValue = searchInput.value.trim();
+    const url = new URL(window.location.href);
+    
+    if (searchValue) {
+        url.searchParams.set('search', searchValue);
+    } else {
+        url.searchParams.delete('search');
+    }
+    
+    url.searchParams.delete('page'); // Reset to page 1
+    window.location.href = url.toString();
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Assicurati che il modal sia nascosto all'avvio
+    document.getElementById('create-user-modal').style.display = 'none';
+    
+    // Search on Enter key
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchUsers();
+        }
+    });
+    
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    };
 });
 </script>
 
-<style>
-/* Stili aggiuntivi per performance */
-.user-info-cell {
-    line-height: 1.4;
-}
-
-.text-muted {
-    color: var(--text-secondary);
-}
-
-.d-block {
-    display: block;
-}
-
-.password-options {
-    display: flex;
-    gap: 2rem;
-    margin: 1rem 0;
-}
-
-.password-options label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: normal;
-    cursor: pointer;
-}
-
-.btn-group {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.fade-in {
-    animation: fadeIn 0.3s ease-in;
-}
-
-.fade-out {
-    animation: fadeOut 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(-10px); }
-}
-
-.spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid var(--border-color);
-    border-top: 4px solid var(--primary-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.header-actions {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-@media (max-width: 768px) {
-    .password-options {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .header-actions {
-        flex-direction: column;
-        width: 100%;
-    }
-    
-    .quick-search {
-        width: 100%;
-    }
-}
-</style>
-
-<?php include 'components/footer.php'; ?> 
+<?php include 'components/footer.php'; ?>

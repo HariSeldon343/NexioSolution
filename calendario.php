@@ -95,6 +95,7 @@ function formatDateItalian($date) {
 
 $pageTitle = 'Calendario';
 require_once 'components/header.php';
+require_once 'components/page-header.php';
 
 // Gestione messaggi di successo e errore
 $successMessage = $_GET['msg'] ?? null;
@@ -155,12 +156,13 @@ $errorMessage = $_GET['error'] ?? null;
         gap: 10px;
     }
     
-    /* Vista giornaliera */
+    /* Vista giornaliera - Contrasto migliorato */
     .day-view {
         background: white;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: 1px solid #d1d5db;
     }
     
     .hour-slot {
@@ -186,101 +188,144 @@ $errorMessage = $_GET['error'] ?? null;
         flex: 1;
     }
     
-    /* Vista settimanale */
+    /* Vista settimanale - Contrasto migliorato */
     .week-view {
         background: white;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         overflow-x: auto;
+        border: 1px solid #d1d5db;
     }
     
     .week-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 1px;
-        background: #e5e7eb;
-        border: 1px solid #e5e7eb;
+        gap: 2px;
+        background: #374151;
+        border: 2px solid #374151;
+        border-radius: 8px;
         min-width: 800px;
+        overflow: hidden;
     }
     
     .week-day {
         background: white;
-        min-height: 150px;
-        padding: 10px;
+        min-height: 180px;
+        padding: 12px;
+        border: 1px solid #e5e7eb;
     }
     
     .week-day-header {
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 10px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #e5e7eb;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e5e7eb;
+        font-size: 14px;
     }
     
     .week-day.today {
-        background: #f0f9ff;
+        background: #dbeafe;
+        border-color: #3b82f6;
+        box-shadow: inset 0 0 0 2px #3b82f6;
     }
     
-    /* Vista mensile */
+    .week-day.today .week-day-header {
+        color: #1e40af;
+        border-bottom-color: #3b82f6;
+    }
+    
+    /* Vista mensile - Contrasto migliorato */
     .month-view {
         background: white;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border: 1px solid #d1d5db;
     }
     
     .month-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
-        gap: 1px;
-        background: #e5e7eb;
-        border: 1px solid #e5e7eb;
+        gap: 2px;
+        background: #374151;
+        border: 2px solid #374151;
+        border-radius: 8px;
+        overflow: hidden;
     }
     
     .month-day {
-        background: white;
-        min-height: 100px;
-        padding: 8px;
+        background: #ffffff;
+        min-height: 120px;
+        padding: 12px 8px;
         position: relative;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+    
+    .month-day:hover {
+        background: #f8fafc;
+        box-shadow: inset 0 0 0 2px #3b82f6;
     }
     
     .month-day-number {
-        font-weight: 600;
-        color: #4a5568;
-        margin-bottom: 5px;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 8px;
+        font-size: 16px;
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+        text-align: center;
+        border-radius: 50%;
+    }
+    
+    .month-day.other-month {
+        background: #f9fafb;
+        color: #9ca3af;
     }
     
     .month-day.other-month .month-day-number {
-        color: #cbd5e0;
+        color: #d1d5db;
+        font-weight: 400;
     }
     
     .month-day.today {
-        background: #f0f9ff;
+        background: #dbeafe;
+        border-color: #3b82f6;
+        box-shadow: inset 0 0 0 2px #3b82f6;
     }
     
     .month-day.today .month-day-number {
-        color: #2563eb;
+        background: #3b82f6;
+        color: white;
+        font-weight: 700;
     }
     
     .mini-event {
-        background: #e6e3ff;
-        color: #6b5cdf;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 11px;
-        margin-bottom: 2px;
+        background: #3b82f6;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 3px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         cursor: pointer;
         transition: all 0.2s ease;
+        border: 1px solid #2563eb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     
     .mini-event:hover {
-        background: #6b5cdf;
-        color: white;
-        transform: translateX(2px);
+        background: #1d4ed8;
+        border-color: #1e40af;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
     
     .event-detail-box {
@@ -367,16 +412,21 @@ $errorMessage = $_GET['error'] ?? null;
     }
 </style>
 
-<div class="content-header">
-    <h1><i class="fas fa-calendar"></i> Calendario Eventi</h1>
-    <div class="header-actions">
-    <?php if ($auth->canManageEvents()): ?>
-    <a href="<?php echo APP_PATH; ?>/calendario-eventi.php?action=nuovo" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nuovo Evento
-    </a>
-    <?php endif; ?>
-    </div>
-</div>
+<?php
+// Definisci azioni per l'header
+$headerActions = [];
+if (method_exists($auth, 'canManageEvents') && $auth->canManageEvents()) {
+    $headerActions[] = [
+        'text' => 'Nuovo Evento',
+        'href' => APP_PATH . '/calendario-eventi.php?action=nuovo',
+        'icon' => 'fas fa-plus',
+        'class' => 'btn btn-primary'
+    ];
+}
+
+// Render header con component
+renderPageHeader('Calendario Eventi', '', 'fas fa-calendar', $headerActions);
+?>
 
 <!-- Messaggi di notifica -->
 <?php if ($successMessage): ?>

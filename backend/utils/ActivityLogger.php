@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/config.php';
 
 class ActivityLogger {
     private static $instance = null;
@@ -27,8 +27,28 @@ class ActivityLogger {
                              (isset($currentAzienda['id']) ? $currentAzienda['id'] : null);
             }
             
-            $sql = "INSERT INTO log_attivita (azienda_id, utente_id, tipo_entita, azione, id_entita, dettagli, ip_address) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+            // Converti dettagli in JSON se non lo è già
+            if (!empty($dettagli) && !is_string($dettagli)) {
+                $dettagli_json = json_encode($dettagli);
+            } elseif (!empty($dettagli) && is_string($dettagli)) {
+                // Verifica se è già JSON valido
+                json_decode($dettagli);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    // Non è JSON, convertilo
+                    $dettagli_json = json_encode(['messaggio' => $dettagli]);
+                } else {
+                    $dettagli_json = $dettagli;
+                }
+            } else {
+                $dettagli_json = json_encode(['messaggio' => '']);
+            }
+            
+            // Determina se questo log è non eliminabile
+            $non_eliminabile = ($azione === 'eliminazione_log') ? 1 : 0;
+            
+            // Usa i nomi corretti delle colonne
+            $sql = "INSERT INTO log_attivita (azienda_id, utente_id, entita_tipo, azione, entita_id, dettagli, ip_address, tipo, descrizione, non_eliminabile) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $params = [
                 $azienda_id,
@@ -36,8 +56,11 @@ class ActivityLogger {
                 $tipo_entita,
                 $azione,
                 $entita_id,
-                $dettagli,
-                $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
+                $dettagli_json,
+                $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
+                $azione, // tipo
+                ucfirst($azione) . ' ' . $tipo_entita, // descrizione
+                $non_eliminabile
             ];
             
             db_query($sql, $params);
@@ -51,11 +74,25 @@ class ActivityLogger {
     
     // Metodi di convenienza
     public function logLogin($user_id) {
-        $this->log('accesso', 'login', null, 'Login effettuato');
+        $dettagli = [
+            'messaggio' => 'Login effettuato con successo',
+            'user_id' => $user_id,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
+        ];
+        $this->log('accesso', 'login', $user_id, $dettagli);
     }
     
     public function logLogout($user_id) {
-        $this->log('accesso', 'logout', null, 'Logout effettuato');
+        $dettagli = [
+            'messaggio' => 'Logout effettuato',
+            'user_id' => $user_id,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
+        ];
+        $this->log('accesso', 'logout', $user_id, $dettagli);
     }
     
     public function logDocumento($azione, $doc_id, $nome_doc) {
@@ -84,12 +121,14 @@ class ActivityLogger {
      * Log modifica documento
      */
     public function logDocumentoModificato($documento_id, $titolo, $vecchi_dati = [], $nuovi_dati = []) {
-        $dettagli = "Modificato documento: " . $titolo;
+        $dettagli = [
+            'messaggio' => "Modificato documento: " . $titolo
+        ];
         if (!empty($vecchi_dati) || !empty($nuovi_dati)) {
-            $dettagli .= " | Modifiche: " . json_encode([
+            $dettagli['modifiche'] = [
                 'prima' => $vecchi_dati,
                 'dopo' => $nuovi_dati
-            ]);
+            ];
         }
         $this->log('documento', 'modificato', $documento_id, $dettagli);
     }
@@ -101,7 +140,7 @@ class ActivityLogger {
         try {
             $sql = "SELECT * FROM log_attivita 
                     WHERE azienda_id = ? 
-                    ORDER BY creato_il DESC 
+                    ORDER BY data_azione DESC 
                     LIMIT ? OFFSET ?";
             
             $stmt = db_connection()->prepare($sql);
@@ -122,7 +161,7 @@ class ActivityLogger {
      */
     public function getLogsByTipo($tipo_entita, $azienda_id = null, $limit = 100) {
         try {
-            $sql = "SELECT * FROM log_attivita WHERE tipo_entita = ?";
+            $sql = "SELECT * FROM log_attivita WHERE entita_tipo = ?";
             $params = [$tipo_entita];
             
             if ($azienda_id) {
@@ -130,7 +169,7 @@ class ActivityLogger {
                 $params[] = $azienda_id;
             }
             
-            $sql .= " ORDER BY creato_il DESC LIMIT ?";
+            $sql .= " ORDER BY data_azione DESC LIMIT ?";
             $params[] = $limit;
             
             $stmt = db_connection()->prepare($sql);
@@ -148,5 +187,28 @@ class ActivityLogger {
             error_log("getLogsByTipo error: " . $e->getMessage());
             return [];
         }
+    }
+    
+    /**
+     * Log errori generici
+     */
+    public function logError($messaggio, $dettagli = []) {
+        $dettagli['messaggio'] = $messaggio;
+        $dettagli['error_timestamp'] = date('Y-m-d H:i:s');
+        $this->log('sistema', 'errore', null, $dettagli);
+    }
+    
+    /**
+     * Log tentativo di login fallito
+     */
+    public function logFailedLogin($username, $ip = null) {
+        $dettagli = [
+            'messaggio' => 'Tentativo di login fallito',
+            'username' => $username,
+            'ip_address' => $ip ?? ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'),
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? '',
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+        $this->log('accesso', 'login_fallito', null, $dettagli);
     }
 } 

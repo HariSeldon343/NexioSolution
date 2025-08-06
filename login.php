@@ -1,9 +1,12 @@
 <?php
 require_once 'backend/config/config.php';
+require_once 'backend/middleware/Auth.php';
 require_once 'backend/utils/RateLimiter.php';
+require_once 'backend/utils/ActivityLogger.php';
 
 $auth = Auth::getInstance();
 $rateLimiter = RateLimiter::getInstance();
+$logger = ActivityLogger::getInstance();
 
 // Se già loggato, redirect a dashboard
 if ($auth->isAuthenticated()) {
@@ -38,6 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isBlocked) {
             // Login riuscito - resetta rate limiter
             $rateLimiter->recordAttempt('login', $ip, true);
             
+            // Log login riuscito
+            $user = $auth->getUser();
+            if ($user) {
+                $logger->logLogin($user['id']);
+            }
+            
             // Se remember me è selezionato, estendi la durata della sessione
             if ($remember) {
                 // Qui potresti implementare un cookie remember me sicuro
@@ -47,6 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isBlocked) {
             
             redirect(APP_PATH . '/dashboard.php');
         } else {
+            // Log tentativo fallito
+            $logger->logFailedLogin($username, $ip);
             $error = $result['message'] ?? 'Username o password non validi';
         }
     }

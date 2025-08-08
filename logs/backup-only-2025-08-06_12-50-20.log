@@ -1,0 +1,6 @@
+[2025-08-06 12:50:20] Inizio backup database
+[2025-08-06 12:50:20] Connessione database OK
+[2025-08-06 12:50:20] Comando backup: "C:\xampp\mysql\bin\mysqldump.exe" --host=localhost --user=root --password=*** --single-transaction --routines --triggers nexiosol > "C:\xampp\htdocs\piattaforma-collaborativa/backup/nexiosol_backup_2025-08-06_12-50-20.sql" 2>&1
+[2025-08-06 12:50:21] Backup completato: C:\xampp\htdocs\piattaforma-collaborativa/backup/nexiosol_backup_2025-08-06_12-50-20.sql (0.45 MB)
+[2025-08-06 12:50:21] WARNING: Backup potrebbe essere vuoto
+[2025-08-06 12:50:21] Script backup completato

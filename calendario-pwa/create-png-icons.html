@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generatore Icone PWA Nexio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .icon-preview {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+        }
+        .icon-preview img {
+            border: 1px solid #ddd;
+            margin-bottom: 5px;
+        }
+        .generate-btn {
+            background: #2d5a9f;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .generate-btn:hover {
+            background: #3b72c4;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f0f0f0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Generatore Icone PWA Nexio Calendario</h1>
+    
+    <div class="status" id="status">
+        Pronto per generare le icone. Clicca il pulsante per iniziare.
+    </div>
+    
+    <button class="generate-btn" onclick="generateAllIcons()">
+        Genera Tutte le Icone PWA
+    </button>
+    
+    <button class="generate-btn" onclick="downloadAllAsZip()">
+        Scarica Tutte come ZIP
+    </button>
+    
+    <h2>Anteprima Icone Generate</h2>
+    <div id="preview-container"></div>
+    
+    <h2>Icone da Generare</h2>
+    <ul>
+        <li>icon-72x72.png</li>
+        <li>icon-96x96.png</li>
+        <li>icon-128x128.png</li>
+        <li>icon-144x144.png</li>
+        <li>icon-152x152.png</li>
+        <li>icon-192x192.png</li>
+        <li>icon-384x384.png</li>
+        <li>icon-512x512.png</li>
+        <li>apple-touch-icon.png (180x180)</li>
+        <li>favicon.png (32x32)</li>
+    </ul>
+
+    <script>
+        const iconSizes = [
+            { size: 72, name: 'icon-72x72.png' },
+            { size: 96, name: 'icon-96x96.png' },
+            { size: 128, name: 'icon-128x128.png' },
+            { size: 144, name: 'icon-144x144.png' },
+            { size: 152, name: 'icon-152x152.png' },
+            { size: 192, name: 'icon-192x192.png' },
+            { size: 384, name: 'icon-384x384.png' },
+            { size: 512, name: 'icon-512x512.png' },
+            { size: 180, name: 'apple-touch-icon.png' },
+            { size: 32, name: 'favicon.png' }
+        ];
+
+        let generatedBlobs = [];
+
+        function updateStatus(message, isSuccess = true) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = isSuccess ? 'status success' : 'status error';
+        }
+
+        function createCalendarIcon(size) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = size;
+            canvas.height = size;
+
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, size);
+            gradient.addColorStop(0, '#3b72c4');
+            gradient.addColorStop(1, '#2d5a9f');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Calendar base
+            const calX = size * 0.15;
+            const calY = size * 0.25;
+            const calW = size * 0.7;
+            const calH = size * 0.6;
+            const cornerRadius = size * 0.08;
+            
+            // White calendar background
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, calX, calY, calW, calH, cornerRadius);
+            ctx.fill();
+
+            // Calendar header (dark blue)
+            const headerH = calH * 0.25;
+            ctx.fillStyle = '#1e3d6f';
+            roundRect(ctx, calX, calY, calW, headerH, cornerRadius);
+            ctx.fill();
+            
+            // Extend header to fill corners
+            ctx.fillRect(calX, calY + headerH - cornerRadius, calW, cornerRadius * 2);
+
+            // Binding rings
+            const ringW = size * 0.06;
+            const ringH = size * 0.15;
+            const ring1X = calX + calW * 0.18;
+            const ring2X = calX + calW * 0.76;
+            const ringY = calY - ringH * 0.4;
+            
+            ctx.strokeStyle = '#6b7280';
+            ctx.lineWidth = Math.max(2, size * 0.015);
+            
+            // Ring 1
+            roundRect(ctx, ring1X, ringY, ringW, ringH, ringW / 2);
+            ctx.stroke();
+            
+            // Ring 2
+            roundRect(ctx, ring2X, ringY, ringW, ringH, ringW / 2);
+            ctx.stroke();
+
+            // Ring holes
+            ctx.fillStyle = '#6b7280';
+            const holeRadius = size * 0.016;
+            ctx.beginPath();
+            ctx.arc(ring1X + ringW/2, ringY - holeRadius * 2, holeRadius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(ring2X + ringW/2, ringY - holeRadius * 2, holeRadius, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Calendar grid
+            const gridStartY = calY + headerH + calH * 0.1;
+            const cellSize = calW * 0.11;
+            const spacing = calW * 0.025;
+            
+            // Draw calendar cells
+            ctx.fillStyle = '#e5e7eb';
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < Math.min(7, 6 + (row === 0 ? 1 : 0)); col++) {
+                    const x = calX + col * (cellSize + spacing) + spacing;
+                    const y = gridStartY + row * (cellSize + spacing);
+                    
+                    if (row === 1 && col === 2) {
+                        // Today highlight (green)
+                        ctx.fillStyle = '#10b981';
+                        roundRect(ctx, x, y, cellSize, cellSize, cellSize * 0.1);
+                        ctx.fill();
+                        
+                        // Date number
+                        if (size >= 64) {
+                            ctx.fillStyle = '#ffffff';
+                            ctx.font = `bold ${Math.max(10, size * 0.05)}px Arial`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText('15', x + cellSize/2, y + cellSize/2);
+                        }
+                        ctx.fillStyle = '#e5e7eb'; // Reset for other cells
+                    } else {
+                        roundRect(ctx, x, y, cellSize, cellSize, cellSize * 0.1);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            return canvas;
+        }
+
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        function generateAllIcons() {
+            updateStatus('Generazione icone in corso...', true);
+            const previewContainer = document.getElementById('preview-container');
+            previewContainer.innerHTML = '';
+            generatedBlobs = [];
+
+            let completed = 0;
+            const total = iconSizes.length;
+
+            iconSizes.forEach(({ size, name }, index) => {
+                setTimeout(() => {
+                    try {
+                        const canvas = createCalendarIcon(size);
+                        
+                        canvas.toBlob((blob) => {
+                            if (blob) {
+                                generatedBlobs.push({ name, blob, size });
+                                
+                                // Create preview
+                                const preview = document.createElement('div');
+                                preview.className = 'icon-preview';
+                                
+                                const img = document.createElement('img');
+                                img.src = URL.createObjectURL(blob);
+                                img.width = Math.min(size, 100);
+                                img.height = Math.min(size, 100);
+                                img.alt = name;
+                                
+                                const label = document.createElement('div');
+                                label.textContent = `${name} (${size}x${size})`;
+                                
+                                const downloadLink = document.createElement('a');
+                                downloadLink.href = URL.createObjectURL(blob);
+                                downloadLink.download = name;
+                                downloadLink.textContent = 'Scarica';
+                                downloadLink.style.display = 'block';
+                                downloadLink.style.marginTop = '5px';
+                                downloadLink.style.color = '#2d5a9f';
+                                
+                                preview.appendChild(img);
+                                preview.appendChild(label);
+                                preview.appendChild(downloadLink);
+                                previewContainer.appendChild(preview);
+                                
+                                completed++;
+                                if (completed === total) {
+                                    updateStatus(`✅ Tutte le ${total} icone generate con successo!`, true);
+                                }
+                            }
+                        }, 'image/png');
+                        
+                    } catch (error) {
+                        console.error(`Error generating ${name}:`, error);
+                        completed++;
+                        if (completed === total) {
+                            updateStatus('Generazione completata con alcuni errori.', false);
+                        }
+                    }
+                }, index * 100); // Stagger generation
+            });
+        }
+
+        function downloadAllAsZip() {
+            if (generatedBlobs.length === 0) {
+                updateStatus('Genera prima le icone!', false);
+                return;
+            }
+
+            // Note: This would require a ZIP library like JSZip
+            updateStatus('Funzione ZIP non ancora implementata. Scarica le icone singolarmente.', false);
+            
+            // Alternative: trigger all downloads
+            generatedBlobs.forEach(({ name, blob }, index) => {
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = name;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                }, index * 500);
+            });
+            
+            updateStatus('Download multipli avviati...', true);
+        }
+
+        // Auto-generate on load
+        window.addEventListener('load', () => {
+            setTimeout(generateAllIcons, 500);
+        });
+    </script>
+</body>
+</html>

@@ -2,20 +2,42 @@
 require_once 'backend/config/config.php';
 require_once 'backend/utils/ActivityLogger.php';
 require_once 'backend/utils/Mailer.php';
+require_once 'backend/utils/ModulesHelper.php';
 
 $auth = Auth::getInstance();
 $auth->requireAuth();
 
 $user = $auth->getUser();
+$isSuperAdmin = $auth->isSuperAdmin();
 // Database instance handled by functions
 $logger = ActivityLogger::getInstance();
 $mailer = Mailer::getInstance();
 
 // Verifica azienda selezionata
 $aziendaId = $_SESSION['azienda_id'] ?? null;
-// Se non è super admin, deve avere azienda selezionata
-if (!$auth->isSuperAdmin() && !$aziendaId) {
-    redirect('seleziona-azienda.php');
+
+// Verifica accesso al modulo tickets
+if (!$isSuperAdmin) {
+    ModulesHelper::requireModule('tickets');
+}
+
+// Per super admin, gestisci filtro azienda
+$filter_azienda_id = null;
+$aziende_list = [];
+
+if ($isSuperAdmin) {
+    // Carica lista aziende per il filtro
+    $aziende_list = db_query("SELECT id, nome FROM aziende WHERE stato = 'attiva' ORDER BY nome")->fetchAll();
+    
+    // Se c'è un filtro azienda specifico nei GET
+    if (isset($_GET['azienda_filter'])) {
+        $filter_azienda_id = intval($_GET['azienda_filter']);
+    }
+} else {
+    // Utente normale deve avere un'azienda selezionata
+    if (!$aziendaId) {
+        redirect('seleziona-azienda.php');
+    }
 }
 
 // Gestione invio nuovo ticket
@@ -222,7 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         "Nuova risposta al ticket: {$ticket['codice']}",
                         "
                         <h3>Nuova risposta al ticket</h3>
-                        <p><strong>Ticket:</strong> {$ticket['codice']} - {$ticket['titolo']}</p>
+                        <p><strong>Ticket:</strong> {$ticket['codice']} - {$ticket['oggetto']}</p>
                         <p><strong>Risposta da:</strong> {$user['nome']} {$user['cognome']}</p>
                         <p><strong>Messaggio:</strong></p>
                         <p>$messaggio</p>
@@ -238,7 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     "Risposta ticket: {$ticket['codice']}",
                     "
                     <h3>Nuova risposta al ticket</h3>
-                    <p><strong>Ticket:</strong> {$ticket['codice']} - {$ticket['titolo']}</p>
+                    <p><strong>Ticket:</strong> {$ticket['codice']} - {$ticket['oggetto']}</p>
                     <p><strong>Risposta da:</strong> {$user['nome']} {$user['cognome']}</p>
                     <p><strong>Messaggio:</strong></p>
                     <p>$messaggio</p>
@@ -262,337 +284,31 @@ $pageTitle = 'Gestione Ticket';
 include 'components/header.php';
 ?>
 
+<!-- Clean Dashboard Styles -->
+<link rel="stylesheet" href="assets/css/dashboard-clean.css">
+
 <style>
-    .ticket-filters {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
-    }
-    
-    .ticket-filters .form-control {
-        min-width: 150px;
-        flex: 1;
-    }
-    
-    @media (max-width: 768px) {
-        .ticket-filters {
-            gap: 10px;
-        }
-        
-        .ticket-filters .form-control {
-            min-width: 120px;
-            font-size: 14px;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .ticket-filters {
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .ticket-filters .form-control {
-            min-width: auto;
-            width: 100%;
-        }
-    }
-    
-    .ticket-table {
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        overflow-x: auto;
-    }
-    
-    .ticket-table table {
-        width: 100%;
-        min-width: 800px;
-        border-collapse: collapse;
-    }
-    
-    .ticket-table th {
-        background: #f8f9fa;
-        padding: 15px;
-        text-align: left;
-        font-weight: 600;
-        border-bottom: 2px solid #dee2e6;
-        white-space: nowrap;
-    }
-    
-    .ticket-table td {
-        padding: 15px;
-        border-bottom: 1px solid #dee2e6;
-        vertical-align: top;
-    }
-    
-    .ticket-table tr:hover {
-        background: #f8f9fa;
-    }
-    
-    @media (max-width: 768px) {
-        .ticket-table {
-            margin: 0 -15px;
-            border-radius: 0;
-        }
-        
-        .ticket-table th,
-        .ticket-table td {
-            padding: 10px 8px;
-            font-size: 14px;
-        }
-        
-        .ticket-table .badge {
-            font-size: 10px;
-            padding: 2px 6px;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .ticket-table {
-            display: block;
-            overflow-x: auto;
-            white-space: nowrap;
-        }
-        
-        .ticket-table table {
-            min-width: 600px;
-        }
-        
-        .ticket-table th,
-        .ticket-table td {
-            padding: 8px 6px;
-            font-size: 12px;
-        }
-    }
-    
-    .badge {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 500;
-    }
-    
-    .badge-aperto { background: #d4edda; color: #155724; }
-    .badge-in-lavorazione { background: #fff3cd; color: #856404; }
-    .badge-chiuso { background: #f8d7da; color: #721c24; }
-    
-    .badge-alta { background: #f8d7da; color: #721c24; }
-    .badge-media { background: #fff3cd; color: #856404; }
-    .badge-bassa { background: #d4edda; color: #155724; }
-    
-    .form-container {
-        background: white;
-        padding: 30px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 20px;
-    }
-    
-    @media (max-width: 768px) {
-        .form-container {
-            padding: 20px;
-            margin: 0 -15px;
-            border-radius: 0;
-        }
-        
-        .form-row {
-            grid-template-columns: 1fr;
-            gap: 15px;
-        }
-    }
-    
-    .form-group {
-        margin-bottom: 20px;
-    }
-    
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
-        color: #333;
-    }
-    
-    .form-control {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 14px;
-    }
-    
-    .form-control:focus {
-        outline: none;
-        border-color: #2d5a9f;
-        box-shadow: 0 0 0 3px rgba(45, 90, 159, 0.1);
-    }
-    
-    textarea.form-control {
-        resize: vertical;
-        min-height: 100px;
-    }
-    
-    .destinatari-group {
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 10px;
-        max-height: 300px;
-        overflow-y: auto;
-        background: #f9f9f9;
-    }
-    
+    /* Additional page-specific styles */
     .destinatari-group label {
         display: block !important;
         padding: 8px 10px !important;
-        cursor: pointer;
         border-bottom: 1px solid #eee;
-        margin: 0;
-        transition: background 0.2s;
+        margin: 0 !important;
     }
     
-    .destinatari-group label:hover {
-        background: #f0f0f0;
+    .message-content {
+        color: #374151;
+        line-height: 1.6;
     }
     
-    .destinatari-group label:last-child {
-        border-bottom: none;
-    }
+    /* Custom badge colors for ticket states */
+    .badge-aperto { background: #d1fae5; color: #047857; }
+    .badge-in-lavorazione, .badge-in_lavorazione { background: #fef3c7; color: #92400e; }
+    .badge-chiuso { background: #fee2e2; color: #b91c1c; }
     
-    .destinatari-group input[type="checkbox"] {
-        margin-right: 10px;
-    }
-    
-    .destinatari-group .badge {
-        float: right;
-        margin-top: 2px;
-    }
-    
-    .ticket-detail {
-        background: white;
-        padding: 30px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-    }
-    
-    .ticket-info {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
-        padding-bottom: 30px;
-        border-bottom: 1px solid #dee2e6;
-    }
-    
-    @media (max-width: 768px) {
-        .ticket-detail {
-            padding: 20px;
-            margin: 0 -15px 20px;
-            border-radius: 0;
-        }
-        
-        .ticket-info {
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .ticket-detail {
-            padding: 15px;
-        }
-        
-        .ticket-info {
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-    }
-    
-    .ticket-messages {
-        margin-top: 30px;
-    }
-    
-    .message {
-        margin-bottom: 20px;
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border-left: 4px solid #2d5a9f;
-    }
-    
-    .message-header {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        font-size: 14px;
-        color: #666;
-    }
-    
-    .message-author {
-        font-weight: 600;
-        color: #333;
-    }
-    
-    .reply-form {
-        margin-top: 30px;
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 8px;
-    }
-    
-    .btn-group {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    
-    @media (max-width: 768px) {
-        .content-header {
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .content-header h1 {
-            font-size: 1.5rem;
-        }
-        
-        .header-actions {
-            width: 100%;
-        }
-        
-        .header-actions .btn {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .btn-group {
-            flex-direction: column;
-        }
-        
-        .btn-group .btn {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        
-        .message {
-            padding: 15px;
-        }
-        
-        .reply-form {
-            padding: 15px;
-        }
-    }
+    .badge-alta { background: #fee2e2; color: #b91c1c; }
+    .badge-media { background: #fef3c7; color: #92400e; }
+    .badge-bassa { background: #d1fae5; color: #047857; }
 </style>
 
 <div class="content-wrapper">
@@ -616,38 +332,54 @@ include 'components/header.php';
     
     <?php if ($action === 'list'): ?>
     <!-- Lista Ticket -->
-    <div class="content-header">
+    <div class="page-header">
         <h1><i class="fas fa-ticket-alt"></i> Gestione Ticket</h1>
-        <div class="header-actions">
-            <a href="tickets.php?action=nuovo" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nuovo Ticket
-            </a>
-        </div>
+        <div class="page-subtitle">Gestisci e monitora i ticket di supporto</div>
+    </div>
+    
+    <div class="action-bar">
+        <?php if ($isSuperAdmin && count($aziende_list) > 1): ?>
+        <select class="form-control" style="max-width: 250px;" onchange="filterByAzienda(this.value)">
+            <option value="">Tutte le aziende</option>
+            <?php foreach ($aziende_list as $azienda): ?>
+                <option value="<?php echo $azienda['id']; ?>" 
+                        <?php echo $filter_azienda_id == $azienda['id'] ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($azienda['nome']); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+        <?php endif; ?>
+        
+        <a href="tickets.php?action=nuovo" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuovo Ticket
+        </a>
     </div>
             
-            <div class="ticket-filters">
-                <select class="form-control" style="width: auto;" onchange="filterTickets(this.value, 'stato')">
-                    <option value="">Tutti gli stati</option>
-                    <option value="aperto">Aperti</option>
-                    <option value="in-lavorazione">In lavorazione</option>
-                    <option value="chiuso">Chiusi</option>
-                </select>
-                
-                <select class="form-control" style="width: auto;" onchange="filterTickets(this.value, 'priorita')">
-                    <option value="">Tutte le priorità</option>
-                    <option value="alta">Alta</option>
-                    <option value="media">Media</option>
-                    <option value="bassa">Bassa</option>
-                </select>
+            <div class="filters-section">
+                <div class="action-bar">
+                    <select class="form-control" style="max-width: 200px;" onchange="filterTickets(this.value, 'stato')">
+                        <option value="">Tutti gli stati</option>
+                        <option value="aperto">Aperti</option>
+                        <option value="in-lavorazione">In lavorazione</option>
+                        <option value="chiuso">Chiusi</option>
+                    </select>
+                    
+                    <select class="form-control" style="max-width: 200px;" onchange="filterTickets(this.value, 'priorita')">
+                        <option value="">Tutte le priorità</option>
+                        <option value="alta">Alta</option>
+                        <option value="media">Media</option>
+                        <option value="bassa">Bassa</option>
+                    </select>
+                </div>
             </div>
             
-            <div class="ticket-table">
-                <table>
+            <div class="content-card">
+                <table class="table-clean">
                     <thead>
                         <tr>
                             <th>Codice</th>
                             <th>Titolo</th>
-                            <?php if ($auth->isSuperAdmin()): ?>
+                            <?php if ($auth->isSuperAdmin() && !$filter_azienda_id): ?>
                                 <th>Azienda</th>
                             <?php endif; ?>
                             <th>Categoria</th>
@@ -662,7 +394,7 @@ include 'components/header.php';
                         <?php
                         // Query per i ticket
                         if ($auth->isSuperAdmin()) {
-                            // Super admin vede tutti i ticket
+                            // Super admin vede tutti i ticket o filtrati per azienda
                             $sql = "
                                 SELECT t.*, u.nome, u.cognome, a.nome as azienda_nome,
                                        (SELECT COUNT(*) FROM ticket_risposte WHERE ticket_id = t.id) as num_risposte,
@@ -670,7 +402,14 @@ include 'components/header.php';
                                 FROM tickets t
                                 JOIN utenti u ON t.utente_id = u.id
                                 LEFT JOIN aziende a ON t.azienda_id = a.id
-                                ORDER BY 
+                                WHERE 1=1";
+                            
+                            // Aggiungi filtro azienda se specificato
+                            if ($filter_azienda_id) {
+                                $sql .= " AND t.azienda_id = :filter_azienda_id";
+                            }
+                            
+                            $sql .= " ORDER BY 
                                     CASE t.stato 
                                         WHEN 'aperto' THEN 1 
                                         WHEN 'in-lavorazione' THEN 2 
@@ -684,9 +423,12 @@ include 'components/header.php';
                                     t.creato_il DESC
                             ";
                             
-                            $stmt = db_query($sql, [
-                                ':user_id_nonletti' => $user['id']
-                            ]);
+                            $params = [':user_id_nonletti' => $user['id']];
+                            if ($filter_azienda_id) {
+                                $params[':filter_azienda_id'] = $filter_azienda_id;
+                            }
+                            
+                            $stmt = db_query($sql, $params);
                         } else {
                             // Utenti normali vedono solo i ticket della loro azienda o dove sono destinatari
                             $sql = "
@@ -731,11 +473,11 @@ include 'components/header.php';
                                     <span class="badge badge-alta"><?php echo $ticket['non_letti']; ?> nuovo</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo htmlspecialchars($ticket['titolo']); ?></td>
-                            <?php if ($auth->isSuperAdmin()): ?>
+                            <td><?php echo htmlspecialchars($ticket['titolo'] ?? ''); ?></td>
+                            <?php if ($auth->isSuperAdmin() && !$filter_azienda_id): ?>
                                 <td><?php echo htmlspecialchars($ticket['azienda_nome'] ?? 'N/A'); ?></td>
                             <?php endif; ?>
-                            <td><?php echo ucfirst($ticket['categoria']); ?></td>
+                            <td><?php echo ucfirst($ticket['categoria'] ?? ''); ?></td>
                             <td>
                                 <span class="badge badge-<?php echo $ticket['priorita']; ?>">
                                     <?php echo ucfirst($ticket['priorita']); ?>
@@ -762,12 +504,15 @@ include 'components/header.php';
                         
                         <?php if (empty($tickets)): ?>
                         <tr>
-                            <td colspan="<?php echo $auth->isSuperAdmin() ? '9' : '8'; ?>" style="text-align: center; padding: 40px;">
-                                <i class="fas fa-inbox" style="font-size: 48px; color: #ddd; display: block; margin-bottom: 20px;"></i>
-                                <p style="color: #666;">Nessun ticket trovato</p>
-                                <a href="tickets.php?action=nuovo" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus"></i> Crea il primo ticket
-                                </a>
+                            <td colspan="<?php echo ($auth->isSuperAdmin() && !$filter_azienda_id) ? '9' : '8'; ?>">
+                                <div class="empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <h3>Nessun ticket trovato</h3>
+                                    <p>Non ci sono ticket da visualizzare al momento.</p>
+                                    <a href="tickets.php?action=nuovo" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Crea il primo ticket
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         <?php endif; ?>
@@ -777,11 +522,12 @@ include 'components/header.php';
             
     <?php elseif ($action === 'nuovo'): ?>
     <!-- Nuovo Ticket -->
-    <div class="content-header">
+    <div class="page-header">
         <h1><i class="fas fa-plus-circle"></i> Nuovo Ticket</h1>
+        <div class="page-subtitle">Crea un nuovo ticket di supporto</div>
     </div>
             
-            <div class="form-container">
+            <div class="content-card">
                 <form method="post" action="">
                     <input type="hidden" name="action" value="nuovo">
                     
@@ -981,20 +727,22 @@ include 'components/header.php';
             $risposte = $stmt->fetchAll();
             ?>
             
-    <div class="content-header">
+    <div class="page-header">
         <h1>
             <i class="fas fa-ticket-alt"></i> 
             <?php echo htmlspecialchars($ticket['codice']); ?> - 
-            <?php echo htmlspecialchars($ticket['titolo']); ?>
+            <?php echo htmlspecialchars($ticket['oggetto'] ?? $ticket['titolo'] ?? ''); ?>
         </h1>
-        <div class="header-actions">
-            <a href="tickets.php" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Torna alla lista
-            </a>
-        </div>
+        <div class="page-subtitle">Dettagli e conversazione del ticket</div>
+    </div>
+    
+    <div class="action-bar">
+        <a href="tickets.php" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Torna alla lista
+        </a>
     </div>
             
-            <div class="ticket-detail">
+            <div class="content-card">
                 <div class="ticket-info">
                     <div>
                         <strong>Stato:</strong><br>
@@ -1045,7 +793,7 @@ include 'components/header.php';
                 </div>
                 <?php endif; ?>
                 
-                <div class="message">
+                <div class="content-card" style="background: #f9fafb; border-left: 4px solid #2d5a9f;">
                     <div class="message-header">
                         <div class="message-author">
                             <?php echo htmlspecialchars($ticket['creatore_nome'] . ' ' . $ticket['creatore_cognome']); ?>
@@ -1061,9 +809,9 @@ include 'components/header.php';
                 
                 <?php if (!empty($risposte)): ?>
                 <div class="ticket-messages">
-                    <h3>Conversazione</h3>
+                    <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 1rem;">Conversazione</h3>
                     <?php foreach ($risposte as $risposta): ?>
-                    <div class="message">
+                    <div class="content-card" style="background: #f9fafb; border-left: 4px solid #2d5a9f;">
                         <div class="message-header">
                             <div class="message-author">
                                 <?php echo htmlspecialchars($risposta['nome'] . ' ' . $risposta['cognome']); ?>
@@ -1088,8 +836,8 @@ include 'components/header.php';
                 
                 if ($ticket['stato'] !== 'chiuso' && $canReply): 
                 ?>
-                <div class="reply-form">
-                    <h3>Rispondi al ticket</h3>
+                <div class="content-card" style="background: #f9fafb;">
+                    <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 1rem;">Rispondi al ticket</h3>
                     <form method="post" action="">
                         <input type="hidden" name="action" value="risposta">
                         <input type="hidden" name="ticket_id" value="<?php echo $ticketId; ?>">
@@ -1100,8 +848,8 @@ include 'components/header.php';
                         </div>
                         
                         <div class="form-group">
-                            <label>
-                                <input type="checkbox" name="chiudi_ticket" value="1">
+                            <label style="font-weight: 500; cursor: pointer;">
+                                <input type="checkbox" name="chiudi_ticket" value="1" style="margin-right: 8px;">
                                 Chiudi il ticket dopo questa risposta
                             </label>
                         </div>
@@ -1111,7 +859,7 @@ include 'components/header.php';
                                 <i class="fas fa-reply"></i> Invia Risposta
                             </button>
                             <?php if ($auth->isSuperAdmin() || $ticket['utente_id'] == $user['id']): ?>
-                            <button type="button" class="btn btn-warning" onclick="cambiaStato('in-lavorazione')">
+                            <button type="button" class="btn btn-secondary" onclick="cambiaStato('in-lavorazione')">
                                 <i class="fas fa-cog"></i> In Lavorazione
                             </button>
                             <?php endif; ?>
@@ -1162,6 +910,17 @@ include 'components/header.php';
         
         // Ricarica la pagina con l'azienda selezionata per aggiornare i destinatari
         window.location.href = 'tickets.php?action=nuovo&azienda_id=' + aziendaId;
+    }
+    
+    // Funzione per filtrare per azienda (solo super admin)
+    function filterByAzienda(azienda_id) {
+        const url = new URL(window.location.href);
+        if (azienda_id) {
+            url.searchParams.set('azienda_filter', azienda_id);
+        } else {
+            url.searchParams.delete('azienda_filter');
+        }
+        window.location.href = url.toString();
     }
 </script>
 

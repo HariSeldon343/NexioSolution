@@ -5,9 +5,9 @@ require_once 'backend/functions/aziende-functions.php';
 $auth = Auth::getInstance();
 $auth->requireAuth();
 
-// Solo super admin può accedere
-if (!$auth->isSuperAdmin()) {
-    $_SESSION['error'] = "Accesso negato. Solo il Super Admin può gestire le aziende.";
+// Solo super admin e utenti speciali possono accedere
+if (!$auth->hasElevatedPrivileges()) {
+    $_SESSION['error'] = "Accesso negato. Solo utenti con privilegi elevati possono gestire le aziende.";
     redirect(APP_PATH . '/dashboard.php');
 }
 
@@ -81,27 +81,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Gestione upload logo
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = ROOT_PATH . '/uploads/loghi/';
+            // Su Windows, usa __DIR__ che è più affidabile
+            $uploadDir = __DIR__ . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'loghi' . DIRECTORY_SEPARATOR;
+            
+            // Crea directory se non esiste
             if (!file_exists($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
+                // Su Windows, ignora il parametro mode di mkdir
+                if (!mkdir($uploadDir, 0777, true)) {
+                    $errors[] = "Impossibile creare la directory di upload: " . $uploadDir;
+                }
             }
             
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            $maxSize = 2 * 1024 * 1024; // 2MB
-            
-            if (!in_array($_FILES['logo']['type'], $allowedTypes)) {
-                $errors[] = "Formato logo non supportato. Sono consentiti: JPEG, PNG, GIF, WebP";
-            } elseif ($_FILES['logo']['size'] > $maxSize) {
-                $errors[] = "Il logo deve essere massimo 2MB";
+            // Verifica che la directory sia scrivibile
+            if (!is_writable($uploadDir)) {
+                $errors[] = "La directory di upload non è scrivibile: " . $uploadDir;
             } else {
-                $extension = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
-                $fileName = 'logo_' . ($aziendaId ?: 'new_' . time()) . '.' . $extension;
-                $uploadPath = $uploadDir . $fileName;
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                $maxSize = 2 * 1024 * 1024; // 2MB
                 
-                if (move_uploaded_file($_FILES['logo']['tmp_name'], $uploadPath)) {
-                    $data['logo_path'] = '/uploads/loghi/' . $fileName;
+                if (!in_array($_FILES['logo']['type'], $allowedTypes)) {
+                    $errors[] = "Formato logo non supportato. Sono consentiti: JPEG, PNG, GIF, WebP";
+                } elseif ($_FILES['logo']['size'] > $maxSize) {
+                    $errors[] = "Il logo deve essere massimo 2MB";
                 } else {
-                    $errors[] = "Errore durante il caricamento del logo";
+                    $extension = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
+                    $fileName = 'logo_' . ($aziendaId ?: 'new_' . time()) . '.' . $extension;
+                    $uploadPath = $uploadDir . $fileName;
+                    
+                    // Debug info
+                    error_log("Upload attempt - Source: " . $_FILES['logo']['tmp_name']);
+                    error_log("Upload attempt - Destination: " . $uploadPath);
+                    
+                    if (move_uploaded_file($_FILES['logo']['tmp_name'], $uploadPath)) {
+                        $data['logo_path'] = '/uploads/loghi/' . $fileName;
+                    } else {
+                        $uploadError = error_get_last();
+                        $errors[] = "Errore durante il caricamento del logo. Dettagli: " . ($uploadError['message'] ?? 'Errore sconosciuto');
+                        error_log("Upload failed: " . print_r($uploadError, true));
+                    }
                 }
             }
         }
@@ -132,6 +149,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (empty($errors)) {
             try {
+                db_connection()->beginTransaction();
+                
                 if ($action === 'nuovo') {
                     $data['creata_da'] = $user['id'];
                     db_insert('aziende', $data);
@@ -141,8 +160,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     db_update('aziende', $data, 'id = :id', ['id' => $aziendaId]);
                     $_SESSION['success'] = "Azienda aggiornata con successo!";
                 }
+                
+                // Gestione moduli (solo per Super Admin)
+                if ($auth->isSuperAdmin()) {
+                    // Prima rimuovi tutti i moduli esistenti per l'azienda
+                    db_query("DELETE FROM moduli_azienda WHERE azienda_id = ?", [$aziendaId]);
+                    
+                    // Poi aggiungi i moduli selezionati
+                    $moduli_selezionati = $_POST['moduli'] ?? [];
+                    if (!empty($moduli_selezionati)) {
+                        foreach ($moduli_selezionati as $modulo_id) {
+                            db_query("
+                                INSERT INTO moduli_azienda (azienda_id, modulo_id, abilitato, abilitato_da) 
+                                VALUES (?, ?, 1, ?)
+                            ", [$aziendaId, $modulo_id, $user['id']]);
+                        }
+                    }
+                }
+                
+                db_connection()->commit();
                 redirect(APP_PATH . '/aziende.php?action=view&id=' . $aziendaId);
             } catch (Exception $e) {
+                if (db_connection()->inTransaction()) {
+                    db_connection()->rollback();
+                }
                 $error = "Errore durante il salvataggio: " . $e->getMessage();
             }
         } else {
@@ -221,6 +262,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['error'] = "Seleziona un utente e un ruolo validi.";
             redirect(APP_PATH . '/aziende.php?action=view&id=' . $aziendaId);
         }
+    } elseif ($action === 'update_modules' && $aziendaId) {
+        // Aggiorna moduli azienda
+        $moduli_selezionati = $_POST['moduli'] ?? [];
+        
+        try {
+            // Inizia transazione
+            db_connection()->beginTransaction();
+            
+            // Carica moduli attualmente attivi
+            $stmt = db_query("SELECT modulo_id FROM aziende_moduli WHERE azienda_id = :azienda_id AND attivo = 1", 
+                           ['azienda_id' => $aziendaId]);
+            $moduli_attuali = array_column($stmt->fetchAll(), 'modulo_id');
+            
+            // Moduli da aggiungere
+            $da_aggiungere = array_diff($moduli_selezionati, $moduli_attuali);
+            
+            // Moduli da disattivare
+            $da_disattivare = array_diff($moduli_attuali, $moduli_selezionati);
+            
+            // Aggiungi nuovi moduli
+            foreach ($da_aggiungere as $modulo_id) {
+                // Verifica se esiste già un record disattivato
+                $stmt = db_query("SELECT id FROM aziende_moduli WHERE azienda_id = :azienda_id AND modulo_id = :modulo_id", 
+                               ['azienda_id' => $aziendaId, 'modulo_id' => $modulo_id]);
+                $existing = $stmt->fetch();
+                
+                if ($existing) {
+                    // Riattiva il modulo esistente
+                    db_update('aziende_moduli', 
+                            ['attivo' => 1, 'data_attivazione' => date('Y-m-d H:i:s'), 'attivato_da' => $user['id']], 
+                            'id = :id', 
+                            ['id' => $existing['id']]);
+                } else {
+                    // Crea nuovo record
+                    db_insert('aziende_moduli', [
+                        'azienda_id' => $aziendaId,
+                        'modulo_id' => $modulo_id,
+                        'attivo' => 1,
+                        'attivato_da' => $user['id']
+                    ]);
+                }
+            }
+            
+            // Disattiva moduli rimossi
+            foreach ($da_disattivare as $modulo_id) {
+                db_update('aziende_moduli', 
+                        ['attivo' => 0, 'data_disattivazione' => date('Y-m-d H:i:s'), 'disattivato_da' => $user['id']], 
+                        'azienda_id = :azienda_id AND modulo_id = :modulo_id', 
+                        ['azienda_id' => $aziendaId, 'modulo_id' => $modulo_id]);
+            }
+            
+            // Conferma transazione
+            db_connection()->commit();
+            
+            $_SESSION['success'] = "Moduli aggiornati con successo!";
+            
+            // Log attività
+            $logger = ActivityLogger::getInstance();
+            $logger->log('azienda', 'aggiornamento_moduli', $aziendaId, 
+                        ['aggiunti' => count($da_aggiungere), 'rimossi' => count($da_disattivare)]);
+            
+        } catch (Exception $e) {
+            db_connection()->rollBack();
+            $_SESSION['error'] = "Errore durante l'aggiornamento dei moduli: " . $e->getMessage();
+        }
+        
+        redirect(APP_PATH . '/aziende.php?action=view&id=' . $aziendaId);
     } elseif ($action === 'remove_user' && $aziendaId) {
         // Rimuovi utente dall'azienda
         $utenteId = $_POST['utente_id'] ?? null;
@@ -237,19 +345,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Initialize variables to avoid undefined variable issues
+$azienda = null;
+$utentiAzienda = [];
+$responsabile_column_exists = false;
+
 // Carica dati per le varie azioni
 if ($action === 'view' && $aziendaId) {
     // Dettaglio azienda - verifica se la colonna responsabile_id esiste
-    $responsabile_column_exists = false;
+    
     try {
         // Prova a selezionare con responsabile_id
         $stmt = db_query("SELECT *, responsabile_id FROM aziende WHERE id = :id", ['id' => $aziendaId]);
-        $azienda = $stmt->fetch();
+        $azienda = $stmt->fetch(PDO::FETCH_ASSOC); // Use FETCH_ASSOC for consistency
         $responsabile_column_exists = true;
     } catch (Exception $e) {
         // Se fallisce, prova senza responsabile_id
         $stmt = db_query("SELECT * FROM aziende WHERE id = :id", ['id' => $aziendaId]);
-        $azienda = $stmt->fetch();
+        $azienda = $stmt->fetch(PDO::FETCH_ASSOC); // Use FETCH_ASSOC for consistency
         if ($azienda) {
             $azienda['responsabile_id'] = null;
         }
@@ -271,22 +384,59 @@ if ($action === 'view' && $aziendaId) {
     ", ['azienda_id' => $aziendaId]);
     $utentiAzienda = $stmt->fetchAll();
     
-    // Carica statistiche
-    $stmt = db_query("SELECT * FROM vista_statistiche_aziende WHERE id = :id", ['id' => $aziendaId]);
-    $stats = $stmt->fetch();
+    // Carica statistiche con query dirette
+    $stats = [];
+    try {
+        // Conta utenti attivi per l'azienda
+        $stmt = db_query("SELECT COUNT(DISTINCT ua.utente_id) as numero_utenti FROM utenti_aziende ua WHERE ua.azienda_id = :id AND ua.attivo = 1", ['id' => $aziendaId]);
+        $utenti_result = $stmt->fetch();
+        $stats['numero_utenti'] = $utenti_result['numero_utenti'] ?? 0;
+        
+        // Conta referenti attivi per l'azienda  
+        $stmt = db_query("SELECT COUNT(*) as numero_referenti FROM referenti WHERE azienda_id = :id AND attivo = 1", ['id' => $aziendaId]);
+        $referenti_result = $stmt->fetch();
+        $stats['numero_referenti'] = $referenti_result['numero_referenti'] ?? 0;
+        
+        // Conta documenti per l'azienda
+        $stmt = db_query("SELECT COUNT(*) as numero_documenti FROM documenti WHERE azienda_id = :id", ['id' => $aziendaId]);
+        $documenti_result = $stmt->fetch();
+        $stats['numero_documenti'] = $documenti_result['numero_documenti'] ?? 0;
+        
+        // Conta eventi per l'azienda
+        $stmt = db_query("SELECT COUNT(*) as numero_eventi FROM eventi WHERE azienda_id = :id", ['id' => $aziendaId]);
+        $eventi_result = $stmt->fetch();
+        $stats['numero_eventi'] = $eventi_result['numero_eventi'] ?? 0;
+        
+        // Conta tickets aperti per l'azienda
+        $stmt = db_query("SELECT COUNT(*) as tickets_aperti FROM tickets WHERE azienda_id = :id AND stato IN ('aperto', 'in_lavorazione')", ['id' => $aziendaId]);
+        $tickets_result = $stmt->fetch();
+        $stats['tickets_aperti'] = $tickets_result['tickets_aperti'] ?? 0;
+        
+    } catch (Exception $e) {
+        error_log("Errore nel caricamento statistiche azienda {$aziendaId}: " . $e->getMessage());
+        $stats = [
+            'numero_utenti' => 0,
+            'numero_referenti' => 0, 
+            'numero_documenti' => 0,
+            'numero_eventi' => 0,
+            'tickets_aperti' => 0
+        ];
+    }
     
 } elseif ($action === 'edit' && $aziendaId) {
     // Modifica azienda - verifica se la colonna responsabile_id esiste
     $responsabile_column_exists = false;
+    $azienda = null; // Initialize to avoid undefined variable issues
+    
     try {
         // Prova a selezionare con responsabile_id
         $stmt = db_query("SELECT *, responsabile_id FROM aziende WHERE id = :id", ['id' => $aziendaId]);
-        $azienda = $stmt->fetch();
+        $azienda = $stmt->fetch(PDO::FETCH_ASSOC); // Use FETCH_ASSOC to ensure array format
         $responsabile_column_exists = true;
     } catch (Exception $e) {
         // Se fallisce, prova senza responsabile_id
         $stmt = db_query("SELECT * FROM aziende WHERE id = :id", ['id' => $aziendaId]);
-        $azienda = $stmt->fetch();
+        $azienda = $stmt->fetch(PDO::FETCH_ASSOC); // Use FETCH_ASSOC to ensure array format
         if ($azienda) {
             $azienda['responsabile_id'] = null;
         }
@@ -297,37 +447,122 @@ if ($action === 'view' && $aziendaId) {
         $_SESSION['error'] = "Azienda non trovata.";
         redirect(APP_PATH . '/aziende.php');
     }
+    
+    // Debug: Log the loaded company data to verify it's correct
+    error_log("Edit Company Data Loaded: " . json_encode($azienda));
+    
+    // Ensure $azienda is properly defined for form use
+    if (!is_array($azienda)) {
+        $_SESSION['error'] = "Errore nel caricamento dati azienda.";
+        redirect(APP_PATH . '/aziende.php');
+    }
 } else {
-    // Lista aziende - verifica se la colonna responsabile_id esiste
+    // Lista aziende - verifica se la colonna responsabile_id esiste e carica statistiche
+    // Clear any potential caching issues
     $responsabile_column_exists = false;
+    $aziende = [];
+    
     try {
-        // Prova a selezionare con responsabile_id
-        $stmt = db_query("
-            SELECT a.*, a.responsabile_id, v.numero_utenti, v.numero_documenti, v.numero_eventi, v.tickets_aperti
-            FROM aziende a
-            LEFT JOIN vista_statistiche_aziende v ON a.id = v.id
-            WHERE a.stato != 'cancellata'
-            ORDER BY a.nome
-        ");
-        $aziende = $stmt->fetchAll();
-        $responsabile_column_exists = true;
-    } catch (Exception $e) {
-        // Se fallisce, prova senza responsabile_id
-        $stmt = db_query("
-            SELECT a.*, v.numero_utenti, v.numero_documenti, v.numero_eventi, v.tickets_aperti
-            FROM aziende a
-            LEFT JOIN vista_statistiche_aziende v ON a.id = v.id
-            WHERE a.stato != 'cancellata'
-            ORDER BY a.nome
-        ");
-        $aziende = $stmt->fetchAll();
+        // First check if responsabile_id column exists
+        $check_stmt = db_query("SHOW COLUMNS FROM aziende LIKE 'responsabile_id'");
+        $responsabile_column_exists = $check_stmt && $check_stmt->fetch();
         
-        // Imposta responsabile_id a null per tutte le aziende
-        foreach ($aziende as &$azienda) {
-            $azienda['responsabile_id'] = null;
+        // Build query based on column existence - use explicit SELECT to avoid duplicates
+        if ($responsabile_column_exists) {
+            $query = "SELECT a.id, a.nome, a.ragione_sociale, a.partita_iva, a.codice_fiscale, a.indirizzo, a.citta, a.cap, a.provincia, a.telefono, a.email, a.pec, a.settore, a.numero_dipendenti, a.stato, a.note, a.max_referenti, a.logo_path, a.data_creazione, a.responsabile_id FROM aziende a WHERE a.stato = 'attiva' ORDER BY a.nome";
+        } else {
+            $query = "SELECT a.id, a.nome, a.ragione_sociale, a.partita_iva, a.codice_fiscale, a.indirizzo, a.citta, a.cap, a.provincia, a.telefono, a.email, a.pec, a.settore, a.numero_dipendenti, a.stato, a.note, a.max_referenti, a.logo_path, a.data_creazione FROM aziende a WHERE a.stato = 'attiva' ORDER BY a.nome";
         }
+        
+        $stmt = db_query($query);
+        $aziende_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Remove any potential duplicates by ID - ensure unique companies only
+        $aziende = [];
+        $seen_ids = [];
+        foreach ($aziende_raw as $company_item) {
+            if (!in_array($company_item['id'], $seen_ids)) {
+                $seen_ids[] = $company_item['id'];
+                if (!$responsabile_column_exists) {
+                    $company_item['responsabile_id'] = null;
+                }
+                $aziende[] = $company_item;
+            }
+        }
+        
+    } catch (Exception $e) {
+        error_log("Error loading companies: " . $e->getMessage());
+        $aziende = [];
         $responsabile_column_exists = false;
     }
+    
+    // Load statistics for each company with separate queries - avoid reference issues
+    $aziende_with_stats = [];
+    foreach ($aziende as $azienda_item) {
+        $azienda = $azienda_item; // Create a copy to avoid reference issues
+        try {
+            // Count active users for company
+            $stmt = db_query("SELECT COUNT(DISTINCT ua.utente_id) as numero_utenti FROM utenti_aziende ua WHERE ua.azienda_id = ? AND ua.attivo = 1", [$azienda['id']]);
+            $utenti_result = $stmt->fetch(PDO::FETCH_ASSOC);
+            $azienda['numero_utenti'] = intval($utenti_result['numero_utenti'] ?? 0);
+            
+            // Count active referenti for company - handle table existence
+            try {
+                $stmt = db_query("SELECT COUNT(*) as numero_referenti FROM referenti_aziende WHERE azienda_id = ? AND attivo = 1", [$azienda['id']]);
+                $referenti_result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $azienda['numero_referenti'] = intval($referenti_result['numero_referenti'] ?? 0);
+            } catch (Exception $ref_e) {
+                // Fallback to legacy referenti table if referenti_aziende doesn't exist
+                try {
+                    $stmt = db_query("SELECT COUNT(*) as numero_referenti FROM referenti WHERE azienda_id = ? AND attivo = 1", [$azienda['id']]);
+                    $referenti_result = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $azienda['numero_referenti'] = intval($referenti_result['numero_referenti'] ?? 0);
+                } catch (Exception $ref_e2) {
+                    $azienda['numero_referenti'] = 0;
+                }
+            }
+            
+            // Count documents for company
+            try {
+                $stmt = db_query("SELECT COUNT(*) as numero_documenti FROM documenti WHERE azienda_id = ?", [$azienda['id']]);
+                $documenti_result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $azienda['numero_documenti'] = intval($documenti_result['numero_documenti'] ?? 0);
+            } catch (Exception $doc_e) {
+                $azienda['numero_documenti'] = 0;
+            }
+            
+            // Count events for company
+            try {
+                $stmt = db_query("SELECT COUNT(*) as numero_eventi FROM eventi WHERE azienda_id = ?", [$azienda['id']]);
+                $eventi_result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $azienda['numero_eventi'] = intval($eventi_result['numero_eventi'] ?? 0);
+            } catch (Exception $ev_e) {
+                $azienda['numero_eventi'] = 0;
+            }
+            
+            // Count open tickets for company
+            try {
+                $stmt = db_query("SELECT COUNT(*) as tickets_aperti FROM tickets WHERE azienda_id = ? AND stato IN ('aperto', 'in_lavorazione')", [$azienda['id']]);
+                $tickets_result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $azienda['tickets_aperti'] = intval($tickets_result['tickets_aperti'] ?? 0);
+            } catch (Exception $tick_e) {
+                $azienda['tickets_aperti'] = 0;
+            }
+            
+        } catch (Exception $e) {
+            error_log("Error loading stats for company {$azienda['id']}: " . $e->getMessage());
+            $azienda['numero_utenti'] = 0;
+            $azienda['numero_referenti'] = 0;
+            $azienda['numero_documenti'] = 0;
+            $azienda['numero_eventi'] = 0;
+            $azienda['tickets_aperti'] = 0;
+        }
+        
+        $aziende_with_stats[] = $azienda;
+    }
+    
+    // Replace the original array with the one including stats
+    $aziende = $aziende_with_stats;
 }
 
 $pageTitle = 'Gestione Aziende';
@@ -335,6 +570,7 @@ require_once 'components/header.php';
 ?>
 
 <style>
+/* Page header styles moved to main style.css */
     /* Variabili CSS Nexio */
     :root {
         --primary-color: #2d5a9f;
@@ -353,24 +589,7 @@ require_once 'components/header.php';
         color: var(--text-primary);
     }
 
-    .content-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-    
-    .content-header h1 {
-        margin: 0;
-        color: var(--text-primary);
-        font-size: 1.875rem;
-        font-weight: 700;
-    }
+    /* Using page-header from dashboard instead of content-header */
     
     .btn {
         padding: 0.75rem 1.5rem;
@@ -579,20 +798,7 @@ require_once 'components/header.php';
         margin-bottom: 2rem;
     }
     
-    .stat-card {
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        padding: 1.5rem;
-        text-align: center;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        transition: all 0.3s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-    }
+    /* Stat card styles moved to dashboard-clean.css */
     
     .aziende-grid {
         display: grid;
@@ -602,16 +808,16 @@ require_once 'components/header.php';
     }
     
     .azienda-card {
-        background: var(--bg-secondary);
-        border-radius: 12px;
+        background: white;
+        border-radius: 8px;
         padding: 20px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        border: 1px solid var(--border-color);
-        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
     }
     
     .azienda-card:hover {
-        box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         transform: translateY(-2px);
     }
     
@@ -695,11 +901,6 @@ require_once 'components/header.php';
     }
     
     @media (max-width: 768px) {
-        .content-header {
-            flex-direction: column;
-            gap: 1rem;
-            text-align: center;
-        }
         
         .form-row {
             grid-template-columns: 1fr;
@@ -715,17 +916,56 @@ require_once 'components/header.php';
     }
 </style>
 
+<?php
+// Ensure $azienda is properly initialized for forms
+if ($action === 'nuovo' && !isset($azienda)) {
+    $azienda = []; // Initialize empty array for new company form
+} elseif ($action === 'edit' && !isset($azienda)) {
+    // This should not happen if edit logic above worked, but safety check
+    $_SESSION['error'] = "Errore nel caricamento dati azienda per modifica.";
+    redirect(APP_PATH . '/aziende.php');
+}
+?>
+
+<div class="content-wrapper">
+    <?php if ($action === 'nuovo' || $action === 'edit'): ?>
+    <!-- Form Azienda Header -->
+    <div class="page-header">
+        <h1><i class="fas fa-building"></i> <?php echo $action === 'nuovo' ? 'Nuova Azienda' : 'Modifica Azienda'; ?></h1>
+        <div class="page-subtitle">Inserisci o modifica i dati dell'azienda</div>
+    </div>
+    
+    <?php elseif ($action === 'view' && $azienda): ?>
+    <!-- Dettaglio Azienda Header -->
+    <div class="page-header">
+        <h1><i class="fas fa-building"></i> <?php echo htmlspecialchars($azienda['nome']); ?></h1>
+        <div class="page-subtitle">Dettagli e statistiche dell'azienda</div>
+    </div>
+    
+    <?php else: ?>
+    <!-- Lista Aziende Header -->
+    <div class="page-header">
+        <h1><i class="fas fa-building"></i> Gestione Aziende</h1>
+        <div class="page-subtitle">Amministra le aziende del sistema</div>
+    </div>
+    
+    <!-- Action button moved outside header -->
+    <div style="margin-bottom: 2rem;">
+        <a href="<?php echo APP_PATH; ?>/aziende.php?action=nuovo" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuova Azienda
+        </a>
+    </div>
+    
+    <?php endif; ?>
+
 <?php if ($action === 'nuovo' || $action === 'edit'): ?>
     <!-- Form Azienda -->
-    <div class="content-header">
-        <h1><i class="fas fa-building"></i> <?php echo $action === 'nuovo' ? 'Nuova Azienda' : 'Modifica Azienda'; ?></h1>
-    </div>
     
     <?php if (isset($error)): ?>
         <div class="alert alert-error"><?php echo $error; ?></div>
     <?php endif; ?>
     
-    <div class="form-container">
+    <div class="content-card">
         <form method="post" action="" enctype="multipart/form-data">
             <div class="form-row">
                 <div class="form-group">
@@ -886,6 +1126,53 @@ require_once 'components/header.php';
                 <textarea id="note" name="note" rows="3"><?php echo htmlspecialchars($_POST['note'] ?? $azienda['note'] ?? ''); ?></textarea>
             </div>
             
+            <?php if ($auth->isSuperAdmin()): ?>
+            <!-- Sezione Moduli Abilitati (solo per Super Admin) -->
+            <div class="form-section" style="margin-top: 30px; padding: 20px; background: #f3f4f6; border-radius: 8px;">
+                <h3 style="margin-bottom: 15px;"><i class="fas fa-puzzle-piece"></i> Moduli Abilitati</h3>
+                <p style="color: #6b7280; margin-bottom: 20px;">Seleziona i moduli che saranno disponibili per questa azienda.</p>
+                
+                <?php
+                // Carica solo i moduli che devono essere controllati manualmente
+                $stmt = db_query("
+                    SELECT * FROM moduli_sistema 
+                    WHERE attivo = 1 
+                    AND codice IN ('calendario', 'tickets', 'conformita_normativa', 'nexio_ai')
+                    ORDER BY ordine, nome
+                ");
+                $moduli_disponibili = $stmt->fetchAll();
+                
+                // Se stiamo modificando, carica moduli attivi per l'azienda
+                $moduli_attivi_ids = [];
+                if ($action === 'edit' && $aziendaId) {
+                    $stmt = db_query("
+                        SELECT modulo_id 
+                        FROM moduli_azienda 
+                        WHERE azienda_id = ? AND abilitato = 1
+                    ", [$aziendaId]);
+                    $moduli_attivi_ids = array_column($stmt->fetchAll(), 'modulo_id');
+                }
+                ?>
+                
+                <div style="display: grid; gap: 10px;">
+                    <?php foreach ($moduli_disponibili as $modulo): ?>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s;">
+                        <input type="checkbox" name="moduli[]" value="<?php echo $modulo['id']; ?>" 
+                               <?php echo in_array($modulo['id'], $moduli_attivi_ids) ? 'checked' : ''; ?>
+                               style="width: 18px; height: 18px;">
+                        <div style="background: #667eea; color: white; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                            <i class="<?php echo $modulo['icona']; ?>"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500;"><?php echo htmlspecialchars($modulo['nome']); ?></div>
+                            <div style="font-size: 12px; color: #6b7280;"><?php echo htmlspecialchars($modulo['descrizione']); ?></div>
+                        </div>
+                    </label>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-save"></i> <?php echo $action === 'nuovo' ? 'Crea Azienda' : 'Salva Modifiche'; ?>
@@ -897,25 +1184,18 @@ require_once 'components/header.php';
     
 <?php elseif ($action === 'view' && $azienda): ?>
     <!-- Dettaglio Azienda -->
-    <div class="content-header">
-        <h1><i class="fas fa-building"></i> <?php echo htmlspecialchars($azienda['nome']); ?></h1>
-        <div class="header-actions">
-            <a href="<?php echo APP_PATH; ?>/referenti.php?azienda_id=<?php echo $azienda['id']; ?>" class="btn btn-primary">
-                <i>👥</i> Gestisci Referenti
-            </a>
-            <a href="<?php echo APP_PATH; ?>/esporta-fascicolo.php?azienda_id=<?php echo $azienda['id']; ?>" class="btn btn-primary">
-                <i class="fas fa-file-pdf"></i> Fascicolo PDF
-            </a>
-            <a href="<?php echo APP_PATH; ?>/aziende.php?action=edit&id=<?php echo $azienda['id']; ?>" class="btn btn-secondary">
-                <i class="fas fa-edit"></i> Modifica
-            </a>
-            <button type="button" class="btn btn-danger" onclick="deleteAzienda(<?php echo $azienda['id']; ?>, '<?php echo htmlspecialchars($azienda['nome']); ?>')">
-                <i class="fas fa-trash"></i> Elimina Azienda
-                </button>
-            <a href="<?php echo APP_PATH; ?>/aziende.php" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Torna alla lista
-            </a>
-        </div>
+    <div class="action-bar" style="margin-bottom: 1.5rem;">
+        <a href="<?php echo APP_PATH; ?>/referenti.php?azienda_id=<?php echo $azienda['id']; ?>" class="btn btn-primary">
+            <i class="fas fa-users"></i> Gestisci Referenti
+        </a>
+        <a href="<?php echo APP_PATH; ?>/aziende.php?action=edit&id=<?php echo $azienda['id']; ?>" class="btn btn-secondary">
+            <i class="fas fa-edit"></i> Modifica Azienda
+        </a>
+        <?php if ($auth->isSuperAdmin()): ?>
+        <button type="button" class="btn btn-danger" onclick="confirmDeleteAzienda(<?php echo $azienda['id']; ?>, '<?php echo htmlspecialchars($azienda['nome']); ?>')">
+            <i class="fas fa-trash"></i> Elimina Azienda
+        </button>
+        <?php endif; ?>
     </div>
     
     <?php if (isset($_SESSION['success'])): ?>
@@ -931,7 +1211,7 @@ require_once 'components/header.php';
     <?php endif; ?>
     
     <!-- Informazioni Azienda -->
-    <div class="form-container">
+    <div class="content-card">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
             <h2 style="margin: 0;">Informazioni Azienda</h2>
             <?php if (isset($azienda['logo_path']) && !empty($azienda['logo_path'])): ?>
@@ -1055,8 +1335,8 @@ require_once 'components/header.php';
     <!-- Statistiche -->
     <div class="stats-grid" style="margin-top: 30px;">
         <div class="stat-card">
-            <div class="stat-icon" style="background: #2d5a9f; color: white; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 15px;">
-                👥
+            <div class="stat-icon" style="background: #dbeafe; color: #1e40af;">
+                <i class="fas fa-users"></i>
             </div>
             <div class="stat-value" style="font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 5px;">
                 <?php echo $stats['numero_utenti'] ?? 0; ?>
@@ -1065,12 +1345,12 @@ require_once 'components/header.php';
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon" style="background: #2a5a9f; color: white; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 15px;">
-                🏢
+            <div class="stat-icon" style="background: #e9d5ff; color: #6b21a8;">
+                <i class="fas fa-building"></i>
             </div>
             <div class="stat-value" style="font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 5px;">
                 <?php 
-                $stmt_ref = db_query("SELECT COUNT(*) as count FROM referenti_aziende WHERE azienda_id = :id AND attivo = 1", ['id' => $azienda['id']]);
+                $stmt_ref = db_query("SELECT COUNT(*) as count FROM referenti WHERE azienda_id = :id AND attivo = 1", ['id' => $azienda['id']]);
                 echo $stmt_ref->fetch()['count'] ?? 0;
                 ?>
             </div>
@@ -1078,8 +1358,8 @@ require_once 'components/header.php';
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 15px;">
-                📄
+            <div class="stat-icon" style="background: #d1fae5; color: #047857;">
+                <i class="fas fa-file-alt"></i>
             </div>
             <div class="stat-value" style="font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 5px;">
                 <?php echo $stats['numero_documenti'] ?? 0; ?>
@@ -1088,8 +1368,8 @@ require_once 'components/header.php';
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%); color: white; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 15px;">
-                📅
+            <div class="stat-icon" style="background: #fef3c7; color: #92400e;">
+                <i class="fas fa-calendar"></i>
             </div>
             <div class="stat-value" style="font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 5px;">
                 <?php echo $stats['numero_eventi'] ?? 0; ?>
@@ -1098,8 +1378,8 @@ require_once 'components/header.php';
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%); color: white; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 15px;">
-                🎫
+            <div class="stat-icon" style="background: #fee2e2; color: #b91c1c;">
+                <i class="fas fa-ticket-alt"></i>
             </div>
             <div class="stat-value" style="font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 5px;">
                 <?php echo $stats['tickets_aperti'] ?? 0; ?>
@@ -1108,8 +1388,103 @@ require_once 'components/header.php';
         </div>
     </div>
     
+    <!-- Moduli Abilitati -->
+    <div class="content-card" style="margin-top: 30px;">
+        <h2 style="margin-bottom: 20px;"><i class="fas fa-puzzle-piece"></i> Moduli Abilitati</h2>
+        
+        <?php
+        // Carica SOLO i moduli che richiedono abilitazione manuale
+        $stmt = db_query("
+            SELECT ms.*, ma.abilitato
+            FROM moduli_sistema ms
+            LEFT JOIN moduli_azienda ma ON ms.id = ma.modulo_id AND ma.azienda_id = :azienda_id
+            WHERE ms.codice IN ('calendario', 'tickets', 'conformita_normativa', 'nexio_ai')
+            AND ms.attivo = 1
+            ORDER BY ms.ordine, ms.nome
+        ", ['azienda_id' => $aziendaId]);
+        $moduli_controllati = $stmt->fetchAll();
+        
+        // Crea array per controllo rapido dei moduli abilitati
+        $moduli_attivi_ids = [];
+        foreach ($moduli_controllati as $mod) {
+            if ($mod['abilitato']) {
+                $moduli_attivi_ids[] = $mod['id'];
+            }
+        }
+        ?>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <?php foreach ($moduli_controllati as $modulo): ?>
+            <?php if ($modulo['abilitato']): ?>
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px;">
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                    <div style="background: #dbeafe; color: #1e40af; width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                        <i class="<?php echo $modulo['icona']; ?>"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0; color: #1f2937;"><?php echo htmlspecialchars($modulo['nome']); ?></h4>
+                        <p style="margin: 5px 0 0 0; font-size: 13px; color: #6b7280;">
+                            <?php echo htmlspecialchars($modulo['descrizione']); ?>
+                        </p>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 12px; color: #4b5563;">
+                    <i class="fas fa-check-circle" style="color: #48bb78;"></i> Modulo abilitato
+                </div>
+            </div>
+            <?php endif; ?>
+            <?php endforeach; ?>
+        </div>
+        
+        <?php 
+        // Conta i moduli attivi
+        $moduli_attivi_count = 0;
+        foreach ($moduli_controllati as $mod) {
+            if ($mod['abilitato']) {
+                $moduli_attivi_count++;
+            }
+        }
+        
+        if ($moduli_attivi_count == 0): ?>
+        <div style="text-align: center; padding: 40px; background: #f9fafb; border-radius: 12px; border: 2px dashed #e5e7eb;">
+            <i class="fas fa-puzzle-piece" style="font-size: 48px; color: #d1d5db; margin-bottom: 15px;"></i>
+            <p style="color: #6b7280;">Nessun modulo attivo per questa azienda</p>
+        </div>
+        <?php endif; ?>
+        
+        <!-- Form per aggiungere/rimuovere moduli - SOLO I 3 CONTROLLATI -->
+        <div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin-top: 20px;">
+            <h4 style="margin: 0 0 15px 0;">Gestione Moduli</h4>
+            <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">
+                Questi moduli richiedono abilitazione manuale. Il File Manager è sempre disponibile per tutte le aziende.
+            </p>
+            <form method="post" action="">
+                <input type="hidden" name="action" value="update_modules">
+                <div style="display: grid; gap: 10px;">
+                    <?php foreach ($moduli_controllati as $modulo): ?>
+                    <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s;">
+                        <input type="checkbox" name="moduli[]" value="<?php echo $modulo['id']; ?>" 
+                               <?php echo in_array($modulo['id'], $moduli_attivi_ids) ? 'checked' : ''; ?>
+                               style="width: 18px; height: 18px;">
+                        <div style="background: <?php echo $modulo['colore']; ?>; color: white; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                            <i class="<?php echo $modulo['icona']; ?>"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 500;"><?php echo htmlspecialchars($modulo['nome']); ?></div>
+                            <div style="font-size: 12px; color: #6b7280;"><?php echo htmlspecialchars($modulo['descrizione']); ?></div>
+                        </div>
+                    </label>
+                    <?php endforeach; ?>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 15px;">
+                    <i class="fas fa-save"></i> Salva Moduli
+                </button>
+            </form>
+        </div>
+    </div>
+    
     <!-- Utenti Azienda -->
-    <div class="form-container" style="margin-top: 30px;">
+    <div class="content-card" style="margin-top: 30px;">
         <h2 style="margin-bottom: 20px;">Utenti Azienda</h2>
         
         <?php
@@ -1121,8 +1496,26 @@ require_once 'components/header.php';
         ];
         
         foreach ($utentiAzienda as $ua) {
+            // Normalizza i ruoli legacy e gestisce valori vuoti
+            $ruolo_normalizzato = trim($ua['ruolo_azienda']);
+            
+            // Se il ruolo è vuoto, assegna 'referente' come default
+            if (empty($ruolo_normalizzato)) {
+                $ruolo_normalizzato = 'referente';
+                
+                // Aggiorna il database per prevenire il problema in futuro
+                try {
+                    db_update('utenti_aziende', 
+                        ['ruolo_azienda' => 'referente'], 
+                        'utente_id = :utente_id AND azienda_id = :azienda_id AND (ruolo_azienda = \'\' OR ruolo_azienda IS NULL)', 
+                        ['utente_id' => $ua['utente_id'], 'azienda_id' => $aziendaId]
+                    );
+                } catch (Exception $e) {
+                    error_log("Errore aggiornamento ruolo vuoto: " . $e->getMessage());
+                }
+            }
+            
             // Normalizza i ruoli legacy
-            $ruolo_normalizzato = $ua['ruolo_azienda'];
             if ($ruolo_normalizzato === 'proprietario') $ruolo_normalizzato = 'responsabile_aziendale';
             if ($ruolo_normalizzato === 'admin' || $ruolo_normalizzato === 'utente') $ruolo_normalizzato = 'referente';
             
@@ -1177,17 +1570,28 @@ require_once 'components/header.php';
                         
                         // Colori per i ruoli
                         $ruolo_colori = [
-                            'responsabile_aziendale' => 'background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white;',
-                            'referente' => 'background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white;',
-                            'ospite' => 'background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white;',
+                            'responsabile_aziendale' => 'background: #fee2e2; color: #b91c1c;',
+                            'referente' => 'background: #dbeafe; color: #1e40af;',
+                            'ospite' => 'background: #f3f4f6; color: #4b5563;',
                             // Legacy
-                            'proprietario' => 'background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white;',
-                            'admin' => 'background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white;',
-                            'utente' => 'background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white;'
+                            'proprietario' => 'background: #fee2e2; color: #b91c1c;',
+                            'admin' => 'background: #dbeafe; color: #1e40af;',
+                            'utente' => 'background: #dbeafe; color: #1e40af;'
                         ];
                         
-                        $nome_ruolo = $ruoli[$ua['ruolo_azienda']] ?? $ua['ruolo_azienda'];
-                        $stile_ruolo = $ruolo_colori[$ua['ruolo_azienda']] ?? 'background: #e2e8f0; color: #1f2937;';
+                        // Gestisce ruoli vuoti o non riconosciuti
+                        $ruolo_display = trim($ua['ruolo_azienda']);
+                        if (empty($ruolo_display)) {
+                            $ruolo_display = 'referente'; // Default fallback
+                        }
+                        
+                        $nome_ruolo = $ruoli[$ruolo_display] ?? ucfirst(str_replace('_', ' ', $ruolo_display));
+                        $stile_ruolo = $ruolo_colori[$ruolo_display] ?? 'background: #e2e8f0; color: #1f2937;';
+                        
+                        // Se il nome del ruolo è ancora vuoto, mostra un placeholder
+                        if (empty($nome_ruolo)) {
+                            $nome_ruolo = 'Ruolo Non Specificato';
+                        }
                         ?>
                         <span style="<?php echo $stile_ruolo; ?> padding: 4px 10px; border-radius: 12px; font-weight: 500; font-size: 12px;">
                             <?php echo $nome_ruolo; ?>
@@ -1267,14 +1671,7 @@ require_once 'components/header.php';
     
 <?php else: ?>
     <!-- Lista Aziende -->
-    <div class="content-header">
-        <h1><i class="fas fa-building"></i> Gestione Aziende</h1>
-        <div class="header-actions">
-        <a href="<?php echo APP_PATH; ?>/aziende.php?action=nuovo" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nuova Azienda
-        </a>
-        </div>
-    </div>
+    
     
     <?php if (isset($_SESSION['success'])): ?>
         <div class="alert alert-success">
@@ -1299,36 +1696,39 @@ require_once 'components/header.php';
         </div>
     <?php else: ?>
         <div class="aziende-grid">
-            <?php foreach ($aziende as $azienda): ?>
+            <?php foreach ($aziende as $azienda_item): 
+                // Use consistent variable naming to avoid conflicts with detail view
+                $current_azienda = $azienda_item;
+            ?>
             <div class="azienda-card">
                 <div class="azienda-header">
                     <div style="display: flex; align-items: center; gap: 15px;">
-                        <?php if (isset($azienda['logo_path']) && !empty($azienda['logo_path'])): ?>
-                            <img src="<?php echo APP_PATH . htmlspecialchars($azienda['logo_path']); ?>" 
-                                 alt="Logo <?php echo htmlspecialchars($azienda['nome']); ?>" 
+                        <?php if (isset($current_azienda['logo_path']) && !empty($current_azienda['logo_path'])): ?>
+                            <img src="<?php echo APP_PATH . htmlspecialchars($current_azienda['logo_path']); ?>" 
+                                 alt="Logo <?php echo htmlspecialchars($current_azienda['nome']); ?>" 
                                  style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px; border: 1px solid #e0e0e0;">
                         <?php endif; ?>
                         <div>
-                            <div class="azienda-title"><?php echo htmlspecialchars($azienda['nome']); ?></div>
-                            <?php if ($azienda['ragione_sociale']): ?>
+                            <div class="azienda-title"><?php echo htmlspecialchars($current_azienda['nome']); ?></div>
+                            <?php if (!empty($current_azienda['ragione_sociale'])): ?>
                             <div style="font-size: 13px; color: #718096;">
-                                <?php echo htmlspecialchars($azienda['ragione_sociale']); ?>
+                                <?php echo htmlspecialchars($current_azienda['ragione_sociale']); ?>
                             </div>
                             <?php endif; ?>
                         </div>
                     </div>
-                    <span class="status-badge status-<?php echo $azienda['stato']; ?>">
-                        <?php echo ucfirst($azienda['stato']); ?>
+                    <span class="status-badge status-<?php echo $current_azienda['stato']; ?>">
+                        <?php echo ucfirst($current_azienda['stato']); ?>
                     </span>
                 </div>
                 
-                <?php if ($azienda['citta'] || $azienda['provincia']): ?>
+                <?php if (!empty($current_azienda['citta']) || !empty($current_azienda['provincia'])): ?>
                 <div style="font-size: 14px; color: #718096; margin-bottom: 15px;">
                     <i class="fas fa-map-marker-alt"></i> 
                     <?php 
                     $location = [];
-                    if ($azienda['citta']) $location[] = $azienda['citta'];
-                    if ($azienda['provincia']) $location[] = '(' . $azienda['provincia'] . ')';
+                    if (!empty($current_azienda['citta'])) $location[] = $current_azienda['citta'];
+                    if (!empty($current_azienda['provincia'])) $location[] = '(' . $current_azienda['provincia'] . ')';
                     echo htmlspecialchars(implode(' ', $location));
                     ?>
                 </div>
@@ -1336,19 +1736,19 @@ require_once 'components/header.php';
                 
                 <div class="azienda-stats">
                     <div class="azienda-stat">
-                        <div class="azienda-stat-value"><?php echo $azienda['numero_utenti'] ?? 0; ?></div>
+                        <div class="azienda-stat-value"><?php echo $current_azienda['numero_utenti'] ?? 0; ?></div>
                         <div class="azienda-stat-label">Utenti</div>
                     </div>
                     <div class="azienda-stat">
-                        <div class="azienda-stat-value"><?php echo $azienda['numero_documenti'] ?? 0; ?></div>
+                        <div class="azienda-stat-value"><?php echo $current_azienda['numero_documenti'] ?? 0; ?></div>
                         <div class="azienda-stat-label">Documenti</div>
                     </div>
                     <div class="azienda-stat">
-                        <div class="azienda-stat-value"><?php echo $azienda['numero_eventi'] ?? 0; ?></div>
+                        <div class="azienda-stat-value"><?php echo $current_azienda['numero_eventi'] ?? 0; ?></div>
                         <div class="azienda-stat-label">Eventi</div>
                     </div>
                     <div class="azienda-stat">
-                        <div class="azienda-stat-value"><?php echo $azienda['tickets_aperti'] ?? 0; ?></div>
+                        <div class="azienda-stat-value"><?php echo $current_azienda['tickets_aperti'] ?? 0; ?></div>
                         <div class="azienda-stat-label">Tickets</div>
                     </div>
                 </div>
@@ -1358,10 +1758,10 @@ require_once 'components/header.php';
                 $has_responsabile = false;
                 $is_super_admin = $auth->isSuperAdmin();
                 
-                // Usa la variabile $responsabile_column_exists già impostata
-                if ($responsabile_column_exists && isset($azienda['responsabile_id']) && $azienda['responsabile_id']) {
+                // Use the $responsabile_column_exists variable already set
+                if ($responsabile_column_exists && isset($current_azienda['responsabile_id']) && $current_azienda['responsabile_id']) {
                     try {
-                        $stmt_resp = db_query("SELECT id FROM utenti WHERE id = :resp_id AND attivo = 1", ['resp_id' => $azienda['responsabile_id']]);
+                        $stmt_resp = db_query("SELECT id FROM utenti WHERE id = ? AND attivo = 1", [$current_azienda['responsabile_id']]);
                         $has_responsabile = $stmt_resp->fetch() !== false;
                     } catch (Exception $e) {
                         $has_responsabile = false;
@@ -1380,13 +1780,18 @@ require_once 'components/header.php';
                 </div>
                 <?php endif; ?>
                 
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <a href="<?php echo APP_PATH; ?>/aziende.php?action=view&id=<?php echo $azienda['id']; ?>" class="btn btn-primary btn-small">
+                <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="<?php echo APP_PATH; ?>/aziende.php?action=view&id=<?php echo $current_azienda['id']; ?>" class="btn btn-primary btn-small">
                         <i class="fas fa-eye"></i> Dettagli
                     </a>
-                    <a href="<?php echo APP_PATH; ?>/aziende.php?action=edit&id=<?php echo $azienda['id']; ?>" class="btn btn-secondary btn-small">
+                    <a href="<?php echo APP_PATH; ?>/aziende.php?action=edit&id=<?php echo $current_azienda['id']; ?>" class="btn btn-secondary btn-small">
                         <i class="fas fa-edit"></i> Modifica
                     </a>
+                    <?php if ($auth->isSuperAdmin()): ?>
+                    <button type="button" class="btn btn-danger btn-small" onclick="confirmDeleteAzienda(<?php echo $current_azienda['id']; ?>, '<?php echo htmlspecialchars(addslashes($current_azienda['nome'])); ?>')">
+                        <i class="fas fa-trash"></i> Elimina
+                    </button>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -1395,109 +1800,6 @@ require_once 'components/header.php';
 <?php endif; ?>
 
 <script>
-async function deleteAzienda(aziendaId, aziendaNome) {
-    if (!confirm(`Sei sicuro di voler eliminare l'azienda "${aziendaNome}"?`)) {
-        return;
-    }
-    
-    try {
-        const formData = new FormData();
-        formData.append('action', 'delete');
-        formData.append('id', aziendaId);
-        
-        const response = await fetch('aziende.php', {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        });
-        
-        // Verifica se la risposta è OK
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        // Leggi il contenuto della risposta
-        const contentType = response.headers.get("content-type");
-        let data;
-        
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-            // È JSON, parsalo
-            data = await response.json();
-        } else {
-            // Non è JSON, potrebbe essere HTML (errore PHP)
-            const text = await response.text();
-            console.error('Risposta non JSON ricevuta:', text);
-            
-            // Cerca di estrarre un messaggio di errore dall'HTML
-            if (text.includes('Fatal error') || text.includes('Warning') || text.includes('Notice')) {
-                throw new Error('Errore del server. Controlla i log PHP.');
-            } else {
-                throw new Error('Risposta non valida dal server');
-            }
-        }
-        
-        if (data.requiresConfirmation) {
-            // Mostra dettagli dipendenze
-            let message = `L'azienda ha ancora:\n`;
-            if (data.dependencies.utentiAttivi > 0) {
-                message += `- ${data.dependencies.utentiAttivi} utenti attivi\n`;
-            }
-            if (data.dependencies.documentiAttivi > 0) {
-                message += `- ${data.dependencies.documentiAttivi} documenti attivi\n`;
-            }
-            if (data.dependencies.eventiTotali > 0) {
-                message += `- ${data.dependencies.eventiTotali} eventi\n`;
-            }
-            if (data.dependencies.ticketsAperti > 0) {
-                message += `- ${data.dependencies.ticketsAperti} tickets aperti\n`;
-            }
-            message += `\nVuoi procedere comunque con l'eliminazione?\nQuesta azione è IRREVERSIBILE!`;
-            
-            if (confirm(message)) {
-                // Riprova con force=true
-                formData.append('force', 'true');
-                const forceResponse = await fetch('aziende.php', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: formData
-                });
-                
-                if (!forceResponse.ok) {
-                    throw new Error(`HTTP error! status: ${forceResponse.status}`);
-                }
-                
-                const forceContentType = forceResponse.headers.get("content-type");
-                let forceData;
-                
-                if (forceContentType && forceContentType.indexOf("application/json") !== -1) {
-                    forceData = await forceResponse.json();
-                } else {
-                    throw new Error('Risposta non valida durante eliminazione forzata');
-                }
-                
-                if (forceData.success) {
-                    alert(forceData.message);
-                    window.location.href = 'aziende.php';
-                } else {
-                    alert('Errore: ' + forceData.message);
-                }
-            }
-        } else if (data.success) {
-            alert(data.message);
-            window.location.href = 'aziende.php';
-        } else {
-            alert('Errore: ' + data.message);
-        }
-    } catch (error) {
-        console.error('Errore durante eliminazione:', error);
-        alert('Errore durante l\'eliminazione dell\'azienda: ' + error.message + '\n\nControlla la console per maggiori dettagli.');
-    }
-}
-
 // Gestione dinamica form utenti azienda
 document.addEventListener('DOMContentLoaded', function() {
     const ruoloSelect = document.getElementById('ruolo_azienda');
@@ -1539,4 +1841,70 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php require_once 'components/footer.php'; ?> 
+<?php require_once 'components/footer.php'; ?>
+
+<script>
+// Funzione principale per l'eliminazione delle aziende
+function confirmDeleteAzienda(aziendaId, aziendaNome) {
+    // Verifica che confirmDeleteAction sia disponibile, altrimenti usa alert normale
+    if (typeof confirmDeleteAction !== 'undefined' && typeof window.confirmDelete !== 'undefined') {
+        // Usa il sistema di conferma avanzato se disponibile
+        confirmDeleteAction({
+            itemType: 'azienda',
+            itemName: aziendaNome,
+            onConfirm: function() {
+                executeDelete(aziendaId, aziendaNome);
+            }
+        });
+    } else {
+        // Fallback al sistema di conferma semplice
+        if (confirm(`Sei sicuro di voler eliminare l'azienda "${aziendaNome}"?\n\nQuesta azione non può essere annullata.`)) {
+            executeDelete(aziendaId, aziendaNome);
+        }
+    }
+}
+
+// Funzione che esegue effettivamente l'eliminazione
+async function executeDelete(aziendaId, aziendaNome) {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'delete');
+        formData.append('id', aziendaId);
+        
+        const response = await fetch('aziende.php', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get("content-type");
+        let data;
+        
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            console.error('Risposta non JSON ricevuta:', text);
+            throw new Error('Risposta del server non valida');
+        }
+        
+        if (data.success) {
+            // Usa alert con successo, senza dipendenze esterne
+            alert(data.message || 'Azienda eliminata con successo');
+            // Ricarica la pagina per mostrare la lista aggiornata
+            window.location.href = '<?php echo APP_PATH; ?>/aziende.php';
+        } else {
+            alert('Errore: ' + (data.message || 'Errore durante l\'eliminazione'));
+        }
+    } catch (error) {
+        console.error('Errore durante l\'eliminazione:', error);
+        alert('Errore di comunicazione con il server: ' + error.message);
+    }
+}
+</script> 

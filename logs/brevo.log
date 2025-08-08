@@ -1,0 +1,14 @@
+[2025-07-23 09:18:49] [BREVO] [info] Invio email a: admin@nexio.it, Oggetto: Test Email - Piattaforma Collaborativa
+[2025-07-23 09:18:50] [BREVO] [error] Errore invio email: Errore Brevo (401): Key not found
+[2025-07-23 09:30:18] [BREVO] [info] Invio email a: admin@nexio.it, Oggetto: Test Email da Brevo - 2025-07-23 09:30:18
+[2025-07-23 09:30:18] [BREVO] [error] Errore invio email: Errore Brevo (401): Key not found
+[2025-07-23 09:30:18] [BREVO] [info] Invio email a: admin@nexio.it, Oggetto: Benvenuto su Nexio Platform!
+[2025-07-23 09:30:18] [BREVO] [error] Errore invio email: Errore Brevo (401): Key not found
+[2025-07-23 09:30:18] [BREVO] [info] Invio email a: admin@nexio.it, Oggetto: Invito all'evento: Test Meeting - Brevo Integration
+[2025-07-23 09:30:19] [BREVO] [error] Errore invio email: Errore Brevo (401): Key not found
+[2025-07-23 09:30:19] [BREVO] [info] Invio email a: admin@nexio.it, Oggetto: Reset Password - Nexio Platform
+[2025-07-23 09:30:19] [BREVO] [error] Errore invio email: Errore Brevo (401): Key not found
+[2025-07-23 09:30:19] [BREVO] [info] Invio email a: admin@nexio.it, Oggetto: Test wrapper mail() - 2025-07-23 09:30:19
+[2025-07-23 09:30:19] [BREVO] [error] Errore invio email: Errore Brevo (401): Key not found
+[2025-07-23 09:31:03] [BREVO] [info] Invio email a: a.oedoma@gmaill.com, Oggetto: Test Email - Piattaforma Collaborativa
+[2025-07-23 09:31:04] [BREVO] [error] Errore invio email: Errore Brevo (401): Key not found

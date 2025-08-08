@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2d5a9f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Nexio Calendario">
+    <meta name="description" content="Calendario eventi Nexio - Gestisci i tuoi eventi ovunque">
+    
+    <title>Nexio Calendario</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-spinner"></div>
+        <p>Caricamento Nexio Calendario...</p>
+    </div>
+
+    <!-- PWA Install Prompt -->
+    <div id="install-prompt" class="install-prompt hidden">
+        <div class="install-content">
+            <i class="fas fa-download"></i>
+            <div>
+                <h3>Installa Nexio Calendario</h3>
+                <p>Aggiungi l'app alla home screen per un accesso rapido</p>
+            </div>
+            <button id="install-btn" class="install-btn">Installa</button>
+            <button id="dismiss-install" class="dismiss-btn">&times;</button>
+        </div>
+    </div>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-brand">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Nexio Calendario</span>
+        </div>
+        <div class="nav-actions">
+            <button id="sync-btn" class="nav-btn" title="Sincronizza">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button id="search-btn" class="nav-btn" title="Cerca">
+                <i class="fas fa-search"></i>
+            </button>
+            <button id="menu-btn" class="nav-btn" title="Menu">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Search Panel -->
+    <div id="search-panel" class="search-panel hidden">
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Cerca eventi..." autocomplete="off">
+            <button id="close-search" class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="search-results" class="search-results"></div>
+    </div>
+
+    <!-- Side Menu -->
+    <div id="side-menu" class="side-menu">
+        <div class="menu-header">
+            <h3>Menu</h3>
+            <button id="close-menu" class="close-btn"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="menu-content">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <div>
+                    <span id="user-name">Caricamento...</span>
+                    <small id="company-name">Azienda</small>
+                </div>
+            </div>
+            
+            <div class="menu-section">
+                <h4>Calendario</h4>
+                <a href="#" data-action="new-event" class="menu-item">
+                    <i class="fas fa-plus"></i> Nuovo Evento
+                </a>
+                <a href="#" data-action="export-calendar" class="menu-item">
+                    <i class="fas fa-download"></i> Esporta ICS
+                </a>
+                <a href="#" data-action="refresh" class="menu-item">
+                    <i class="fas fa-refresh"></i> Aggiorna
+                </a>
+            </div>
+            
+            <div class="menu-section">
+                <h4>Filtri</h4>
+                <div class="filter-group">
+                    <label class="filter-item">
+                        <input type="checkbox" id="filter-meetings" checked>
+                        <span class="filter-color meetings"></span>
+                        Riunioni
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" id="filter-training" checked>
+                        <span class="filter-color training"></span>
+                        Formazione
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" id="filter-conferences" checked>
+                        <span class="filter-color conferences"></span>
+                        Conferenze
+                    </label>
+                    <label class="filter-item">
+                        <input type="checkbox" id="filter-other" checked>
+                        <span class="filter-color other"></span>
+                        Altri
+                    </label>
+                </div>
+            </div>
+            
+            <div class="menu-section">
+                <h4>Impostazioni</h4>
+                <a href="#" data-action="settings" class="menu-item">
+                    <i class="fas fa-cog"></i> Preferenze
+                </a>
+                <a href="#" data-action="help" class="menu-item">
+                    <i class="fas fa-question-circle"></i> Aiuto
+                </a>
+            </div>
+            
+            <div class="menu-footer">
+                <a href="../dashboard.php" class="menu-item">
+                    <i class="fas fa-arrow-left"></i> Torna al Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Calendar Controls -->
+        <div class="calendar-controls">
+            <div class="view-selector">
+                <button class="view-btn active" data-view="month">
+                    <i class="fas fa-calendar"></i>
+                    <span>Mese</span>
+                </button>
+                <button class="view-btn" data-view="week">
+                    <i class="fas fa-calendar-week"></i>
+                    <span>Settimana</span>
+                </button>
+                <button class="view-btn" data-view="day">
+                    <i class="fas fa-calendar-day"></i>
+                    <span>Giorno</span>
+                </button>
+                <button class="view-btn" data-view="list">
+                    <i class="fas fa-list"></i>
+                    <span>Lista</span>
+                </button>
+            </div>
+            
+            <div class="date-navigation">
+                <button id="prev-period" class="nav-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button id="today-btn" class="today-btn">Oggi</button>
+                <button id="next-period" class="nav-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Date Title -->
+        <div class="date-title">
+            <h2 id="current-date-title">Caricamento...</h2>
+        </div>
+
+        <!-- Calendar Views Container -->
+        <div id="calendar-container" class="calendar-container">
+            
+            <!-- Month View -->
+            <div id="month-view" class="calendar-view active">
+                <div class="calendar-grid">
+                    <div class="weekday-header">
+                        <div class="weekday">Lun</div>
+                        <div class="weekday">Mar</div>
+                        <div class="weekday">Mer</div>
+                        <div class="weekday">Gio</div>
+                        <div class="weekday">Ven</div>
+                        <div class="weekday">Sab</div>
+                        <div class="weekday">Dom</div>
+                    </div>
+                    <div id="month-grid" class="month-grid">
+                        <!-- Days will be dynamically generated -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Week View -->
+            <div id="week-view" class="calendar-view">
+                <div class="week-container">
+                    <div class="time-column">
+                        <div class="time-slot" style="height: 40px;"></div>
+                        <!-- Time slots will be generated -->
+                    </div>
+                    <div id="week-grid" class="week-grid">
+                        <!-- Week days will be dynamically generated -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day View -->
+            <div id="day-view" class="calendar-view">
+                <div class="day-container">
+                    <div class="time-column">
+                        <!-- Time slots will be generated -->
+                    </div>
+                    <div id="day-grid" class="day-grid">
+                        <!-- Day events will be dynamically generated -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div id="list-view" class="calendar-view">
+                <div id="events-list" class="events-list">
+                    <!-- Events list will be dynamically generated -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <button id="fab" class="fab" title="Nuovo Evento">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Event Modal -->
+    <div id="event-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Nuovo Evento</h3>
+                <button id="close-modal" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <form id="event-form" class="modal-body">
+                <input type="hidden" id="event-id" name="id">
+                
+                <div class="form-group">
+                    <label for="event-title">Titolo *</label>
+                    <input type="text" id="event-title" name="titolo" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="event-description">Descrizione</label>
+                    <textarea id="event-description" name="descrizione" rows="3"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="event-start-date">Data Inizio *</label>
+                        <input type="date" id="event-start-date" name="data_inizio" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-start-time">Ora Inizio *</label>
+                        <input type="time" id="event-start-time" name="ora_inizio" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="event-end-date">Data Fine</label>
+                        <input type="date" id="event-end-date" name="data_fine">
+                    </div>
+                    <div class="form-group">
+                        <label for="event-end-time">Ora Fine</label>
+                        <input type="time" id="event-end-time" name="ora_fine">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="event-location">Luogo</label>
+                    <input type="text" id="event-location" name="luogo">
+                </div>
+                
+                <div class="form-group">
+                    <label for="event-type">Tipo Evento</label>
+                    <select id="event-type" name="tipo">
+                        <option value="riunione">Riunione</option>
+                        <option value="formazione">Formazione</option>
+                        <option value="conferenza">Conferenza</option>
+                        <option value="altro">Altro</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Partecipanti</label>
+                    <div id="participants-container" class="participants-container">
+                        <!-- Participants will be loaded dynamically -->
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="send-notifications" name="invia_notifiche">
+                        <span class="checkmark"></span>
+                        Invia notifiche email ai partecipanti
+                    </label>
+                </div>
+            </form>
+            
+            <div class="modal-footer">
+                <button type="button" id="cancel-btn" class="btn btn-secondary">Annulla</button>
+                <button type="button" id="delete-btn" class="btn btn-danger hidden">Elimina</button>
+                <button type="submit" id="save-btn" class="btn btn-primary">Salva</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div id="event-details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="details-title">Dettagli Evento</h3>
+                <button id="close-details" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="event-details-content">
+                    <!-- Event details will be populated here -->
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" id="edit-event-btn" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Modifica
+                </button>
+                <button type="button" id="close-details-btn" class="btn btn-secondary">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Offline Indicator -->
+    <div id="offline-indicator" class="offline-indicator hidden">
+        <i class="fas fa-wifi"></i>
+        <span>Modalità Offline</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registrato:', registration);
+                    })
+                    .catch(error => {
+                        console.error('Errore registrazione Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

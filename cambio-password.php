@@ -56,8 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = db_query("
                 SELECT password_hash 
                 FROM password_history 
-                WHERE user_id = ? 
-                ORDER BY created_at DESC 
+                WHERE utente_id = ? 
+                ORDER BY data_cambio DESC 
                 LIMIT 3
             ", [$user['id']]);
             
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 // Aggiorna password
                 $newPasswordHash = password_hash($newPassword, PASSWORD_DEFAULT);
-                $newPasswordScadenza = date('Y-m-d', strtotime('+60 days')); // Cambiato da 90 a 60 giorni
+                $newPasswordScadenza = date('Y-m-d', strtotime('+90 days')); // Validità password 90 giorni
                 
                 db_connection()->beginTransaction();
                 
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = db_query("
                         UPDATE utenti 
                         SET password = ?, 
-                            primo_accesso = FALSE, 
+                            primo_accesso = 0, 
                             password_scadenza = ?,
                             last_password_change = NOW()
                         WHERE id = ?
@@ -93,20 +93,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($stmt && $stmt->rowCount() > 0) {
                         // Salva password nella cronologia
                         db_query("
-                            INSERT INTO password_history (user_id, password_hash) 
+                            INSERT INTO password_history (utente_id, password_hash) 
                             VALUES (?, ?)
                         ", [$user['id'], $newPasswordHash]);
                         
                         // Mantieni solo le ultime 10 password nella cronologia
                         db_query("
                             DELETE FROM password_history 
-                            WHERE user_id = ? 
+                            WHERE utente_id = ? 
                             AND id NOT IN (
                                 SELECT id FROM (
                                     SELECT id 
                                     FROM password_history 
-                                    WHERE user_id = ? 
-                                    ORDER BY created_at DESC 
+                                    WHERE utente_id = ? 
+                                    ORDER BY data_cambio DESC 
                                     LIMIT 10
                                 ) AS t
                             )

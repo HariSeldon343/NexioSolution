@@ -18,6 +18,29 @@ foreach ($eventi as $evento) {
     $eventiPerData[$dataEvento][] = $evento;
 }
 
+// Organizza task per data (se l'utente può vederli)
+$taskPerData = [];
+if (isset($user_tasks) && !empty($user_tasks)) {
+    foreach ($user_tasks as $task) {
+        $dataInizio = strtotime($task['data_inizio']);
+        $dataFine = strtotime($task['data_fine']);
+        
+        // Aggiungi il task a ogni giorno nel suo intervallo
+        $currentData = $dataInizio;
+        while ($currentData <= $dataFine) {
+            $dataTask = date('Y-m-d', $currentData);
+            // Solo includi se è nella settimana corrente
+            if ($currentData >= $startWeek && $currentData <= $endWeek) {
+                if (!isset($taskPerData[$dataTask])) {
+                    $taskPerData[$dataTask] = [];
+                }
+                $taskPerData[$dataTask][] = $task;
+            }
+            $currentData = strtotime('+1 day', $currentData);
+        }
+    }
+}
+
 // Genera i giorni della settimana
 $giorniSettimana = [];
 for ($i = 0; $i < 7; $i++) {
@@ -79,6 +102,12 @@ $ore = range(8, 20);
                             }
                         }
                     }
+                    
+                    // Aggiungi task per questo giorno (mostrati alla prima ora disponibile)
+                    $dayTasks = [];
+                    if ($ora == 8 && isset($taskPerData[$dataGiorno])) {
+                        $dayTasks = $taskPerData[$dataGiorno];
+                    }
                 ?>
                 <div class="time-slot" data-date="<?= $dataGiorno ?>" data-hour="<?= $ora ?>">
                     <?php foreach ($eventiOra as $evento): 
@@ -105,6 +134,34 @@ $ore = range(8, 20);
                         <div class="event-actions">
                             <a href="?action=modifica&id=<?= $evento['id'] ?>" class="event-action-btn">
                                 <i class="fas fa-edit"></i>
+                            </a>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    <?php endforeach; ?>
+                    
+                    <?php 
+                    // Mostra i task solo nella prima ora del giorno
+                    foreach ($dayTasks as $task): 
+                        $prodottoServizio = $task['prodotto_servizio'] ?? 'Non specificato';
+                    ?>
+                    <div class="week-event event-task" 
+                         title="Task: <?= htmlspecialchars($task['attivita']) ?> - <?= htmlspecialchars($prodottoServizio) ?>"
+                         data-task-id="<?= $task['id'] ?>">
+                        <div class="event-type">TASK</div>
+                        <div class="event-title"><?= htmlspecialchars($task['attivita']) ?></div>
+                        <div class="event-details">
+                            <?= htmlspecialchars($task['giornate_previste']) ?> gg - <?= htmlspecialchars($task['utente_nome']) ?>
+                        </div>
+                        
+                        <?php if ($auth->isSuperAdmin()): ?>
+                        <div class="event-actions">
+                            <a href="?action=modifica_task&id=<?= $task['id'] ?>" class="event-action-btn">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="?action=elimina_task&id=<?= $task['id'] ?>" class="event-action-btn delete-btn"
+                               onclick="return confirm('Sei sicuro di voler eliminare questo task?')">
+                                <i class="fas fa-trash"></i>
                             </a>
                         </div>
                         <?php endif; ?>
@@ -324,6 +381,37 @@ $ore = range(8, 20);
 .event-type-conference { background: #9f7aea; }
 .event-type-social { background: #ecc94b; color: #744210; }
 .event-type-other { background: #a0aec0; }
+
+/* Task styling */
+.event-task {
+    background: #48bb78 !important;
+    color: white;
+    border-left: 4px solid #22543d;
+}
+
+.event-task .event-type {
+    background: rgba(0,0,0,0.2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    display: inline-block;
+    margin-bottom: 4px;
+}
+
+.event-task .event-details {
+    font-size: 10px;
+    opacity: 0.9;
+    margin-top: 4px;
+}
+
+.event-task .delete-btn {
+    background: rgba(229, 62, 62, 0.3);
+}
+
+.event-task .delete-btn:hover {
+    background: rgba(229, 62, 62, 0.5);
+}
 
 /* Responsive */
 @media (max-width: 768px) {

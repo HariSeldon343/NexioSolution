@@ -532,7 +532,9 @@ include 'components/header.php';
                 <p><strong>Ultimo accesso:</strong> <?php echo format_datetime($utente['ultimo_accesso']); ?></p>
             <?php endif; ?>
             <?php if ($utente['primo_accesso']): ?>
-                <p style="color: #dc2626;"><strong>⚠️ Primo accesso non ancora effettuato</strong></p>
+                <p style="color: #dc2626;"><strong>⚠️ Primo accesso non ancora effettuato - Cambio password richiesto</strong></p>
+            <?php else: ?>
+                <p style="color: #059669;"><strong>✓ Primo accesso completato</strong></p>
             <?php endif; ?>
         </div>
         

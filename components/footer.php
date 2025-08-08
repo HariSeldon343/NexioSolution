@@ -4,6 +4,16 @@
     <!-- Notifiche Toast -->
     <div id="toast-container"></div>
 
+    <!-- Bootstrap JavaScript Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Sistema di conferma cancellazione con cache busting -->
+    <?php 
+    $confirm_js_version = file_exists(dirname(__DIR__) . '/assets/js/confirm-delete.js') ? 
+                          filemtime(dirname(__DIR__) . '/assets/js/confirm-delete.js') : time(); 
+    ?>
+    <script src="<?php echo APP_PATH; ?>/assets/js/confirm-delete.js?v=<?php echo $confirm_js_version; ?>"></script>
+
     <script>
     // Sistema notifiche toast
     function showToast(message, type = 'info') {

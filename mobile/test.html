@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexio Calendar PWA - Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            color: #2d5a9f;
+            margin-bottom: 15px;
+        }
+        .test-result {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #2d5a9f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #1e3d6f; }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .feature-list li:before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+        }
+        .feature-list li.error:before {
+            content: "✗ ";
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Nexio Calendar PWA - Test Suite</h1>
+    <p>Questa pagina verifica che tutte le funzionalità PWA siano correttamente configurate.</p>
+    
+    <!-- PWA Features Test -->
+    <div class="test-card">
+        <h2 class="test-title">📱 PWA Features</h2>
+        <ul class="feature-list" id="pwaFeatures">
+            <li id="serviceWorker">Service Worker: <span>Checking...</span></li>
+            <li id="manifest">Manifest: <span>Checking...</span></li>
+            <li id="https">HTTPS: <span>Checking...</span></li>
+            <li id="installable">Installable: <span>Checking...</span></li>
+            <li id="offline">Offline Support: <span>Checking...</span></li>
+            <li id="notifications">Notifications: <span>Checking...</span></li>
+        </ul>
+        <button onclick="testPWAFeatures()">🔄 Test PWA Features</button>
+    </div>
+
+    <!-- API Connectivity Test -->
+    <div class="test-card">
+        <h2 class="test-title">🔗 API Connectivity</h2>
+        <div id="apiResults"></div>
+        <button onclick="testAPIConnectivity()">🔄 Test API Endpoints</button>
+    </div>
+
+    <!-- Browser Compatibility Test -->
+    <div class="test-card">
+        <h2 class="test-title">🌐 Browser Compatibility</h2>
+        <div id="browserInfo"></div>
+        <button onclick="testBrowserCompatibility()">🔄 Check Compatibility</button>
+    </div>
+
+    <!-- Performance Test -->
+    <div class="test-card">
+        <h2 class="test-title">⚡ Performance</h2>
+        <div id="performanceResults"></div>
+        <button onclick="testPerformance()">🔄 Test Performance</button>
+    </div>
+
+    <!-- Database Connectivity -->
+    <div class="test-card">
+        <h2 class="test-title">🗄️ Database Connectivity</h2>
+        <div id="databaseResults"></div>
+        <button onclick="testDatabase()">🔄 Test Database</button>
+    </div>
+
+    <!-- Installation Guide -->
+    <div class="test-card">
+        <h2 class="test-title">📚 Installation Guide</h2>
+        <div id="installGuide">
+            <h4>Come installare la PWA:</h4>
+            <ol>
+                <li><strong>Chrome/Edge Desktop:</strong> Clicca l'icona "Installa" nella barra degli indirizzi</li>
+                <li><strong>Chrome/Edge Mobile:</strong> Menu → "Aggiungi a schermata home"</li>
+                <li><strong>Safari iOS:</strong> Tocca il pulsante Condividi → "Aggiungi a schermata home"</li>
+                <li><strong>Firefox:</strong> Non supporta installazione PWA (utilizzabile come web app)</li>
+            </ol>
+            <p><a href="index.html" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">🚀 Apri Nexio Calendar PWA</a></p>
+        </div>
+    </div>
+
+    <script>
+        // PWA Feature Testing
+        function testPWAFeatures() {
+            // Service Worker
+            if ('serviceWorker' in navigator) {
+                updateFeature('serviceWorker', 'Service Worker: Supportato', 'success');
+            } else {
+                updateFeature('serviceWorker', 'Service Worker: Non supportato', 'error');
+            }
+
+            // Manifest
+            fetch('manifest.json')
+                .then(response => response.json())
+                .then(data => {
+                    updateFeature('manifest', 'Manifest: Caricato correttamente', 'success');
+                })
+                .catch(() => {
+                    updateFeature('manifest', 'Manifest: Errore di caricamento', 'error');
+                });
+
+            // HTTPS
+            if (location.protocol === 'https:' || location.hostname === 'localhost') {
+                updateFeature('https', 'HTTPS: Attivo', 'success');
+            } else {
+                updateFeature('https', 'HTTPS: Non attivo (richiesto per PWA complete)', 'warning');
+            }
+
+            // Installable
+            if ('serviceWorker' in navigator && 'PushManager' in window) {
+                updateFeature('installable', 'Installable: Sì', 'success');
+            } else {
+                updateFeature('installable', 'Installable: Limitato', 'warning');
+            }
+
+            // Offline Support
+            if ('serviceWorker' in navigator && 'caches' in window) {
+                updateFeature('offline', 'Offline Support: Disponibile', 'success');
+            } else {
+                updateFeature('offline', 'Offline Support: Non disponibile', 'error');
+            }
+
+            // Notifications
+            if ('Notification' in window) {
+                updateFeature('notifications', 'Notifications: Supportate', 'success');
+            } else {
+                updateFeature('notifications', 'Notifications: Non supportate', 'error');
+            }
+        }
+
+        function updateFeature(id, text, status) {
+            const element = document.getElementById(id);
+            element.innerHTML = text;
+            element.className = status;
+        }
+
+        // API Connectivity Testing
+        async function testAPIConnectivity() {
+            const apiResults = document.getElementById('apiResults');
+            apiResults.innerHTML = '<div class="info">Testing API endpoints...</div>';
+
+            const endpoints = [
+                { name: 'CSRF Token', url: '../backend/api/calendar-mobile-api.php?action=csrf_token' },
+                { name: 'Auth Check', url: '../backend/api/calendar-mobile-api.php?action=auth_check' },
+                { name: 'Events API', url: '../backend/api/calendar-events.php' },
+                { name: 'Calendar API', url: '../backend/api/calendar-api.php?action=status' }
+            ];
+
+            let results = '';
+
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint.url, {
+                        method: 'GET',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        results += `<div class="success">${endpoint.name}: OK (${response.status})</div>`;
+                    } else {
+                        results += `<div class="warning">${endpoint.name}: HTTP ${response.status}</div>`;
+                    }
+                } catch (error) {
+                    results += `<div class="error">${endpoint.name}: Error - ${error.message}</div>`;
+                }
+            }
+
+            apiResults.innerHTML = results;
+        }
+
+        // Browser Compatibility Testing
+        function testBrowserCompatibility() {
+            const browserInfo = document.getElementById('browserInfo');
+            
+            const userAgent = navigator.userAgent;
+            const platform = navigator.platform;
+            const language = navigator.language;
+            
+            let browserName = 'Unknown';
+            let browserVersion = 'Unknown';
+            
+            if (userAgent.indexOf('Chrome') > -1) {
+                browserName = 'Chrome';
+                browserVersion = userAgent.match(/Chrome\/(\d+)/)?.[1];
+            } else if (userAgent.indexOf('Firefox') > -1) {
+                browserName = 'Firefox';
+                browserVersion = userAgent.match(/Firefox\/(\d+)/)?.[1];
+            } else if (userAgent.indexOf('Safari') > -1) {
+                browserName = 'Safari';
+                browserVersion = userAgent.match(/Version\/(\d+)/)?.[1];
+            } else if (userAgent.indexOf('Edge') > -1) {
+                browserName = 'Edge';
+                browserVersion = userAgent.match(/Edge\/(\d+)/)?.[1];
+            }
+
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+            const supportsES6 = typeof Symbol !== 'undefined';
+            const supportsFetch = typeof fetch !== 'undefined';
+            const supportsPromises = typeof Promise !== 'undefined';
+
+            let compatibility = 'success';
+            let compatibilityText = 'Completamente compatibile';
+
+            if (!supportsES6 || !supportsFetch || !supportsPromises) {
+                compatibility = 'warning';
+                compatibilityText = 'Compatibilità limitata';
+            }
+
+            browserInfo.innerHTML = `
+                <div class="info">
+                    <strong>Browser:</strong> ${browserName} ${browserVersion}<br>
+                    <strong>Platform:</strong> ${platform}<br>
+                    <strong>Language:</strong> ${language}<br>
+                    <strong>Mobile:</strong> ${isMobile ? 'Sì' : 'No'}<br>
+                    <strong>Screen:</strong> ${screen.width}x${screen.height}<br>
+                    <strong>Viewport:</strong> ${window.innerWidth}x${window.innerHeight}
+                </div>
+                <div class="${compatibility}">
+                    <strong>Compatibilità:</strong> ${compatibilityText}
+                </div>
+                <div class="info">
+                    <strong>Features:</strong><br>
+                    ES6: ${supportsES6 ? '✓' : '✗'}<br>
+                    Fetch API: ${supportsFetch ? '✓' : '✗'}<br>
+                    Promises: ${supportsPromises ? '✓' : '✗'}<br>
+                    Local Storage: ${typeof Storage !== 'undefined' ? '✓' : '✗'}<br>
+                    Service Workers: ${'serviceWorker' in navigator ? '✓' : '✗'}<br>
+                    Push API: ${'PushManager' in window ? '✓' : '✗'}
+                </div>
+            `;
+        }
+
+        // Performance Testing
+        function testPerformance() {
+            const performanceResults = document.getElementById('performanceResults');
+            
+            if (!performance || !performance.timing) {
+                performanceResults.innerHTML = '<div class="error">Performance API non disponibile</div>';
+                return;
+            }
+
+            const timing = performance.timing;
+            const loadTime = timing.loadEventEnd - timing.navigationStart;
+            const domReady = timing.domContentLoadedEventEnd - timing.navigationStart;
+            const firstPaint = performance.getEntriesByType('paint')[0]?.startTime || 0;
+
+            let performanceRating = 'success';
+            let ratingText = 'Ottime';
+
+            if (loadTime > 3000) {
+                performanceRating = 'error';
+                ratingText = 'Lente';
+            } else if (loadTime > 1500) {
+                performanceRating = 'warning';
+                ratingText = 'Accettabili';
+            }
+
+            performanceResults.innerHTML = `
+                <div class="${performanceRating}">
+                    <strong>Performance:</strong> ${ratingText}
+                </div>
+                <div class="info">
+                    <strong>Page Load Time:</strong> ${loadTime}ms<br>
+                    <strong>DOM Ready:</strong> ${domReady}ms<br>
+                    <strong>First Paint:</strong> ${firstPaint.toFixed(2)}ms<br>
+                    <strong>Memory Usage:</strong> ${performance.memory ? (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2) + ' MB' : 'Non disponibile'}
+                </div>
+            `;
+        }
+
+        // Database Testing
+        async function testDatabase() {
+            const databaseResults = document.getElementById('databaseResults');
+            databaseResults.innerHTML = '<div class="info">Testing database connectivity...</div>';
+
+            try {
+                // Test database through API
+                const response = await fetch('../backend/api/calendar-mobile-api.php?action=auth_check');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        databaseResults.innerHTML = `
+                            <div class="success">Database: Connesso e funzionante</div>
+                            <div class="info">
+                                <strong>User ID:</strong> ${data.auth?.user?.id || 'Non autenticato'}<br>
+                                <strong>Azienda:</strong> ${data.auth?.azienda?.nome || 'Non selezionata'}<br>
+                                <strong>Eventi oggi:</strong> ${data.auth?.statistics?.todayEvents || 0}<br>
+                                <strong>Eventi mese:</strong> ${data.auth?.statistics?.monthEvents || 0}
+                            </div>
+                        `;
+                    } else {
+                        databaseResults.innerHTML = `<div class="warning">Database: ${data.error || 'Errore sconosciuto'}</div>`;
+                    }
+                } else {
+                    databaseResults.innerHTML = `<div class="error">Database: HTTP ${response.status}</div>`;
+                }
+            } catch (error) {
+                databaseResults.innerHTML = `<div class="error">Database: ${error.message}</div>`;
+            }
+        }
+
+        // Run initial tests when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            testPWAFeatures();
+            testBrowserCompatibility();
+            testPerformance();
+        });
+
+        // Test service worker installation
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(registration => {
+                    console.log('SW registered:', registration);
+                    updateFeature('serviceWorker', 'Service Worker: Registrato con successo', 'success');
+                })
+                .catch(error => {
+                    console.log('SW registration failed:', error);
+                    updateFeature('serviceWorker', 'Service Worker: Registrazione fallita', 'error');
+                });
+        }
+
+        // Test manifest
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            // Check if app is already installed
+            window.addEventListener('beforeinstallprompt', (e) => {
+                updateFeature('installable', 'Installable: Pronto per installazione', 'success');
+            });
+
+            // Check if running as installed app
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                updateFeature('installable', 'Installable: App già installata', 'success');
+            }
+        }
+    </script>
+</body>
+</html>

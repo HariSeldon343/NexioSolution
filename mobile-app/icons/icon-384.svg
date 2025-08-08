@@ -1,0 +1,7 @@
+<svg width="384" height="384" viewBox="0 0 384 384" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background square with rounded corners -->
+  <rect x="24" y="24" width="336" height="336" rx="60" ry="60" fill="#2563eb"/>
+  
+  <!-- Star symbol -->
+  <text x="192" y="248" font-family="Arial, sans-serif" font-size="150" text-anchor="middle" fill="white">✦</text>
+</svg>

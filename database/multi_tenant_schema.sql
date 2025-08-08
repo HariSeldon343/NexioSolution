@@ -1,7 +1,7 @@
 -- Schema aggiuntivo per supporto multi-tenant
 -- Da eseguire dopo schema.sql
 
-USE piattaforma_collaborativa;
+USE NexioSol;
 
 -- Tabella aziende
 CREATE TABLE IF NOT EXISTS aziende (

@@ -245,6 +245,16 @@ a:hover {
     font-weight: 300;
 }
 
+/* Logo image styles */
+.sidebar-logo img,
+img.sidebar-logo {
+    width: 40px;
+    height: 40px;
+    display: block;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+}
+
 /* Menu moderno */
 .sidebar-menu {
     flex: 1 1 auto;
@@ -1145,4 +1155,244 @@ tbody tr:last-child td {
     right: var(--space-xl);
     z-index: var(--z-tooltip);
     max-width: 400px;
+}
+
+/* ========================================
+   CLEAN DESIGN SYSTEM OVERRIDES
+   Remove excessive shadows and gradients
+   ======================================== */
+
+/* Override any gradients with clean backgrounds */
+.gradient-overlay,
+.gradient-bg,
+.gradient-card,
+.bg-gradient,
+.bg-gradient-primary,
+.bg-gradient-secondary {
+    background: var(--bg-primary) !important;
+    background-image: none !important;
+}
+
+/* Consistent shadows across all components */
+.card,
+.panel,
+.box,
+.widget,
+.dashboard-panel,
+.content-box,
+.form-section,
+.data-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    background: var(--bg-primary) !important;
+}
+
+/* Clean hover states */
+.card:hover,
+.panel:hover,
+.box:hover,
+.widget:hover,
+.dashboard-panel:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    transform: translateY(-1px);
+}
+
+/* Consistent spacing between sections */
+.section,
+.content-section,
+.page-section,
+.form-section,
+.dashboard-section {
+    margin-bottom: 25px !important;
+}
+
+/* Clean headers */
+.page-header,
+.section-header,
+.content-header,
+.card-header,
+.panel-header {
+    background: transparent !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    padding: 0 0 15px 0 !important;
+    margin-bottom: 20px !important;
+}
+
+/* Override heavy box shadows */
+.shadow,
+.shadow-sm,
+.shadow-md,
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl,
+.drop-shadow,
+.box-shadow {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Clean form styles */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+textarea,
+select,
+.form-control,
+.form-select,
+.form-input {
+    background: var(--bg-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.form-control:focus,
+.form-select:focus,
+.form-input:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(45, 90, 159, 0.1) !important;
+    outline: none !important;
+}
+
+/* Clean button styles */
+.btn,
+button,
+input[type="submit"],
+input[type="button"],
+.button {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn:hover,
+button:hover,
+.button:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-1px);
+}
+
+/* Clean table styles */
+.table,
+.data-table,
+table {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+}
+
+/* Remove any remaining gradients from headers */
+.header,
+.navbar,
+.topbar,
+.app-header {
+    background: var(--bg-primary) !important;
+    background-image: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Sidebar clean style */
+.sidebar,
+.sidenav,
+.nav-sidebar {
+    background: var(--sidebar-bg) !important;
+    background-image: none !important;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Clean modal styles */
+.modal,
+.modal-content,
+.dialog {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+    border: none !important;
+    border-radius: 8px !important;
+}
+
+/* Clean dropdown styles */
+.dropdown-menu,
+.dropdown,
+.menu-dropdown {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+}
+
+/* Utility classes for consistent spacing */
+.mt-section { margin-top: 25px !important; }
+.mb-section { margin-bottom: 25px !important; }
+.p-section { padding: 25px !important; }
+
+/* Remove text shadows */
+.text-shadow,
+h1, h2, h3, h4, h5, h6 {
+    text-shadow: none !important;
+}
+
+/* Consistent icon colors */
+.icon,
+.fa,
+.fas,
+.far,
+.fab {
+    color: inherit;
+}
+
+.icon-primary { color: var(--primary-color) !important; }
+.icon-secondary { color: var(--secondary-color) !important; }
+.icon-success { color: var(--success-color) !important; }
+.icon-danger { color: var(--danger-color) !important; }
+.icon-warning { color: var(--warning-color) !important; }
+.icon-info { color: var(--info-color) !important; }
+
+/* Ensure consistent background colors */
+body,
+.main,
+.content,
+.page-content {
+    background: var(--bg-secondary) !important;
+    background-image: none !important;
+}
+
+/* Clean progress bars */
+.progress,
+.progress-bar {
+    background: var(--gray-200) !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+}
+
+.progress-bar-inner,
+.progress-fill {
+    background: var(--primary-color) !important;
+    background-image: none !important;
+}
+
+/* Clean badges and labels */
+.badge,
+.label,
+.tag {
+    background-image: none !important;
+    border: none !important;
+    font-weight: 600 !important;
+}
+
+/* Ensure no blurred backgrounds */
+.blur,
+.backdrop-blur,
+.bg-blur {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 } 

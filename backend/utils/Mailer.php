@@ -11,6 +11,7 @@ require_once dirname(__DIR__) . '/config/config.php';
 class Mailer {
     private static $instance = null;
     private $config = [];
+    private $debug = true; // Abilita debug per troubleshooting
     
     private function __construct() {
         try {
@@ -37,9 +38,13 @@ class Mailer {
      */
     private function loadConfig() {
         try {
-            // Verifica che la tabella configurazioni esista
-            if (!$this->tableExists('configurazioni')) {
-                $this->createConfigTable();
+            // NON creare tabelle se siamo in una transazione
+            // perché causerebbe un commit implicito
+            if (!db_connection()->inTransaction()) {
+                // Verifica che la tabella configurazioni esista
+                if (!$this->tableExists('configurazioni')) {
+                    $this->createConfigTable();
+                }
             }
             
             $stmt = db_query("
@@ -157,57 +162,29 @@ class Mailer {
      * @return bool True se l'invio è riuscito, false altrimenti
      */
     public function send($to, $subject, $body, $options = []) {
-        // Verifica che le configurazioni SMTP siano complete
-        if (empty($this->config['smtp_host']) || empty($this->config['smtp_port'])) {
-            error_log('Mailer: Configurazione SMTP incompleta - Host: ' . ($this->config['smtp_host'] ?? 'missing') . ', Port: ' . ($this->config['smtp_port'] ?? 'missing'));
-            return false;
-        }
+        // Log completo configurazione per debug
+        error_log('[MAILER DEBUG] Inizio invio email');
+        error_log('[MAILER DEBUG] Destinatario: ' . (is_array($to) ? implode(',', $to) : $to));
+        error_log('[MAILER DEBUG] Oggetto: ' . $subject);
         
-        // Log tentativo di invio
-        error_log('Mailer: Tentativo invio email a ' . (is_array($to) ? implode(',', $to) : $to));
-        
-        // Usa SimpleSMTP invece di PHPMailer (funziona meglio su Windows/XAMPP)
+        // USA SOLO BrevoSMTP per tutte le email
         try {
-            require_once __DIR__ . '/SimpleSMTP.php';
+            require_once __DIR__ . '/BrevoSMTP.php';
+            $brevoSMTP = BrevoSMTP::getInstance();
             
-            $smtp = new SimpleSMTP(
-                $this->config['smtp_host'],
-                intval($this->config['smtp_port']),
-                $this->config['smtp_username'],
-                $this->config['smtp_password']
-            );
-            
-            // Abilita sempre debug per il troubleshooting
-            $smtp->enableDebug(true);
-            
-            // Prepara destinatari
-            $to_string = is_array($to) ? implode(', ', array_values($to)) : $to;
-            
-            // Invia email
-            $fromEmail = $this->config['smtp_from_email'] ?? 'noreply@example.com';
-            $fromName = $this->config['smtp_from_name'] ?? 'Piattaforma Collaborativa';
-            
-            $result = $smtp->send($to_string, $subject, $body, $fromEmail, $fromName);
-            
-            if ($result) {
-                $this->logEmail($to, $subject, 'success');
+            if ($brevoSMTP->send($to, $subject, $body, true)) {
+                error_log('[MAILER DEBUG] ✅ Email inviata con successo tramite BrevoSMTP');
+                $this->logEmail($to, $subject, 'success', 'BrevoSMTP');
                 return true;
             } else {
-                throw new Exception('Invio email fallito');
+                error_log('[MAILER DEBUG] ❌ BrevoSMTP fallito senza eccezione');
+                $this->logEmail($to, $subject, 'failed', 'BrevoSMTP');
+                return false;
             }
-            
         } catch (Exception $e) {
-            error_log('SimpleSMTP Error: ' . $e->getMessage());
-            
-            // Log dettagliato per debug
-            error_log('Mailer: Configurazione SMTP - Host: ' . ($this->config['smtp_host'] ?? 'missing') . 
-                     ', Port: ' . ($this->config['smtp_port'] ?? 'missing') . 
-                     ', Username: ' . (!empty($this->config['smtp_username']) ? 'set' : 'missing') . 
-                     ', Password: ' . (!empty($this->config['smtp_password']) ? 'set' : 'missing'));
-            
-            // Fallback a mail() nativa se SimpleSMTP fallisce
-            error_log('Tentativo con mail() nativa dopo errore SimpleSMTP');
-            return $this->sendWithNativeMail($to, $subject, $body);
+            error_log('[MAILER DEBUG] ❌ BrevoSMTP eccezione: ' . $e->getMessage());
+            $this->logEmail($to, $subject, 'failed', 'BrevoSMTP - ' . $e->getMessage());
+            return false;
         }
     }
     
@@ -234,19 +211,40 @@ class Mailer {
         $fromEmail = $this->config['smtp_from_email'] ?? 'noreply@example.com';
         $fromName = $this->config['smtp_from_name'] ?? 'Piattaforma Collaborativa';
         
+        // Crea un boundary per il messaggio multipart
+        $boundary = md5(time());
+        
         $headers = [
             'MIME-Version: 1.0',
-            'Content-type: text/html; charset=UTF-8',
+            'Content-Type: multipart/alternative; boundary="' . $boundary . '"',
             'From: ' . $fromName . ' <' . $fromEmail . '>',
             'Reply-To: ' . $fromEmail,
             'X-Mailer: PHP/' . phpversion()
         ];
         
+        // Estrai il testo dal contenuto HTML
+        $textBody = strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>'], "\n", $body));
+        $textBody = html_entity_decode($textBody, ENT_QUOTES, 'UTF-8');
+        
+        // Costruisci il messaggio multipart
+        $message = '';
+        $message .= '--' . $boundary . "\r\n";
+        $message .= "Content-Type: text/plain; charset=UTF-8\r\n";
+        $message .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
+        $message .= $textBody . "\r\n";
+        
+        $message .= '--' . $boundary . "\r\n";
+        $message .= "Content-Type: text/html; charset=UTF-8\r\n";
+        $message .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
+        $message .= $body . "\r\n";
+        
+        $message .= '--' . $boundary . '--';
+        
         $to = is_array($to) ? implode(', ', array_values($to)) : $to;
         
         // Tentativo di invio
         error_log('Mailer: Tentativo invio con mail() nativa a ' . $to);
-        $result = @mail($to, $subject, $body, implode("\r\n", $headers));
+        $result = @mail($to, $subject, $message, implode("\r\n", $headers));
         
         if (!$result) {
             $lastError = error_get_last();
@@ -271,7 +269,7 @@ class Mailer {
             ];
             
             db_query("
-                INSERT INTO log_attivita (tipo_entita, azione, dettagli, creato_il)
+                INSERT INTO log_attivita (entita_tipo, azione, dettagli, data_azione)
                 VALUES (?, ?, ?, NOW())
             ", ['email', 'email_sent', json_encode($dettagli)]);
         } catch (Exception $e) {

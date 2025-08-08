@@ -44,17 +44,19 @@ $utenti = $stmt->fetchAll();
 
 $pageTitle = 'Gestione Utenti';
 require_once 'components/header.php';
+require_once 'components/page-header.php';
+
+renderPageHeader('Gestione Utenti', 'Amministra gli utenti del sistema', 'users');
+
+// I pulsanti sono spostati nella action bar sotto l'header
 ?>
 
-<div class="content-header">
-    <h1><i class="fas fa-users"></i> Gestione Utenti</h1>
-    <div class="header-actions">
-        <?php if ($auth->canAccess('users', 'write')): ?>
-        <a href="<?php echo APP_PATH; ?>/aziende.php" class="btn btn-primary">
-            <i class="fas fa-users-cog"></i> Gestisci da Aziende
-        </a>
-        <?php endif; ?>
-    </div>
+<div class="action-bar">
+    <?php if ($auth->canAccess('users', 'write')): ?>
+    <a href="<?php echo APP_PATH; ?>/aziende.php" class="btn btn-primary">
+        <i class="fas fa-users-cog"></i> Gestisci da Aziende
+    </a>
+    <?php endif; ?>
 </div>
 
 <div class="users-table-container">

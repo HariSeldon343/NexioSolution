@@ -1,0 +1,194 @@
+/**
+ * Nexio Sidebar - Responsive Enhancement
+ * CSS aggiuntivo per migliorare la responsività della sidebar
+ */
+
+/* Sidebar Mobile Toggle */
+.sidebar-mobile-toggle {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1001;
+    background: #2d3748;
+    color: white;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.sidebar-mobile-toggle:hover {
+    background: #4a5568;
+}
+
+/* Mobile Overlay */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+/* Miglioramenti responsive */
+@media (max-width: 768px) {
+    .sidebar-mobile-toggle {
+        display: block;
+    }
+    
+    .sidebar {
+        transform: translateX(-100%);
+        z-index: 1000;
+    }
+    
+    .sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+    
+    .sidebar-overlay.show {
+        display: block;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding-top: 60px; /* Spazio per il toggle button */
+    }
+    
+    /* Menu items più grandi su mobile */
+    .sidebar-menu .menu-item a {
+        padding: 15px;
+        font-size: 16px;
+    }
+    
+    .sidebar-menu .menu-item a i {
+        width: 24px;
+        font-size: 18px;
+    }
+    
+    /* User info più compatta su mobile */
+    .user-info {
+        margin-top: 20px;
+        padding: 12px;
+    }
+    
+    .user-name {
+        font-size: 15px;
+    }
+    
+    .user-role {
+        font-size: 13px;
+    }
+    
+    .user-company {
+        font-size: 12px;
+        margin-top: 6px;
+    }
+}
+
+/* Tablet responsive */
+@media (max-width: 992px) and (min-width: 769px) {
+    .sidebar {
+        width: 220px;
+    }
+    
+    .main-content {
+        margin-left: 220px;
+        width: calc(100vw - 220px);
+    }
+    
+    .sidebar-header h2 {
+        font-size: 20px;
+    }
+    
+    .sidebar-header p {
+        font-size: 11px;
+    }
+}
+
+/* Large screens optimizations */
+@media (min-width: 1400px) {
+    .sidebar {
+        width: 280px;
+    }
+    
+    .main-content {
+        margin-left: 280px;
+        width: calc(100vw - 280px);
+    }
+    
+    .sidebar-menu .menu-item a {
+        padding: 14px 18px;
+        font-size: 15px;
+    }
+    
+    .user-info {
+        padding: 18px;
+    }
+}
+
+/* Smooth animations removed per richiesta utente */
+
+/* Focus and accessibility improvements */
+.sidebar-menu .menu-item a:focus {
+    outline: 2px solid #4299e1;
+    outline-offset: 2px;
+}
+
+.sidebar-mobile-toggle:focus {
+    outline: 2px solid #4299e1;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .sidebar {
+        border-right: 2px solid #cbd5e0;
+    }
+    
+    .sidebar-menu .menu-item a {
+        border: 1px solid transparent;
+    }
+    
+    .sidebar-menu .menu-item a:hover,
+    .sidebar-menu .menu-item a.active {
+        border-color: #4299e1;
+    }
+}
+
+/* Tutte le transizioni rimosse */
+.sidebar,
+.main-content,
+.sidebar-menu .menu-item a {
+    transition: none;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+    .sidebar-mobile-toggle {
+        background: #1a202c;
+    }
+    
+    .sidebar-mobile-toggle:hover {
+        background: #2d3748;
+    }
+}
+
+/* Print styles - hide sidebar when printing */
+@media print {
+    .sidebar,
+    .sidebar-mobile-toggle,
+    .sidebar-overlay {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}

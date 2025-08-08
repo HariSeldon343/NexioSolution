@@ -1,5 +1,5 @@
 -- Aggiornamento tabella utenti per gestione password e primo accesso
--- Esegui questo script nel database piattaforma_collaborativa
+-- Esegui questo script nel database NexioSol
 
 -- Aggiungi campi mancanti alla tabella utenti
 ALTER TABLE utenti 

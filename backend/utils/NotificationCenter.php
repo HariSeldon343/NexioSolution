@@ -187,14 +187,22 @@ class NotificationCenter {
      * Invia notifica di benvenuto
      */
     public function notifyWelcomeUser($user, $tempPassword = null) {
+        error_log("[DEBUG NOTIFICATION CENTER] notifyWelcomeUser chiamato per: " . $user['email']);
+        
         $emailContent = EmailTemplate::welcomeUser($user, $tempPassword);
         
-        $this->sendEmail(
+        error_log("[DEBUG NOTIFICATION CENTER] Template email generato, lunghezza: " . strlen($emailContent));
+        
+        $result = $this->sendEmail(
             $user['email'],
             'Benvenuto in Nexio Solution',
             $emailContent,
             'user_welcome'
         );
+        
+        error_log("[DEBUG NOTIFICATION CENTER] Risultato sendEmail: " . ($result ? 'SUCCESS' : 'FAILED'));
+        
+        return $result;
     }
     
     /**
@@ -218,12 +226,10 @@ class NotificationCenter {
                 SELECT DISTINCT u.id, u.email, u.nome, u.cognome, u.ruolo
                 FROM utenti u
                 JOIN utenti_aziende ua ON u.id = ua.utente_id
-                LEFT JOIN utenti_permessi up ON ua.id = up.utente_azienda_id
                 WHERE ua.azienda_id = ?
                 AND u.attivo = 1
                 AND ua.attivo = 1
                 AND u.id != ?
-                AND (up.riceve_notifiche_email = 1 OR u.ruolo = 'super_admin')
             ", [$aziendaId, $excludeUserId])->fetchAll();
             
             // Unisci evitando duplicati
@@ -261,15 +267,14 @@ class NotificationCenter {
             return true;
         }
         
-        // Verifica permessi per l'azienda
+        // Per ora tutti gli utenti attivi dell'azienda ricevono notifiche
         $result = db_query("
-            SELECT up.riceve_notifiche_eventi
+            SELECT ua.attivo
             FROM utenti_aziende ua
-            LEFT JOIN utenti_permessi up ON ua.id = up.utente_azienda_id
             WHERE ua.utente_id = ? AND ua.azienda_id = ? AND ua.attivo = 1
         ", [$userId, $aziendaId])->fetch();
         
-        return $result && $result['riceve_notifiche_eventi'];
+        return $result ? true : false;
     }
     
     /**

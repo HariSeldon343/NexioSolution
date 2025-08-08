@@ -2,17 +2,50 @@
 /**
  * Vista lista eventi
  */
+
+// Combina eventi e task in un array unico
+$allItems = [];
+
+// Aggiungi eventi
+foreach ($eventi as $evento) {
+    $allItems[] = [
+        'type' => 'event',
+        'data' => $evento,
+        'date' => strtotime($evento['data_inizio'])
+    ];
+}
+
+// Aggiungi task se disponibili
+if (isset($user_tasks) && !empty($user_tasks)) {
+    foreach ($user_tasks as $task) {
+        $allItems[] = [
+            'type' => 'task',
+            'data' => $task,
+            'date' => strtotime($task['data_inizio'])
+        ];
+    }
+}
+
+// Ordina per data
+usort($allItems, function($a, $b) {
+    return $a['date'] - $b['date'];
+});
 ?>
 
 <div class="events-list-view">
-    <?php if (empty($eventi)): ?>
+    <?php if (empty($allItems)): ?>
         <div class="empty-state">
             <i class="fas fa-calendar-times"></i>
-            <h3>Nessun evento trovato</h3>
-            <p>Non ci sono eventi in questo periodo</p>
+            <h3>Nessun evento o task trovato</h3>
+            <p>Non ci sono eventi o task in questo periodo</p>
             <?php if ($auth->canManageEvents()): ?>
             <a href="?action=nuovo" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Crea il primo evento
+            </a>
+            <?php endif; ?>
+            <?php if ($auth->isSuperAdmin()): ?>
+            <a href="?action=nuovo_task" class="btn btn-success" style="margin-left: 10px;">
+                <i class="fas fa-tasks"></i> Assegna Task
             </a>
             <?php endif; ?>
         </div>
@@ -20,15 +53,19 @@
         <div class="events-grid">
             <?php 
             $currentDate = null;
-            foreach ($eventi as $evento): 
-                $eventoDate = date('Y-m-d', strtotime($evento['data_inizio']));
-                if ($currentDate !== $eventoDate): 
-                    $currentDate = $eventoDate;
+            foreach ($allItems as $item): 
+                $itemDate = date('Y-m-d', $item['date']);
+                if ($currentDate !== $itemDate): 
+                    $currentDate = $itemDate;
             ?>
                 <div class="date-divider">
-                    <h3><?= date('l, d F Y', strtotime($evento['data_inizio'])) ?></h3>
+                    <h3><?= date('l, d F Y', $item['date']) ?></h3>
                 </div>
-            <?php endif; ?>
+            <?php endif; 
+            
+            if ($item['type'] === 'event'):
+                $evento = $item['data'];
+            ?>
             
             <div class="event-card" data-event-id="<?= $evento['id'] ?>">
                 <div class="event-time">
@@ -63,6 +100,13 @@
                             <?= htmlspecialchars($evento['creatore_nome'] . ' ' . $evento['creatore_cognome']) ?>
                         </span>
                         
+                        <?php if (isset($evento['nome_azienda']) && $isSuperAdmin && !$filter_azienda_id): ?>
+                        <span class="event-company">
+                            <i class="fas fa-building"></i>
+                            <?= htmlspecialchars($evento['nome_azienda']) ?>
+                        </span>
+                        <?php endif; ?>
+                        
                         <?php if ($evento['num_partecipanti'] > 0): ?>
                         <span class="event-participants">
                             <i class="fas fa-users"></i>
@@ -89,6 +133,75 @@
                     <?php endif; ?>
                 </div>
             </div>
+            
+            <?php else: 
+                // Task card
+                $task = $item['data'];
+                $prodottoServizio = $task['prodotto_servizio'] ?? 'Non specificato';
+            ?>
+            
+            <div class="event-card task-card" data-task-id="<?= $task['id'] ?>">
+                <div class="event-time">
+                    <span class="task-type">TASK</span>
+                    <span class="task-duration"><?= $task['giornate_previste'] ?> gg</span>
+                </div>
+                
+                <div class="event-content">
+                    <div class="event-header">
+                        <h4 class="event-title"><?= htmlspecialchars($task['attivita']) ?> - <?= htmlspecialchars($prodottoServizio) ?></h4>
+                        <div class="event-type event-task">
+                            Task
+                        </div>
+                    </div>
+                    
+                    <?php if ($task['descrizione']): ?>
+                    <p class="event-description"><?= htmlspecialchars($task['descrizione']) ?></p>
+                    <?php endif; ?>
+                    
+                    <div class="event-meta">
+                        <span class="event-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <?= htmlspecialchars($task['citta']) ?>
+                        </span>
+                        
+                        <span class="event-creator">
+                            <i class="fas fa-user"></i>
+                            <?= htmlspecialchars($task['utente_nome'] . ' ' . $task['utente_cognome']) ?>
+                        </span>
+                        
+                        <span class="event-company">
+                            <i class="fas fa-building"></i>
+                            <?= htmlspecialchars($task['azienda_nome']) ?>
+                        </span>
+                        
+                        <?php if ($task['costo_giornata']): ?>
+                        <span class="event-cost">
+                            <i class="fas fa-euro-sign"></i>
+                            €<?= number_format($task['costo_giornata'], 2, ',', '.') ?>/gg
+                        </span>
+                        <?php endif; ?>
+                        
+                        <span class="event-dates">
+                            <i class="fas fa-calendar-alt"></i>
+                            <?= date('d/m', strtotime($task['data_inizio'])) ?> - <?= date('d/m', strtotime($task['data_fine'])) ?>
+                        </span>
+                    </div>
+                </div>
+                
+                <?php if ($auth->isSuperAdmin()): ?>
+                <div class="event-actions">
+                    <a href="?action=modifica_task&id=<?= $task['id'] ?>" class="btn btn-sm btn-outline">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="?action=elimina_task&id=<?= $task['id'] ?>" class="btn btn-sm btn-danger"
+                       onclick="return confirm('Sei sicuro di voler eliminare questo task?')">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </div>
+                <?php endif; ?>
+            </div>
+            
+            <?php endif; ?>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
@@ -214,6 +327,51 @@
 .event-type-social { background: #fef5e7; color: #975a16; }
 .event-type-other { background: #e2e8f0; color: #4a5568; }
 
+/* Task card styling */
+.task-card {
+    border-left: 4px solid #48bb78;
+    background: #f0fff4;
+}
+
+.task-card:hover {
+    border-color: #38a169;
+}
+
+.task-type {
+    background: #48bb78;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.task-duration {
+    display: block;
+    margin-top: 5px;
+    font-size: 14px;
+    color: #22543d;
+    font-weight: 600;
+}
+
+.event-task {
+    background: #48bb78;
+    color: white;
+}
+
+.event-cost {
+    background: #fef5e7;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    color: #975a16;
+}
+
+.event-dates {
+    font-weight: 500;
+}
+
 .event-description {
     color: #718096;
     margin-bottom: 15px;
@@ -237,6 +395,13 @@
 
 .event-meta i {
     color: #a0aec0;
+}
+
+.event-company {
+    background: #f7fafc;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
 }
 
 .event-actions {

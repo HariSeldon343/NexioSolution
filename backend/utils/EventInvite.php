@@ -3,8 +3,20 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/ICSGenerator.php';
 
 class EventInvite {
+    private static $instance = null;
+    
     public function __construct() {
         // Non è più necessario un oggetto database, usiamo le funzioni globali
+    }
+    
+    /**
+     * Ottiene l'istanza singleton di EventInvite
+     */
+    public static function getInstance() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
     }
     
     /**
@@ -217,6 +229,8 @@ class EventInvite {
      * Invia inviti email con allegato iCal
      */
     public function sendInvitations($evento_id, $partecipanti_ids = []) {
+        error_log("EventInvite DEBUG: sendInvitations chiamato per evento $evento_id con partecipanti: " . json_encode($partecipanti_ids));
+        
         // Carica dettagli evento
         $stmt = db_query("
             SELECT e.*, u.nome as nome_organizzatore, u.cognome as cognome_organizzatore, u.email as email_organizzatore,
@@ -261,22 +275,26 @@ class EventInvite {
                 require_once __DIR__ . '/Mailer.php';
                 $mailer = Mailer::getInstance();
                 
-                $mailer->sendWithAttachment(
-                    $partecipante['email'],
-                    $subject,
-                    $body,
-                    [
-                        'filename' => $filename,
-                        'content' => $ical_content,
-                        'type' => 'text/calendar; method=REQUEST'
-                    ]
-                );
-                
-                // Log invio
-                error_log("Invito evento inviato a: " . $partecipante['email']);
+                // Usa il metodo send normale che ha già UniversalMailer come fallback
+                if ($mailer->send($partecipante['email'], $subject, $body)) {
+                    error_log("EventInvite: ✓ Email inviata con successo a " . $partecipante['email']);
+                    
+                    // Se vogliamo includere l'ICS nel corpo dell'email (opzionale)
+                    $bodyWithICS = $body . '
+                    <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 5px;">
+                        <h4>📅 Aggiungi al calendario</h4>
+                        <p>Salva il seguente contenuto in un file con estensione .ics e aprilo con il tuo calendario:</p>
+                        <pre style="background: white; padding: 10px; border-radius: 3px; font-size: 12px; overflow-x: auto;">' . htmlspecialchars($ical_content) . '</pre>
+                    </div>';
+                    
+                    // Opzionale: invia una seconda email con l'ICS nel corpo
+                    // $mailer->send($partecipante['email'], $subject . ' - File Calendario', $bodyWithICS);
+                } else {
+                    error_log("EventInvite: Errore invio email a " . $partecipante['email']);
+                }
                 
             } catch (Exception $e) {
-                error_log("Errore invio invito a " . $partecipante['email'] . ": " . $e->getMessage());
+                error_log("EventInvite: Eccezione invio a " . $partecipante['email'] . ": " . $e->getMessage());
             }
         }
     }
@@ -347,6 +365,56 @@ class EventInvite {
     }
     
     /**
+     * Invia notifica evento (metodo semplificato per test)
+     */
+    public function sendEventNotification($evento, $partecipanti) {
+        try {
+            require_once __DIR__ . '/Mailer.php';
+            $mailer = Mailer::getInstance();
+            
+            $subject = "Invito: " . $evento['titolo'];
+            $success = true;
+            
+            foreach ($partecipanti as $partecipante) {
+                if (empty($partecipante['email'])) continue;
+                
+                // Genera ICS per questo partecipante
+                $icsContent = $this->generateICalFile($evento, $partecipante);
+                
+                // Prepara corpo email
+                $body = $this->prepareEmailBody($evento, $partecipante);
+                
+                // Aggiungi informazioni ICS nel corpo
+                $body .= '
+                <div style="margin-top: 30px; padding: 20px; background-color: #f0f4f8; border-radius: 8px; border: 1px solid #d1d5db;">
+                    <h4 style="color: #374151; margin-top: 0;">📅 Aggiungi al tuo calendario</h4>
+                    <p style="color: #6b7280; margin: 10px 0;">Per aggiungere questo evento al tuo calendario:</p>
+                    <ol style="color: #6b7280;">
+                        <li>Copia il testo qui sotto</li>
+                        <li>Salvalo in un file chiamato <strong>evento.ics</strong></li>
+                        <li>Apri il file con il tuo calendario preferito</li>
+                    </ol>
+                    <details style="margin-top: 15px;">
+                        <summary style="cursor: pointer; color: #4f46e5; font-weight: 500;">Clicca per vedere il contenuto ICS</summary>
+                        <pre style="background: white; padding: 15px; border-radius: 5px; font-size: 11px; overflow-x: auto; margin-top: 10px; border: 1px solid #e5e7eb;">' . htmlspecialchars($icsContent) . '</pre>
+                    </details>
+                </div>';
+                
+                if (!$mailer->send($partecipante['email'], $subject, $body)) {
+                    error_log("EventInvite: Errore invio a " . $partecipante['email']);
+                    $success = false;
+                }
+            }
+            
+            return $success;
+            
+        } catch (Exception $e) {
+            error_log("EventInvite: Errore sendEventNotification: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
      * Ottieni lista utenti invitabili per un utente
      */
     public function getInvitableUsers($user_id, $azienda_id = null) {
@@ -385,5 +453,66 @@ class EventInvite {
         }
         
         return [];
+    }
+    
+    /**
+     * Invia notifica di cancellazione evento
+     */
+    public function sendEventCancellation($evento, $partecipante) {
+        require_once __DIR__ . '/Mailer.php';
+        $mailer = Mailer::getInstance();
+        
+        $subject = "Evento Cancellato: " . $evento['titolo'];
+        
+        $body = EmailTemplate::generate(
+            'Evento Cancellato',
+            "L'evento '" . htmlspecialchars($evento['titolo']) . "' è stato cancellato.",
+            null,
+            null,
+            [
+                'Data originale' => date('d/m/Y', strtotime($evento['data_inizio'])),
+                'Ora' => date('H:i', strtotime($evento['data_inizio'])),
+                'Luogo' => $evento['luogo'] ?? 'Non specificato',
+                'Motivo' => 'L\'evento è stato cancellato dall\'organizzatore'
+            ]
+        );
+        
+        return $mailer->send($partecipante['email'], $subject, $body);
+    }
+    
+    /**
+     * Invia notifica di aggiornamento evento
+     */
+    public function sendEventUpdate($evento, $partecipante) {
+        require_once __DIR__ . '/Mailer.php';
+        $mailer = Mailer::getInstance();
+        
+        $subject = "Evento Aggiornato: " . $evento['titolo'];
+        
+        // Genera nuovo ICS per l'evento aggiornato
+        $icsContent = $this->generateICalFile($evento, $partecipante);
+        
+        $body = EmailTemplate::generate(
+            'Evento Aggiornato',
+            "L'evento '" . htmlspecialchars($evento['titolo']) . "' è stato modificato.",
+            'Visualizza Evento',
+            APP_URL . '/calendario-eventi.php?date=' . date('Y-m-d', strtotime($evento['data_inizio'])),
+            [
+                'Nuova data' => date('d/m/Y', strtotime($evento['data_inizio'])),
+                'Nuovo orario' => date('H:i', strtotime($evento['data_inizio'])) . ' - ' . date('H:i', strtotime($evento['data_fine'])),
+                'Luogo' => $evento['luogo'] ?? 'Non specificato',
+                'Descrizione' => $evento['descrizione'] ?? 'Nessuna descrizione'
+            ]
+        );
+        
+        // Aggiungi ICS nel corpo
+        $body .= '
+        <div style="margin-top: 30px; padding: 20px; background-color: #f0f4f8; border-radius: 8px; border: 1px solid #d1d5db;">
+            <h4 style="color: #374151; margin-top: 0;">📅 Aggiorna nel tuo calendario</h4>
+            <p style="color: #6b7280;">Salva il seguente contenuto in un file .ics per aggiornare l\'evento nel tuo calendario:</p>
+            <pre style="background: white; padding: 15px; border-radius: 5px; font-size: 11px; overflow-x: auto; margin-top: 10px; border: 1px solid #e5e7eb;">' . htmlspecialchars($icsContent) . '</pre>
+        </div>';
+        
+        return $mailer->send($partecipante['email'], $subject, $body);
     }
 }

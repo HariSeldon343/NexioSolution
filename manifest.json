@@ -1,0 +1,57 @@
+{
+  "name": "Nexio Calendar",
+  "short_name": "Nexio Calendar",
+  "description": "Calendario eventi mobile per la piattaforma Nexio",
+  "start_url": "/piattaforma-collaborativa/calendario-eventi-mobile.php",
+  "display": "standalone",
+  "theme_color": "#2d3748",
+  "background_color": "#f7fafc",
+  "orientation": "portrait-primary",
+  "scope": "/piattaforma-collaborativa/",
+  "icons": [
+    {
+      "src": "assets/images/nexio-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/images/nexio-icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "assets/images/nexio-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["productivity", "business"],
+  "lang": "it",
+  "shortcuts": [
+    {
+      "name": "Nuovo Evento",
+      "short_name": "Nuovo",
+      "description": "Crea un nuovo evento",
+      "url": "/piattaforma-collaborativa/calendario-eventi.php?action=nuovo",
+      "icons": [
+        {
+          "src": "assets/images/nexio-icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Calendario Desktop",
+      "short_name": "Desktop",
+      "description": "Apri versione desktop",
+      "url": "/piattaforma-collaborativa/calendario-eventi.php",
+      "icons": [
+        {
+          "src": "assets/images/nexio-icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}

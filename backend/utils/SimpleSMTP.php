@@ -11,7 +11,7 @@ class SimpleSMTP {
     private $password;
     private $socket;
     private $debug = false;
-    private $timeout = 10;
+    private $timeout = 30;
     
     public function __construct($host, $port, $username, $password) {
         $this->host = $host;
@@ -26,7 +26,7 @@ class SimpleSMTP {
     
     private function log($message) {
         if ($this->debug) {
-            error_log("SimpleSMTP: " . $message);
+            error_log("[SimpleSMTP] " . $message);
         }
     }
     

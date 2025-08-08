@@ -1,5 +1,5 @@
 -- Aggiunge la colonna tipo alla tabella eventi
-USE piattaforma_collaborativa;
+USE NexioSol;
 
 ALTER TABLE eventi 
 ADD COLUMN tipo ENUM('riunione', 'formazione', 'evento', 'altro') NOT NULL DEFAULT 'riunione' 

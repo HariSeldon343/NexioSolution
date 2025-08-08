@@ -5,6 +5,7 @@
  */
 
 require_once 'backend/config/config.php';
+require_once 'backend/middleware/Auth.php';
 
 $auth = Auth::getInstance();
 

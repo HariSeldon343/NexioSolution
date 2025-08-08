@@ -173,12 +173,10 @@ if ($template_id && $action === 'edit') {
 
 $pageTitle = 'Gestione Template';
 include dirname(__FILE__) . '/components/header.php';
+require_once 'components/page-header.php';
 ?>
 
-<div class="content-header">
-    <h1><i class="fas fa-file-contract"></i> Gestione Template Documenti</h1>
-    <p>Crea e gestisci modelli di documento con intestazioni e piè di pagina personalizzabili</p>
-</div>
+<?php renderPageHeader('Gestione Template', 'Crea e modifica i template documentali', 'file-alt'); ?>
 
 <div class="tabs-container">
     <div class="tabs">

@@ -190,7 +190,44 @@ SELECT 1, '2.4.6', 'Amministrazione e Finanza', id, 3, 1 FROM classificazione WH
 INSERT INTO classificazione (azienda_id, codice, descrizione, parent_id, livello, attivo) 
 SELECT 1, '2.4.7', 'Commerciale e Marketing', id, 3, 1 FROM classificazione WHERE codice = '2.4' AND azienda_id = 1;
 
--- 9. CREA INDICI PER PERFORMANCE
+-- 9. TABELLE RATE LIMITING
+-- Tabella principale per i tentativi di accesso
+CREATE TABLE IF NOT EXISTS rate_limit_attempts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    action VARCHAR(50) NOT NULL,
+    identifier VARCHAR(255) NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    success BOOLEAN DEFAULT FALSE,
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_action_identifier (action, identifier),
+    INDEX idx_attempted_at (attempted_at),
+    INDEX idx_ip (ip_address)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabella per IP in whitelist (sempre permessi)
+CREATE TABLE IF NOT EXISTS rate_limit_whitelist (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL UNIQUE,
+    reason VARCHAR(255),
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES utenti(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabella per IP in blacklist (sempre bloccati)
+CREATE TABLE IF NOT EXISTS rate_limit_blacklist (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip_address VARCHAR(45) NOT NULL UNIQUE,
+    reason VARCHAR(255),
+    blocked_until DATETIME,
+    permanent BOOLEAN DEFAULT FALSE,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES utenti(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. CREA INDICI PER PERFORMANCE
 CREATE INDEX IF NOT EXISTS idx_documenti_classificazione ON documenti(classificazione_id);
 CREATE INDEX IF NOT EXISTS idx_documenti_azienda ON documenti(azienda_id);
 CREATE INDEX IF NOT EXISTS idx_documenti_stato ON documenti(stato);

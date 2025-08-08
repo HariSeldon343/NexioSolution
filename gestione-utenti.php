@@ -525,7 +525,7 @@ $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 $limit = 20; // Ridotto per performance
 $offset = ($page - 1) * $limit;
 $search = isset($_GET['search']) ? sanitize_input($_GET['search']) : '';
-$azienda_filter = isset($_GET['azienda']) ? intval($_GET['azienda']) : 0;
+$azienda_filter = isset($_GET['azienda']) && $_GET['azienda'] !== '' ? intval($_GET['azienda']) : null;
 
 // Inizializza variabili per evitare undefined
 $utenti = [];
@@ -545,7 +545,7 @@ try {
         $params = array_merge($params, [$searchPattern, $searchPattern, $searchPattern]);
     }
     
-    if ($azienda_filter) {
+    if ($azienda_filter !== null) {
         $countQuery .= " JOIN utenti_aziende ua ON u.id = ua.utente_id";
         $whereConditions[] = "ua.azienda_id = ? AND ua.attivo = 1";
         $params[] = $azienda_filter;
@@ -581,7 +581,7 @@ try {
         $params = array_merge($params, [$searchPattern, $searchPattern, $searchPattern]);
     }
     
-    if ($azienda_filter) {
+    if ($azienda_filter !== null) {
         $whereConditions[] = "ua.azienda_id = ?";
         $params[] = $azienda_filter;
     }
@@ -927,7 +927,7 @@ require_once 'components/page-header.php';
         <select id="filterAzienda" class="form-control" onchange="filterByAzienda(this.value)" style="max-width: 300px;">
             <option value="">Tutte le aziende</option>
             <?php foreach ($aziende as $azienda): ?>
-                <option value="<?php echo $azienda['id']; ?>" <?php echo $azienda_filter == $azienda['id'] ? 'selected' : ''; ?>>
+                <option value="<?php echo $azienda['id']; ?>" <?php echo $azienda_filter !== null && $azienda_filter == $azienda['id'] ? 'selected' : ''; ?>>
                     <?php echo htmlspecialchars($azienda['nome']); ?>
                 </option>
             <?php endforeach; ?>
@@ -1082,7 +1082,7 @@ require_once 'components/page-header.php';
     ?>
     <div class="pagination">
         <?php if ($page > 1): ?>
-            <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&azienda=<?php echo $azienda_filter; ?>" class="btn btn-sm btn-secondary">
+            <a href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?><?php echo $azienda_filter !== null ? '&azienda=' . $azienda_filter : ''; ?>" class="btn btn-sm btn-secondary">
                 <i class="fas fa-chevron-left"></i> Precedente
             </a>
         <?php endif; ?>
@@ -1092,7 +1092,7 @@ require_once 'components/page-header.php';
         </span>
         
         <?php if ($page < $totalPages): ?>
-            <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&azienda=<?php echo $azienda_filter; ?>" class="btn btn-sm btn-secondary">
+            <a href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?><?php echo $azienda_filter !== null ? '&azienda=' . $azienda_filter : ''; ?>" class="btn btn-sm btn-secondary">
                 Successiva <i class="fas fa-chevron-right"></i>
             </a>
         <?php endif; ?>
@@ -1655,9 +1655,10 @@ function copyToClipboard(text) {
 
 function filterByAzienda(aziendaId) {
     const url = new URL(window.location.href);
-    url.searchParams.set('azienda', aziendaId);
-    if (!aziendaId) {
+    if (aziendaId === '' || aziendaId === null) {
         url.searchParams.delete('azienda');
+    } else {
+        url.searchParams.set('azienda', aziendaId);
     }
     window.location.href = url.toString();
 }

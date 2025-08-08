@@ -84,9 +84,9 @@ try {
     if ($hasElevatedPrivileges && !$aziendaId) {
         // Vista globale per utenti con privilegi elevati
         
-        // Aziende attive
+        // Aziende attive (exclude cancelled ones to match the list view)
         try {
-            $stmt = db_query("SELECT COUNT(*) as count FROM aziende WHERE stato = 'attiva'");
+            $stmt = db_query("SELECT COUNT(*) as count FROM aziende WHERE stato != 'cancellata'");
             $stats['aziende'] = $stmt && $stmt->rowCount() > 0 ? $stmt->fetch()['count'] : 0;
         } catch (Exception $e) {
             $stats['aziende'] = 0;
@@ -394,27 +394,10 @@ require_once 'components/page-header.php';
 
 <!-- Chart.js per grafici -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/dashboard-clean.css">
 
 <style>
 /* Dashboard Styles - Clean & Modern */
-.dashboard-header {
-    background: #2d5a9f;
-    color: white;
-    padding: 2rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-}
-
-.dashboard-header h1 {
-    font-size: 28px;
-    margin-bottom: 8px;
-    font-weight: 600;
-}
-
-.dashboard-subtitle {
-    font-size: 16px;
-    opacity: 0.9;
-}
 
 .stats-overview {
     display: grid;
@@ -793,8 +776,8 @@ require_once 'components/page-header.php';
 </style>
 
 <?php
-// Render header con component
-renderPageHeader('Dashboard', '', 'fas fa-tachometer-alt', []);
+// Render header standardizzato
+renderPageHeader('Dashboard', 'Panoramica generale del sistema', 'tachometer-alt');
 ?>
 
 <!-- Info Widget -->

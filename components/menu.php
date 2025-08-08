@@ -1,4 +1,7 @@
 <?php
+// Include ModulesHelper
+require_once __DIR__ . '/../backend/utils/ModulesHelper.php';
+
 // Verifica che l'utente sia autenticato
 $auth = Auth::getInstance();
 if (!$auth->isAuthenticated()) {
@@ -37,6 +40,49 @@ $menuItems = [
         'visible' => $auth->canAccess('documents', 'read')
     ],
     [
+        'title' => 'Gestione Documentale',
+        'icon' => 'fas fa-folder-tree',
+        'url' => 'gestione-documentale.php',
+        'visible' => true // Visibile a tutti gli utenti autenticati
+    ],
+    [
+        'title' => 'File Manager',
+        'icon' => 'fas fa-folder-open',
+        'url' => 'filesystem.php',
+        'visible' => ModulesHelper::isModuleEnabled('FILESYSTEM', $auth->getCurrentCompany())
+    ],
+    [
+        'title' => 'Sistema ISO',
+        'icon' => 'fas fa-certificate',
+        'submenu' => [
+            [
+                'title' => 'Stato Sistema ISO',
+                'icon' => 'fas fa-info-circle',
+                'url' => 'iso-system-status.php',
+                'visible' => $auth->hasElevatedPrivileges()
+            ],
+            [
+                'title' => 'Setup ISO',
+                'icon' => 'fas fa-cog',
+                'url' => 'setup-iso-document-system.php',
+                'visible' => $isSuperAdmin
+            ],
+            [
+                'title' => 'Struttura Conformità',
+                'icon' => 'fas fa-sitemap',
+                'url' => 'inizializza-struttura-conformita.php',
+                'visible' => $auth->hasElevatedPrivileges()
+            ],
+            [
+                'title' => 'Classificazioni ISO',
+                'icon' => 'fas fa-tags',
+                'url' => 'gestione-classificazioni.php',
+                'visible' => $isSuperAdmin || $auth->hasRoleInAzienda('proprietario') || $auth->hasRoleInAzienda('admin')
+            ]
+        ],
+        'visible' => $auth->canAccess('documents', 'read')
+    ],
+    [
         'title' => 'Classificazioni',
         'icon' => 'fas fa-tags',
         'url' => 'gestione-classificazioni.php',
@@ -67,6 +113,12 @@ $menuItems = [
         'visible' => $auth->canAccess('moduli')
     ],
     [
+        'title' => 'Nexio AI',
+        'icon' => 'fas fa-robot',
+        'url' => 'nexio-ai.php',
+        'visible' => true // Temporaneamente visibile a tutti per test
+    ],
+    [
         'title' => 'Log',
         'icon' => 'fas fa-history',
         'url' => 'log-attivita.php',
@@ -95,8 +147,8 @@ $menuItems = [
 
 <nav class="sidebar">
     <div class="sidebar-header">
-                    <div class="logo">
-                <img src="<?php echo APP_PATH; ?>/assets/images/nexio-logo.svg" alt="Nexio Logo" style="max-width: 200px;">
+                    <div class="logo" style="display: flex; justify-content: center; align-items: center; width: 100%;">
+                <img src="<?php echo APP_PATH; ?>/assets/images/nexio-logo.svg" alt="Nexio Logo" style="max-width: 200px; display: block;">
             </div>
     </div>
     
@@ -125,12 +177,34 @@ $menuItems = [
         <ul class="menu-items">
             <?php foreach ($menuItems as $item): ?>
                 <?php if ($item['visible']): ?>
-                    <li class="menu-item <?php echo $currentPage === basename($item['url']) ? 'active' : ''; ?>">
-                        <a href="<?php echo $item['url']; ?>">
-                            <i class="<?php echo $item['icon']; ?>"></i>
-                            <span><?php echo $item['title']; ?></span>
-                        </a>
-                    </li>
+                    <?php if (isset($item['submenu'])): ?>
+                        <li class="menu-item has-submenu">
+                            <a href="javascript:void(0);" onclick="toggleSubmenu(this)">
+                                <i class="<?php echo $item['icon']; ?>"></i>
+                                <span><?php echo $item['title']; ?></span>
+                                <i class="fas fa-chevron-down submenu-arrow"></i>
+                            </a>
+                            <ul class="submenu">
+                                <?php foreach ($item['submenu'] as $subitem): ?>
+                                    <?php if (isset($subitem['visible']) && $subitem['visible']): ?>
+                                        <li class="submenu-item <?php echo $currentPage === basename($subitem['url']) ? 'active' : ''; ?>">
+                                            <a href="<?php echo $subitem['url']; ?>">
+                                                <i class="<?php echo $subitem['icon']; ?>"></i>
+                                                <span><?php echo $subitem['title']; ?></span>
+                                            </a>
+                                        </li>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </ul>
+                        </li>
+                    <?php else: ?>
+                        <li class="menu-item <?php echo $currentPage === basename($item['url']) ? 'active' : ''; ?>">
+                            <a href="<?php echo $item['url']; ?>">
+                                <i class="<?php echo $item['icon']; ?>"></i>
+                                <span><?php echo $item['title']; ?></span>
+                            </a>
+                        </li>
+                    <?php endif; ?>
                 <?php endif; ?>
             <?php endforeach; ?>
         </ul>
@@ -147,4 +221,90 @@ $menuItems = [
         <?php endif; ?>
     </div>
     <?php endif; ?>
-</nav> 
+</nav>
+
+<style>
+/* Stili per submenu */
+.menu-item.has-submenu {
+    position: relative;
+}
+
+.submenu-arrow {
+    margin-left: auto;
+    transition: transform 0.3s;
+    font-size: 12px;
+}
+
+.menu-item.has-submenu.open .submenu-arrow {
+    transform: rotate(180deg);
+}
+
+.submenu {
+    display: none;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.menu-item.has-submenu.open .submenu {
+    display: block;
+}
+
+.submenu-item {
+    padding-left: 20px;
+}
+
+.submenu-item a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: #e0e0e0;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.submenu-item a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.submenu-item.active a {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-left: 3px solid #fbbf24;
+}
+
+.menu-item.has-submenu > a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+</style>
+
+<script>
+function toggleSubmenu(element) {
+    const menuItem = element.closest('.menu-item');
+    menuItem.classList.toggle('open');
+    
+    // Chiudi altri submenu aperti
+    document.querySelectorAll('.menu-item.has-submenu').forEach(item => {
+        if (item !== menuItem && item.classList.contains('open')) {
+            item.classList.remove('open');
+        }
+    });
+}
+
+// Mantieni aperto il submenu se una pagina del submenu è attiva
+document.addEventListener('DOMContentLoaded', function() {
+    const activeSubmenuItem = document.querySelector('.submenu-item.active');
+    if (activeSubmenuItem) {
+        const parentMenuItem = activeSubmenuItem.closest('.menu-item.has-submenu');
+        if (parentMenuItem) {
+            parentMenuItem.classList.add('open');
+        }
+    }
+});
+</script> 

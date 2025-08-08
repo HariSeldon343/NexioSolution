@@ -16,7 +16,7 @@ if (!$auth->canAccess('settings', 'read')) {
 }
 
 // Gestione eliminazione log (solo super admin)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $auth->isSuperAdmin()) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $auth->canDeleteLogs()) {
     if (isset($_POST['action']) && $_POST['action'] === 'delete_logs') {
         try {
             db_connection()->beginTransaction();
@@ -26,20 +26,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $auth->isSuperAdmin()) {
             $deleteParams = [];
             
             if (isset($_POST['delete_all']) && $_POST['delete_all'] === '1') {
-                // Elimina tutti i log TRANNE quelli di eliminazione log
+                // Elimina tutti i log TRANNE quelli di eliminazione_log
                 $deleteWhere[] = "(azione != 'eliminazione_log' OR azione IS NULL)";
                 $dettagli = "Eliminati TUTTI i log di sistema (esclusi log di eliminazione)";
             } else {
-                // Elimina log filtrati (sempre esclusi i log di eliminazione)
+                // Elimina log filtrati (sempre esclusi i log di eliminazione_log)
                 $deleteWhere[] = "(azione != 'eliminazione_log' OR azione IS NULL)";
                 
-                if (!empty($_POST['tipo_entita'])) {
-                    $deleteWhere[] = "tipo_entita = :tipo_entita";
-                    $deleteParams['tipo_entita'] = $_POST['tipo_entita'];
+                if (!empty($_POST['entita_tipo'])) {
+                    $deleteWhere[] = "entita_tipo = :entita_tipo";
+                    $deleteParams['entita_tipo'] = $_POST['entita_tipo'];
                 }
                 
                 if (!empty($_POST['delete_before'])) {
-                    $deleteWhere[] = "DATE(creato_il) < :delete_before";
+                    $deleteWhere[] = "DATE(data_azione) < :delete_before";
                     $deleteParams['delete_before'] = $_POST['delete_before'];
                 }
                 
@@ -55,13 +55,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $auth->isSuperAdmin()) {
             $stmt = db_query($countSql, $deleteParams);
             $countDeleted = $stmt->fetch()['count'];
             
-            // Conta anche i log di eliminazione che rimarranno
+            // Conta i log di eliminazione che rimarranno
             $stmt = db_query("SELECT COUNT(*) as count FROM log_attivita WHERE azione = 'eliminazione_log'");
-            $countEliminazioniRimaste = $stmt->fetch()['count'];
+            $countNonEliminabili = $stmt->fetch()['count'];
             
-            // Prima di eliminare, crea un log dell'eliminazione
+            // Prima di eliminare, crea un log dell'eliminazione (non eliminabile)
             $logger->log('sistema', 'eliminazione_log', null, 
                 "$dettagli. Totale record eliminati: $countDeleted");
+            
+            // Marca il log appena creato come non eliminabile
+            $lastLogId = db_connection()->lastInsertId();
+            if ($lastLogId) {
+                db_query("UPDATE log_attivita SET non_eliminabile = 1 WHERE id = ?", [$lastLogId]);
+            }
             
             // Esegui l'eliminazione
             $deleteSql = "DELETE FROM log_attivita WHERE " . implode(" AND ", $deleteWhere);
@@ -69,8 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $auth->isSuperAdmin()) {
             
             db_connection()->commit();
             
-            if ($countEliminazioniRimaste > 0) {
-                $_SESSION['success'] = "Eliminati $countDeleted log di attività. Conservati $countEliminazioniRimaste log di eliminazione per audit.";
+            if ($countNonEliminabili > 0) {
+                $_SESSION['success'] = "Eliminati $countDeleted log di attività. Conservati $countNonEliminabili log di eliminazione per audit.";
             } else {
                 $_SESSION['success'] = "Eliminati $countDeleted log di attività";
             }
@@ -78,13 +84,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $auth->isSuperAdmin()) {
             
         } catch (Exception $e) {
             db_connection()->rollback();
+            
             $_SESSION['error'] = "Errore durante l'eliminazione: " . $e->getMessage();
         }
     }
 }
 
 // Parametri filtro
-$tipo_entita = $_GET['tipo'] ?? '';
+$entita_tipo = $_GET['tipo'] ?? '';
 $azione = $_GET['azione'] ?? '';
 $data_da = $_GET['data_da'] ?? date('Y-m-d', strtotime('-7 days'));
 $data_a = $_GET['data_a'] ?? date('Y-m-d');
@@ -111,9 +118,9 @@ if ($aziendaId && !$auth->isSuperAdmin()) {
     $params['azienda_id'] = $aziendaId;
 }
 
-if ($tipo_entita) {
-    $where[] = "tipo_entita = :tipo_entita";
-    $params['tipo_entita'] = $tipo_entita;
+if ($entita_tipo) {
+    $where[] = "entita_tipo = :entita_tipo";
+    $params['entita_tipo'] = $entita_tipo;
 }
 
 if ($azione) {
@@ -122,34 +129,55 @@ if ($azione) {
 }
 
 if ($data_da) {
-    $where[] = "DATE(creato_il) >= :data_da";
+    $where[] = "DATE(data_azione) >= :data_da";
     $params['data_da'] = $data_da;
 }
 
 if ($data_a) {
-    $where[] = "DATE(creato_il) <= :data_a";
+    $where[] = "DATE(data_azione) <= :data_a";
     $params['data_a'] = $data_a;
 }
 
 $where_clause = implode(" AND ", $where);
 
 // Conta totale record
-$count_sql = "SELECT COUNT(*) as total FROM vista_log_attivita WHERE $where_clause";
+$count_sql = "SELECT COUNT(*) as total FROM log_attivita WHERE $where_clause";
 $stmt = db_query($count_sql, $params);
 $total = $stmt->fetch()['total'];
 $total_pages = ceil($total / $per_page);
 
-// Ottieni log
-$sql = "SELECT * FROM vista_log_attivita 
+// Debug: Aggiungi logging per capire cosa succede
+error_log("DEBUG LOG-ATTIVITA: Where clause: $where_clause");
+error_log("DEBUG LOG-ATTIVITA: Params: " . print_r($params, true));
+error_log("DEBUG LOG-ATTIVITA: Total count: $total");
+
+// Ottieni log - usa la tabella diretta invece della vista
+$sql = "SELECT l.*, u.nome, u.cognome, u.email, a.nome as azienda_nome
+        FROM log_attivita l
+        LEFT JOIN utenti u ON l.utente_id = u.id
+        LEFT JOIN aziende a ON l.azienda_id = a.id
         WHERE $where_clause 
-        ORDER BY creato_il DESC 
+        ORDER BY l.data_azione DESC 
         LIMIT $per_page OFFSET $offset";
+
+error_log("DEBUG LOG-ATTIVITA: SQL finale: $sql");
 
 $stmt = db_query($sql, $params);
 $logs = $stmt->fetchAll();
 
+error_log("DEBUG LOG-ATTIVITA: Logs trovati: " . count($logs));
+
+// Fallback: Se non ci sono log con la query principale, prova query semplificata
+if (empty($logs) && $total > 0) {
+    error_log("DEBUG LOG-ATTIVITA: Tentativo query semplificata");
+    $simple_sql = "SELECT * FROM log_attivita ORDER BY data_azione DESC LIMIT $per_page OFFSET $offset";
+    $stmt = db_query($simple_sql);
+    $logs = $stmt->fetchAll();
+    error_log("DEBUG LOG-ATTIVITA: Query semplificata - Logs trovati: " . count($logs));
+}
+
 // Ottieni valori unici per filtri
-$stmt = db_query("SELECT DISTINCT tipo_entita FROM log_attivita ORDER BY tipo_entita");
+$stmt = db_query("SELECT DISTINCT entita_tipo FROM log_attivita WHERE entita_tipo IS NOT NULL ORDER BY entita_tipo");
 $tipi = $stmt->fetchAll();
 
 $stmt = db_query("SELECT DISTINCT azione FROM log_attivita ORDER BY azione");
@@ -328,16 +356,21 @@ require_once 'components/header.php';
     }
 </style>
 
-<div class="content-header">
-    <h1><i class="fas fa-file-alt"></i> Log Attività</h1>
-    <?php if ($auth->isSuperAdmin()): ?>
-    <div class="header-actions">
-        <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
-            <i class="fas fa-trash"></i> Elimina Log
-        </button>
-    </div>
-    <?php endif; ?>
+<div class="page-header">
+    <h1><i class="fas fa-history"></i> Log Attività</h1>
+    <div class="page-subtitle">Registro delle attività del sistema</div>
 </div>
+
+<?php if ($auth->canDeleteLogs()): ?>
+<div class="action-bar">
+    <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
+        <i class="fas fa-trash"></i> Elimina Log
+    </button>
+    <small style="margin-left: 10px; color: #666;">
+        <i class="fas fa-info-circle"></i> I log di eliminazione non possono essere cancellati
+    </small>
+</div>
+<?php endif; ?>
 
 <?php if (isset($_SESSION['success'])): ?>
     <div class="alert alert-success">
@@ -361,7 +394,7 @@ require_once 'components/header.php';
     <?php
     // Attività oggi - uso sintassi compatibile
     $oggi = date('Y-m-d');
-    $sql = "SELECT COUNT(*) as count FROM vista_log_attivita WHERE DATE(creato_il) = ?";
+    $sql = "SELECT COUNT(*) as count FROM log_attivita WHERE DATE(data_azione) = ?";
     $params = [$oggi];
     if ($aziendaId) {
         $sql .= " AND azienda_id = ?";
@@ -378,9 +411,9 @@ require_once 'components/header.php';
     <?php
     // Documenti creati questa settimana
     $settimanaFa = date('Y-m-d', strtotime('-7 days'));
-    $sql = "SELECT COUNT(*) as count FROM vista_log_attivita 
-        WHERE tipo_entita = 'documento' AND azione = 'creazione' 
-        AND DATE(creato_il) >= ?";
+    $sql = "SELECT COUNT(*) as count FROM log_attivita 
+        WHERE entita_tipo = 'documento' AND azione = 'creazione' 
+        AND DATE(data_azione) >= ?";
     $params = [$settimanaFa];
     if ($aziendaId) {
         $sql .= " AND azienda_id = ?";
@@ -397,8 +430,8 @@ require_once 'components/header.php';
     <?php
     // Utenti attivi questa settimana
     $sql = "SELECT COUNT(DISTINCT COALESCE(utente_id, 0)) as count 
-        FROM vista_log_attivita 
-        WHERE DATE(creato_il) >= ?";
+        FROM log_attivita 
+        WHERE DATE(data_azione) >= ?";
     $params = [$settimanaFa];
     if ($aziendaId) {
         $sql .= " AND azienda_id = ?";
@@ -422,9 +455,9 @@ require_once 'components/header.php';
                 <select id="tipo" name="tipo">
                     <option value="">Tutti</option>
                     <?php foreach ($tipi as $t): ?>
-                        <option value="<?php echo htmlspecialchars($t['tipo_entita']); ?>" 
-                                <?php echo $tipo_entita === $t['tipo_entita'] ? 'selected' : ''; ?>>
-                            <?php echo ucfirst($t['tipo_entita']); ?>
+                        <option value="<?php echo htmlspecialchars($t['entita_tipo']); ?>" 
+                                <?php echo $entita_tipo === $t['entita_tipo'] ? 'selected' : ''; ?>>
+                            <?php echo ucfirst($t['entita_tipo']); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -491,22 +524,19 @@ require_once 'components/header.php';
                 <?php foreach ($logs as $log): ?>
                     <tr>
                         <td>
-                            <div><?php echo date('d/m/Y', strtotime($log['creato_il'])); ?></div>
+                            <div><?php echo date('d/m/Y', strtotime($log['data_azione'])); ?></div>
                             <div style="font-size: 12px; color: #718096;">
-                                <?php echo date('H:i:s', strtotime($log['creato_il'])); ?>
+                                <?php echo date('H:i:s', strtotime($log['data_azione'])); ?>
                             </div>
                         </td>
                         <td>
                             <div class="user-info-cell">
-                                <div class="user-name"><?php echo htmlspecialchars($log['nome_completo'] ?? 'Sistema'); ?></div>
-                                <div class="user-email"><?php echo htmlspecialchars($log['email_utente'] ?? ''); ?></div>
-                                <?php if ($log['tipo_utente'] === 'referente_azienda'): ?>
-                                    <span style="font-size: 11px; color: #9f7aea;">Referente</span>
-                                <?php endif; ?>
+                                <div class="user-name"><?php echo htmlspecialchars(($log['nome'] ?? '') . ' ' . ($log['cognome'] ?? '') ?: 'Sistema'); ?></div>
+                                <div class="user-email"><?php echo htmlspecialchars($log['email'] ?? ''); ?></div>
                             </div>
                         </td>
                         <td>
-                            <span class="entity-type"><?php echo htmlspecialchars($log['tipo_entita']); ?></span>
+                            <span class="entity-type"><?php echo htmlspecialchars($log['entita_tipo']); ?></span>
                         </td>
                         <td>
                             <span class="action-badge <?php echo $log['azione']; ?>">
@@ -514,7 +544,31 @@ require_once 'components/header.php';
                             </span>
                         </td>
                         <td class="details-cell">
-                            <?php echo htmlspecialchars($log['dettagli'] ?? '-'); ?>
+                            <?php 
+                            // Se i dettagli sono JSON, decodificali e mostrali meglio
+                            $dettagli = $log['dettagli'] ?? '';
+                            if (!empty($dettagli)) {
+                                $dettagliDecoded = json_decode($dettagli, true);
+                                if (json_last_error() === JSON_ERROR_NONE && is_array($dettagliDecoded)) {
+                                    // Mostra dettagli JSON in modo leggibile
+                                    echo '<div style="font-size: 13px;">';
+                                    foreach ($dettagliDecoded as $key => $value) {
+                                        if ($key === 'ip' || $key === 'user_agent') continue; // Salta questi
+                                        $label = ucfirst(str_replace('_', ' ', $key));
+                                        if (is_array($value)) {
+                                            $value = implode(', ', $value);
+                                        }
+                                        echo '<div><strong>' . htmlspecialchars($label) . ':</strong> ' . htmlspecialchars($value) . '</div>';
+                                    }
+                                    echo '</div>';
+                                } else {
+                                    // Non è JSON, mostra come testo normale
+                                    echo htmlspecialchars($dettagli);
+                                }
+                            } else {
+                                echo '-';
+                            }
+                            ?>
                             <?php if ($log['ip_address']): ?>
                                 <div style="font-size: 11px; color: #a0aec0; margin-top: 4px;">
                                     IP: <?php echo htmlspecialchars($log['ip_address']); ?>
@@ -524,7 +578,7 @@ require_once 'components/header.php';
                         <?php if ($auth->isSuperAdmin() && !$currentAzienda): ?>
                             <td>
                                 <div style="font-size: 13px;">
-                                    <?php echo htmlspecialchars($log['nome_azienda'] ?? '-'); ?>
+                                    <?php echo htmlspecialchars($log['azienda_nome'] ?? '-'); ?>
                                 </div>
                             </td>
                         <?php endif; ?>
@@ -623,11 +677,11 @@ require_once 'components/header.php';
                     <div id="filterOptions" class="filter-options">
                         <div class="form-group">
                             <label>Tipo Entità</label>
-                            <select name="tipo_entita">
+                            <select name="entita_tipo">
                                 <option value="">Tutti i tipi</option>
                                 <?php foreach ($tipi as $t): ?>
-                                    <option value="<?php echo htmlspecialchars($t['tipo_entita']); ?>">
-                                        <?php echo ucfirst($t['tipo_entita']); ?>
+                                    <option value="<?php echo htmlspecialchars($t['entita_tipo']); ?>">
+                                        <?php echo ucfirst($t['entita_tipo']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -647,7 +701,7 @@ require_once 'components/header.php';
             </div>
             
             <div class="modal-footer">
-                <button type="submit" class="btn btn-danger" onclick="return confirmDelete()">
+                <button type="submit" class="btn btn-danger" onclick="return confirmDeleteLogs()">
                     <i class="fas fa-trash"></i> Conferma Eliminazione
                 </button>
                 <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">
@@ -817,13 +871,13 @@ function toggleDeleteOptions() {
     }
 }
 
-function confirmDelete() {
+function confirmDeleteLogs() {
     const deleteType = document.querySelector('input[name="delete_type"]:checked').value;
     
     if (deleteType === 'all') {
         return confirm('⚠️ ATTENZIONE ⚠️\n\nStai per eliminare TUTTI i log del sistema.\nQuesta operazione è IRREVERSIBILE!\n\nSei assolutamente sicuro di voler procedere?');
     } else {
-        const tipo = document.querySelector('select[name="tipo_entita"]').value;
+        const tipo = document.querySelector('select[name="entita_tipo"]').value;
         const dataBefore = document.querySelector('input[name="delete_before"]').value;
         
         if (!tipo && !dataBefore) {

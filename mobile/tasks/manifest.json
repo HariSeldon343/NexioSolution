@@ -1,0 +1,104 @@
+{
+    "name": "Nexio Tasks",
+    "short_name": "NexioTasks",
+    "description": "Nexio Tasks - Sistema gestione task mobile con Kanban board e sincronizzazione offline",
+    "start_url": "/piattaforma-collaborativa/mobile/tasks/",
+    "scope": "/piattaforma-collaborativa/mobile/tasks/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "theme_color": "#2d5a9f",
+    "background_color": "#ffffff",
+    "lang": "it",
+    "categories": ["business", "productivity", "utilities", "collaboration"],
+    "dir": "ltr",
+    "icons": [
+        {
+            "src": "../../assets/images/nexio-icon.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "../../assets/images/nexio-logo.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Nuovo Task",
+            "short_name": "Nuovo",
+            "description": "Crea un nuovo task",
+            "url": "/piattaforma-collaborativa/mobile/tasks/#/nuovo-task",
+            "icons": [{ "src": "../../assets/images/nexio-icon.svg", "sizes": "96x96" }]
+        },
+        {
+            "name": "Kanban Board",
+            "short_name": "Kanban",
+            "description": "Visualizza Kanban board task",
+            "url": "/piattaforma-collaborativa/mobile/tasks/#/kanban",
+            "icons": [{ "src": "../../assets/images/nexio-icon.svg", "sizes": "96x96" }]
+        },
+        {
+            "name": "I Miei Task",
+            "short_name": "Miei Task",
+            "description": "Visualizza i task assegnati a me",
+            "url": "/piattaforma-collaborativa/mobile/tasks/#/assigned",
+            "icons": [{ "src": "../../assets/images/nexio-icon.svg", "sizes": "96x96" }]
+        },
+        {
+            "name": "Statistiche",
+            "short_name": "Stats",
+            "description": "Visualizza statistiche task e produttività",
+            "url": "/piattaforma-collaborativa/mobile/tasks/#/stats",
+            "icons": [{ "src": "../../assets/images/nexio-icon.svg", "sizes": "96x96" }]
+        }
+    ],
+    "share_target": {
+        "action": "/piattaforma-collaborativa/mobile/tasks/share",
+        "method": "POST",
+        "enctype": "multipart/form-data",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url"
+        }
+    },
+    "protocol_handlers": [
+        {
+            "protocol": "web+nexiotask",
+            "url": "/piattaforma-collaborativa/mobile/tasks/?task=%s"
+        }
+    ],
+    "edge_side_panel": {
+        "preferred_width": 400
+    },
+    "screenshots": [
+        {
+            "src": "../../assets/images/screenshot-mobile-tasks.png",
+            "sizes": "320x640",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Task Kanban board on mobile"
+        },
+        {
+            "src": "../../assets/images/screenshot-desktop-tasks.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Task management on desktop"
+        }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false,
+    "file_handlers": [
+        {
+            "action": "/piattaforma-collaborativa/mobile/tasks/import",
+            "accept": {
+                "text/csv": [".csv"],
+                "application/json": [".json"]
+            }
+        }
+    ]
+}

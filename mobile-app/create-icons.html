@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nexio PWA Icon Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .icon-preview { display: inline-block; margin: 10px; text-align: center; }
+        canvas { border: 1px solid #ccc; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Nexio PWA Icon Generator</h1>
+    <p>This page generates all required PWA icons from the base SVG.</p>
+    
+    <div id="icons"></div>
+    
+    <script>
+        const svgContent = `
+            <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                <rect x="32" y="32" width="448" height="448" rx="80" ry="80" fill="#2563eb"/>
+                <text x="256" y="320" font-family="Arial, sans-serif" font-size="200" text-anchor="middle" fill="white">✦</text>
+            </svg>
+        `;
+        
+        const sizes = [16, 32, 72, 96, 128, 144, 152, 180, 192, 384, 512];
+        
+        function createIcon(size) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = size;
+            canvas.height = size;
+            
+            const img = new Image();
+            const svgBlob = new Blob([svgContent], {type: 'image/svg+xml'});
+            const url = URL.createObjectURL(svgBlob);
+            
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, size, size);
+                
+                // Create download link
+                canvas.toBlob(function(blob) {
+                    const link = document.createElement('a');
+                    link.download = `icon-${size}.png`;
+                    link.href = URL.createObjectURL(blob);
+                    
+                    const div = document.createElement('div');
+                    div.className = 'icon-preview';
+                    div.innerHTML = `
+                        <div>${size}x${size}</div>
+                        <canvas width="${size}" height="${size}" style="width: ${Math.min(size, 64)}px; height: ${Math.min(size, 64)}px;"></canvas>
+                        <br>
+                    `;
+                    
+                    const previewCanvas = div.querySelector('canvas');
+                    const previewCtx = previewCanvas.getContext('2d');
+                    previewCtx.drawImage(canvas, 0, 0);
+                    
+                    div.appendChild(link);
+                    link.textContent = `Download ${size}x${size}`;
+                    
+                    document.getElementById('icons').appendChild(div);
+                }, 'image/png');
+                
+                URL.revokeObjectURL(url);
+            };
+            
+            img.src = url;
+        }
+        
+        // Generate all icons
+        sizes.forEach(createIcon);
+        
+        // Apple touch icon (special case)
+        function createAppleTouchIcon() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 180;
+            canvas.height = 180;
+            
+            const appleSvg = `
+                <svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0" y="0" width="180" height="180" rx="35" ry="35" fill="#2563eb"/>
+                    <text x="90" y="115" font-family="Arial, sans-serif" font-size="70" text-anchor="middle" fill="white">✦</text>
+                </svg>
+            `;
+            
+            const img = new Image();
+            const svgBlob = new Blob([appleSvg], {type: 'image/svg+xml'});
+            const url = URL.createObjectURL(svgBlob);
+            
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, 180, 180);
+                
+                canvas.toBlob(function(blob) {
+                    const link = document.createElement('a');
+                    link.download = 'apple-touch-icon.png';
+                    link.href = URL.createObjectURL(blob);
+                    link.textContent = 'Download Apple Touch Icon';
+                    
+                    const div = document.createElement('div');
+                    div.className = 'icon-preview';
+                    div.innerHTML = `
+                        <div>Apple Touch Icon</div>
+                        <canvas width="180" height="180" style="width: 64px; height: 64px;"></canvas>
+                        <br>
+                    `;
+                    
+                    const previewCanvas = div.querySelector('canvas');
+                    const previewCtx = previewCanvas.getContext('2d');
+                    previewCtx.drawImage(canvas, 0, 0);
+                    
+                    div.appendChild(link);
+                    document.getElementById('icons').appendChild(div);
+                }, 'image/png');
+                
+                URL.revokeObjectURL(url);
+            };
+            
+            img.src = url;
+        }
+        
+        createAppleTouchIcon();
+    </script>
+</body>
+</html>

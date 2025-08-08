@@ -251,7 +251,7 @@ class RateLimiter {
                 'ip_address' => $ip,
                 'reason' => $reason,
                 'blocked_until' => date('Y-m-d H:i:s', time() + $duration),
-                'created_by' => Auth::getInstance()->getUserId() ?? 0
+                'created_by' => Auth::getInstance()->getUser()['id'] ?? 0
             ]);
             return true;
         } catch (Exception $e) {

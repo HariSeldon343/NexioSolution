@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Nexio Calendar">
+    <meta name="application-name" content="Nexio Calendar">
+    <meta name="msapplication-TileColor" content="#2d5a9f">
+    <meta name="theme-color" content="#2d5a9f">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="../assets/images/nexio-icon.svg">
+    <link rel="apple-touch-icon" href="../assets/images/nexio-icon.svg">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="preload" href="app.js" as="script">
+    
+    <!-- Bootstrap CSS -->
+    <link href="../assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../assets/vendor/fontawesome/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom PWA Styles -->
+    <link href="styles.css" rel="stylesheet">
+    
+    <title>Nexio Calendar</title>
+    
+    <style>
+        /* Critical CSS for immediate rendering */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2d5a9f 0%, #4299e1 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10000;
+            transition: opacity 0.3s ease;
+        }
+        
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        .loading-text {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 30px;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Hide content until app loads */
+        #app {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        #app.loaded {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-logo">
+            <i class="fas fa-calendar-alt" style="font-size: 60px;"></i>
+        </div>
+        <div class="loading-text">Nexio Calendar</div>
+        <div class="loading-spinner"></div>
+        <div style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
+            Caricamento in corso...
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app">
+        <!-- Navigation Bar -->
+        <nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#" id="navBrand">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    <span id="navTitle">Nexio Calendar</span>
+                </a>
+                
+                <div class="navbar-nav ms-auto d-flex flex-row">
+                    <button class="btn btn-outline-light btn-sm me-2" id="syncBtn" title="Sincronizza">
+                        <i class="fas fa-sync"></i>
+                    </button>
+                    <button class="btn btn-outline-light btn-sm me-2" id="addEventBtn" title="Nuovo Evento">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" id="menuBtn" title="Menu">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Offline Banner -->
+        <div id="offlineBanner" class="alert alert-warning m-0 rounded-0 text-center" style="display: none; margin-top: 56px !important;">
+            <i class="fas fa-wifi" style="opacity: 0.5;"></i>
+            Modalità offline - Alcune funzionalità potrebbero non essere disponibili
+        </div>
+
+        <!-- Install Banner -->
+        <div id="installBanner" class="alert alert-info m-0 rounded-0" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-mobile-alt me-2"></i>
+                    Installa l'app per un'esperienza migliore
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-primary me-2" id="installBtn">Installa</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="dismissInstallBtn">&times;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <main id="mainContent" class="main-content">
+            <!-- View Controls -->
+            <div id="viewControls" class="view-controls bg-white border-bottom">
+                <div class="container-fluid">
+                    <div class="row align-items-center py-2">
+                        <div class="col-auto">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary" data-view="month" id="monthViewBtn">
+                                    <i class="fas fa-calendar"></i>
+                                    <span class="d-none d-sm-inline ms-1">Mese</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" data-view="week" id="weekViewBtn">
+                                    <i class="fas fa-calendar-week"></i>
+                                    <span class="d-none d-sm-inline ms-1">Settimana</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" data-view="day" id="dayViewBtn">
+                                    <i class="fas fa-calendar-day"></i>
+                                    <span class="d-none d-sm-inline ms-1">Giorno</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" data-view="list" id="listViewBtn">
+                                    <i class="fas fa-list"></i>
+                                    <span class="d-none d-sm-inline ms-1">Lista</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col text-center">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <button class="btn btn-sm btn-outline-secondary me-2" id="prevBtn">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <h5 class="mb-0" id="currentPeriod">Loading...</h5>
+                                <button class="btn btn-sm btn-outline-secondary ms-2" id="nextBtn">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-auto">
+                            <button class="btn btn-sm btn-secondary" id="todayBtn">
+                                <i class="fas fa-home"></i>
+                                <span class="d-none d-sm-inline ms-1">Oggi</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar Content -->
+            <div id="calendarContainer" class="calendar-container">
+                <div id="loadingEvents" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Caricamento eventi...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Caricamento eventi...</p>
+                </div>
+                
+                <!-- Month View -->
+                <div id="monthView" class="calendar-view" style="display: none;">
+                    <div class="month-grid" id="monthGrid">
+                        <!-- Generated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Week View -->
+                <div id="weekView" class="calendar-view" style="display: none;">
+                    <div class="week-grid" id="weekGrid">
+                        <!-- Generated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Day View -->
+                <div id="dayView" class="calendar-view" style="display: none;">
+                    <div class="day-grid" id="dayGrid">
+                        <!-- Generated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- List View -->
+                <div id="listView" class="calendar-view" style="display: none;">
+                    <div class="events-list" id="eventsList">
+                        <!-- Generated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Side Menu -->
+        <div id="sideMenu" class="side-menu">
+            <div class="menu-header">
+                <h5 class="mb-0">Menu</h5>
+                <button class="btn-close" id="closeSideMenu"></button>
+            </div>
+            <div class="menu-content">
+                <div class="menu-section">
+                    <h6 class="menu-section-title">Calendario</h6>
+                    <button class="menu-item" id="refreshBtn">
+                        <i class="fas fa-refresh me-2"></i>
+                        Aggiorna
+                    </button>
+                    <button class="menu-item" id="exportBtn">
+                        <i class="fas fa-download me-2"></i>
+                        Esporta ICS
+                    </button>
+                </div>
+                
+                <div class="menu-section">
+                    <h6 class="menu-section-title">Impostazioni</h6>
+                    <button class="menu-item" id="notificationsBtn">
+                        <i class="fas fa-bell me-2"></i>
+                        Notifiche
+                        <span class="menu-toggle" id="notificationToggle">
+                            <i class="fas fa-toggle-on"></i>
+                        </span>
+                    </button>
+                    <button class="menu-item" id="themeBtn">
+                        <i class="fas fa-palette me-2"></i>
+                        Tema scuro
+                        <span class="menu-toggle" id="themeToggle">
+                            <i class="fas fa-toggle-off"></i>
+                        </span>
+                    </button>
+                </div>
+                
+                <div class="menu-section">
+                    <h6 class="menu-section-title">Account</h6>
+                    <div class="menu-item user-info" id="userInfo">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <div class="user-name">Loading...</div>
+                            <div class="user-role">Loading...</div>
+                        </div>
+                    </div>
+                    <button class="menu-item" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        Esci
+                    </button>
+                </div>
+                
+                <div class="menu-footer">
+                    <small class="text-muted">
+                        Nexio Calendar v1.0.0
+                        <br>
+                        <span id="connectionStatus">Online</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Modal -->
+        <div class="modal fade" id="eventModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="eventModalTitle">Nuovo Evento</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="eventForm">
+                            <input type="hidden" id="eventId">
+                            
+                            <div class="mb-3">
+                                <label for="eventTitle" class="form-label">Titolo *</label>
+                                <input type="text" class="form-control" id="eventTitle" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="eventDescription" class="form-label">Descrizione</label>
+                                <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="eventStartDate" class="form-label">Data Inizio *</label>
+                                        <input type="date" class="form-control" id="eventStartDate" required>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="eventStartTime" class="form-label">Ora Inizio *</label>
+                                        <input type="time" class="form-control" id="eventStartTime" required>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="eventEndDate" class="form-label">Data Fine</label>
+                                        <input type="date" class="form-control" id="eventEndDate">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="eventEndTime" class="form-label">Ora Fine</label>
+                                        <input type="time" class="form-control" id="eventEndTime">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="eventLocation" class="form-label">Luogo</label>
+                                <input type="text" class="form-control" id="eventLocation">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="eventType" class="form-label">Tipo</label>
+                                <select class="form-select" id="eventType">
+                                    <option value="riunione">Riunione</option>
+                                    <option value="appuntamento">Appuntamento</option>
+                                    <option value="scadenza">Scadenza</option>
+                                    <option value="evento">Evento</option>
+                                    <option value="altro">Altro</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="sendNotifications">
+                                    <label class="form-check-label" for="sendNotifications">
+                                        Invia notifiche ai partecipanti
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                        <button type="button" class="btn btn-danger" id="deleteEventBtn" style="display: none;">
+                            <i class="fas fa-trash"></i> Elimina
+                        </button>
+                        <button type="button" class="btn btn-primary" id="saveEventBtn">
+                            <i class="fas fa-save"></i> Salva
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3">
+            <!-- Toasts will be inserted here -->
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="../assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Main App Script -->
+    <script src="app.js"></script>
+    
+    <!-- PWA Installation Script -->
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBanner').style.display = 'block';
+        });
+
+        // Install Button Click
+        document.addEventListener('DOMContentLoaded', () => {
+            const installBtn = document.getElementById('installBtn');
+            const dismissBtn = document.getElementById('dismissInstallBtn');
+            const installBanner = document.getElementById('installBanner');
+
+            if (installBtn) {
+                installBtn.addEventListener('click', async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        console.log(`User response to the install prompt: ${outcome}`);
+                        deferredPrompt = null;
+                        installBanner.style.display = 'none';
+                    }
+                });
+            }
+
+            if (dismissBtn) {
+                dismissBtn.addEventListener('click', () => {
+                    installBanner.style.display = 'none';
+                });
+            }
+        });
+
+        // Hide install banner if app is already installed
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('installBanner').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

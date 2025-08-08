@@ -104,8 +104,12 @@ $pageTitle = 'Profilo';
 require_once 'components/header.php';
 ?>
 
-<div class="content-header">
+<!-- Clean Dashboard Styles -->
+<link rel="stylesheet" href="assets/css/dashboard-clean.css">
+
+<div class="page-header">
     <h1><i class="fas fa-user"></i> Il Mio Profilo</h1>
+    <div class="page-subtitle">Gestisci le tue informazioni personali e impostazioni</div>
 </div>
 
 <?php if ($message): ?>
@@ -120,12 +124,12 @@ require_once 'components/header.php';
 </div>
 <?php endif; ?>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+<div class="grid-responsive grid-2">
     <!-- Informazioni profilo -->
-    <div class="form-container">
-        <h2 style="font-size: 20px; margin-bottom: 20px; color: #2d3748; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">
-            <i class="fas fa-user-circle"></i> Informazioni Personali
-        </h2>
+    <div class="content-card">
+        <div class="panel-header">
+            <h2><i class="fas fa-user-circle"></i> Informazioni Personali</h2>
+        </div>
         
         <form method="POST" action="">
             <div class="form-group">
@@ -180,10 +184,10 @@ require_once 'components/header.php';
     </div>
     
     <!-- Cambio password -->
-    <div class="form-container">
-        <h2 style="font-size: 20px; margin-bottom: 20px; color: #2d3748; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">
-            <i class="fas fa-lock"></i> Cambia Password
-        </h2>
+    <div class="content-card">
+        <div class="panel-header">
+            <h2><i class="fas fa-lock"></i> Cambia Password</h2>
+        </div>
         
         <form method="POST" action="">
             <div class="form-group">
@@ -225,10 +229,10 @@ require_once 'components/header.php';
 
 <!-- Informazioni azienda se presente -->
 <?php if ($currentAzienda): ?>
-<div class="form-container" style="margin-top: 30px;">
-    <h2 style="font-size: 20px; margin-bottom: 20px; color: #2d3748; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">
-        <i class="fas fa-building"></i> Azienda Corrente
-    </h2>
+<div class="content-card" style="margin-top: 30px;">
+    <div class="panel-header">
+        <h2><i class="fas fa-building"></i> Azienda Corrente</h2>
+    </div>
     
     <div class="info-grid">
         <div class="info-item">

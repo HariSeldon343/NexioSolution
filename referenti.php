@@ -306,6 +306,7 @@ if ($action === 'edit' && $referente_id) {
 
 $pageTitle = 'Gestione Referenti - ' . htmlspecialchars($azienda['nome']);
 require_once 'components/header.php';
+require_once 'components/page-header.php';
 ?>
 
 <style>
@@ -519,13 +520,12 @@ require_once 'components/header.php';
 
 <?php if ($action === 'nuovo' || $action === 'edit'): ?>
     <!-- Form Referente -->
-    <div class="content-header">
-        <h1><i class="fas fa-user-plus"></i> <?php echo $action === 'nuovo' ? 'Nuovo Referente' : 'Modifica Referente'; ?></h1>
-        <div class="header-actions">
-            <a href="<?php echo APP_PATH; ?>/referenti.php?azienda_id=<?php echo $azienda_id; ?>" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Torna ai referenti
-            </a>
-        </div>
+    <?php renderPageHeader($action === 'nuovo' ? 'Nuovo Referente' : 'Modifica Referente', 'Inserisci o modifica i dati del referente', 'user-tie'); ?>
+    
+    <div class="action-bar">
+        <a href="<?php echo APP_PATH; ?>/referenti.php?azienda_id=<?php echo $azienda_id; ?>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Torna ai referenti
+        </a>
     </div>
     
     <div class="info-message">
@@ -785,21 +785,20 @@ require_once 'components/header.php';
     
 <?php else: ?>
     <!-- Lista Referenti -->
-    <div class="content-header">
-        <h1><i class="fas fa-users"></i> Referenti - <?php echo htmlspecialchars($azienda['nome']); ?></h1>
-        <div class="header-actions">
-            <?php 
-            $attivi = count(array_filter($referenti, function($r) { return $r['attivo']; }));
-            if ($attivi < $max_referenti): 
-            ?>
-            <a href="<?php echo APP_PATH; ?>/referenti.php?azienda_id=<?php echo $azienda_id; ?>&action=nuovo" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nuovo Referente
-            </a>
-            <?php endif; ?>
-            <a href="<?php echo APP_PATH; ?>/aziende.php?action=view&id=<?php echo $azienda_id; ?>" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Torna all'azienda
-            </a>
-        </div>
+    <?php renderPageHeader('Gestione Referenti', 'Amministra i referenti aziendali', 'user-tie'); ?>
+    
+    <div class="action-bar">
+        <?php 
+        $attivi = count(array_filter($referenti, function($r) { return $r['attivo']; }));
+        if ($attivi < $max_referenti): 
+        ?>
+        <a href="<?php echo APP_PATH; ?>/referenti.php?azienda_id=<?php echo $azienda_id; ?>&action=nuovo" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuovo Referente
+        </a>
+        <?php endif; ?>
+        <a href="<?php echo APP_PATH; ?>/aziende.php?action=view&id=<?php echo $azienda_id; ?>" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Torna all'azienda
+        </a>
     </div>
     
     <?php if (isset($_SESSION['success'])): ?>

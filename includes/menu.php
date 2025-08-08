@@ -19,6 +19,9 @@ $base_path = '/piattaforma-collaborativa';
         <a href="<?php echo $base_path; ?>/documenti.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'documenti.php' ? 'active' : ''; ?>">
             <i>📄</i> Documenti
         </a>
+        <a href="<?php echo $base_path; ?>/gestione-documentale.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'gestione-documentale.php' ? 'active' : ''; ?>">
+            <i>📁</i> Gestione Documentale ISO
+        </a>
         <a href="<?php echo $base_path; ?>/calendario.php" class="nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'calendario.php' ? 'active' : ''; ?>">
             <i>📅</i> Calendario
         </a>

@@ -5,12 +5,14 @@ $auth = Auth::getInstance();
 $auth->requireAuth();
 
 $user = $auth->getUser();
-$userAziende = $auth->getUserAziende();
+$userAziende = $auth->getAccessibleCompanies();
 
 // Se ha solo un'azienda, reindirizza automaticamente
 if (count($userAziende) == 1) {
-    $auth->setCurrentAzienda($userAziende[0]['azienda_id']);
-    redirect(APP_PATH . '/dashboard.php');
+    $auth->switchCompany($userAziende[0]['id']);
+    // Controlla se c'è un parametro redirect
+    $redirect = isset($_GET['redirect']) ? $_GET['redirect'] : APP_PATH . '/dashboard.php';
+    redirect($redirect);
 }
 
 // Se non ha aziende, mostra errore
@@ -130,20 +132,24 @@ if (empty($userAziende)) {
         
         <div class="aziende-grid">
             <?php foreach ($userAziende as $ua): ?>
-            <a href="<?php echo APP_PATH; ?>/cambia-azienda.php?azienda_id=<?php echo $ua['azienda_id']; ?>" class="azienda-card">
+            <a href="<?php echo APP_PATH; ?>/cambia-azienda.php?azienda_id=<?php echo $ua['id']; ?>&redirect=<?php echo urlencode($_GET['redirect'] ?? APP_PATH . '/filesystem.php'); ?>" class="azienda-card">
                 <div class="azienda-info">
-                    <h3><?php echo htmlspecialchars($ua['azienda_nome']); ?></h3>
+                    <h3><?php echo htmlspecialchars($ua['nome']); ?></h3>
+                    <?php if (isset($ua['ruolo_azienda'])): ?>
                     <span class="azienda-role">
                         <?php 
                         $ruoli = [
                             'proprietario' => 'Proprietario',
                             'admin' => 'Amministratore',
+                            'manager' => 'Manager',
+                            'user' => 'Utente',
                             'utente' => 'Utente',
                             'ospite' => 'Ospite'
                         ];
-                        echo $ruoli[$ua['ruolo_azienda']] ?? $ua['ruolo_azienda'];
+                        echo $ruoli[$ua['ruolo_azienda']] ?? ucfirst($ua['ruolo_azienda']);
                         ?>
                     </span>
+                    <?php endif; ?>
                 </div>
                 <div class="arrow-icon">→</div>
             </a>

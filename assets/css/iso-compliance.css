@@ -1,0 +1,294 @@
+/**
+ * ISO Compliance Document Management - Styles
+ * Custom styles for the ISO compliance interface
+ * 
+ * @version 1.0.0
+ */
+
+/* Folder Tree Styles */
+.folder-tree {
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.folder-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.folder-children {
+    list-style: none;
+    padding-left: 20px;
+    margin-top: 5px;
+}
+
+.folder-item {
+    margin-bottom: 2px;
+}
+
+.folder-name {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.folder-name:hover {
+    background-color: #f8f9fa;
+}
+
+.folder-name.selected {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.folder-name.selected .badge {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.folder-name i {
+    width: 16px;
+    text-align: center;
+}
+
+/* Standards List */
+.standard-item {
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+}
+
+.standard-item:hover {
+    background-color: #e9ecef;
+}
+
+/* Document List */
+.doc-checkbox {
+    cursor: pointer;
+}
+
+.table > tbody > tr {
+    transition: background-color 0.15s ease;
+}
+
+.table > tbody > tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table > tbody > tr.selected {
+    background-color: #e7f1ff;
+}
+
+/* Document Status Badges */
+.badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25em 0.6em;
+}
+
+/* Search Box */
+#searchDocuments {
+    min-width: 250px;
+}
+
+/* Upload Modal */
+#fileInput {
+    cursor: pointer;
+}
+
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-area:hover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+.upload-area.drag-over {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+/* File Type Icons */
+.file-icon {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 20px;
+    margin-right: 10px;
+}
+
+.file-icon-pdf {
+    background-color: #dc3545;
+    color: white;
+}
+
+.file-icon-doc,
+.file-icon-docx {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.file-icon-xls,
+.file-icon-xlsx {
+    background-color: #198754;
+    color: white;
+}
+
+/* Tooltips */
+.tooltip-inner {
+    max-width: 300px;
+    text-align: left;
+}
+
+/* Progress Overlay */
+#progressOverlay {
+    backdrop-filter: blur(2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .folder-tree {
+        max-height: 300px;
+    }
+    
+    #searchDocuments {
+        min-width: 150px;
+    }
+    
+    .table {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group-sm > .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .folder-tree,
+    .card-header,
+    .btn,
+    .form-check-input {
+        display: none !important;
+    }
+    
+    .table {
+        border: 1px solid #000;
+    }
+    
+    .table th,
+    .table td {
+        border: 1px solid #000 !important;
+    }
+}
+
+/* Accessibility */
+.folder-name:focus {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+}
+
+.visually-hidden-focusable:focus {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.toast {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Custom Scrollbar */
+.folder-tree::-webkit-scrollbar {
+    width: 8px;
+}
+
+.folder-tree::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.folder-tree::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.folder-tree::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .folder-tree {
+        background-color: #212529;
+        color: #f8f9fa;
+    }
+    
+    .folder-name:hover {
+        background-color: #343a40;
+    }
+    
+    .folder-name.selected {
+        background-color: #0d6efd;
+    }
+    
+    .standard-item {
+        background-color: #343a40;
+        border-color: #495057;
+        color: #f8f9fa;
+    }
+    
+    .standard-item:hover {
+        background-color: #495057;
+    }
+    
+    .table {
+        color: #f8f9fa;
+    }
+    
+    .table > tbody > tr:hover {
+        background-color: #343a40;
+    }
+    
+    .upload-area {
+        border-color: #495057;
+        color: #f8f9fa;
+    }
+    
+    .upload-area:hover {
+        background-color: #343a40;
+    }
+}

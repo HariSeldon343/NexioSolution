@@ -1,0 +1,439 @@
+/**
+ * CSS Fix per Calendario Mensile - Nexio
+ * Risolve sovrapposizioni e problemi di layout nella vista mensile
+ */
+
+/* Reset e base per calendario mensile */
+.calendar-month-view {
+    width: 100%;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+.calendar-header {
+    background: #f8fafc;
+    padding: 20px;
+    border-bottom: 2px solid #e2e8f0;
+    text-align: center;
+}
+
+.calendar-header h2 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+/* Griglia calendario principale */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: #e2e8f0;
+    gap: 1px;
+    min-height: 400px;
+}
+
+/* Header giorni settimana */
+.calendar-weekdays {
+    display: contents;
+}
+
+.weekday-header {
+    background: #4299e1;
+    color: white;
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+}
+
+/* Griglia giorni */
+.calendar-days {
+    display: contents;
+}
+
+/* Singolo giorno del calendario */
+.calendar-day {
+    background: white;
+    border: none;
+    padding: 0;
+    min-height: 120px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.calendar-day:hover {
+    background: #f7fafc;
+}
+
+/* Stati speciali dei giorni */
+.calendar-day.other-month {
+    background: #f8f9fa;
+    color: #a0aec0;
+}
+
+.calendar-day.today {
+    background: #ebf8ff;
+    border: 2px solid #4299e1;
+}
+
+.calendar-day.selected {
+    background: #bee3f8;
+    border: 2px solid #2b6cb0;
+}
+
+.calendar-day.has-events {
+    background: #f0fff4;
+}
+
+.calendar-day.has-tasks {
+    background: #fffaf0;
+}
+
+.calendar-day.has-events.has-tasks {
+    background: linear-gradient(45deg, #f0fff4 50%, #fffaf0 50%);
+}
+
+/* Header del giorno */
+.day-header {
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+    flex-shrink: 0;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.day-number {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 0.875rem;
+}
+
+.events-count {
+    background: #4299e1;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* Container eventi del giorno */
+.day-events {
+    padding: 4px;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 80px;
+}
+
+/* Singolo evento nel giorno */
+.day-event {
+    background: #4299e1;
+    color: white;
+    border-radius: 3px;
+    padding: 3px 6px;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 18px;
+    flex-shrink: 0;
+}
+
+.day-event:hover {
+    transform: scale(1.02);
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Tipologie di eventi */
+.event-type-riunione {
+    background: #4299e1;
+}
+
+.event-type-formazione {
+    background: #48bb78;
+}
+
+.event-type-scadenza {
+    background: #ed8936;
+}
+
+.event-type-ferie {
+    background: #9f7aea;
+}
+
+.event-type-altro {
+    background: #718096;
+}
+
+/* Eventi task */
+.event-task {
+    background: #48bb78 !important;
+    border-left: 3px solid #38a169;
+}
+
+.event-task .event-type {
+    background: rgba(255,255,255,0.2);
+    color: #f7fafc;
+    font-size: 0.625rem;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Orario evento */
+.event-time {
+    font-weight: 600;
+    font-size: 0.625rem;
+    opacity: 0.9;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Titolo evento */
+.event-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+/* Indicatore "altri eventi" */
+.more-events {
+    background: rgba(45,55,72,0.8);
+    color: white;
+    text-align: center;
+    padding: 2px 4px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    border-radius: 2px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .calendar-day {
+        min-height: 100px;
+    }
+    
+    .day-events {
+        max-height: 65px;
+    }
+    
+    .day-event {
+        font-size: 0.7rem;
+        padding: 2px 5px;
+        min-height: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .calendar-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    
+    .weekday-header {
+        display: none;
+    }
+    
+    .calendar-day {
+        min-height: auto;
+        border-bottom: 1px solid #e2e8f0;
+        border-radius: 0;
+        padding: 15px;
+    }
+    
+    .day-header {
+        border-bottom: none;
+        margin-bottom: 10px;
+        position: static;
+    }
+    
+    .day-number {
+        font-size: 1.125rem;
+        font-weight: 700;
+    }
+    
+    .day-events {
+        max-height: none;
+        gap: 6px;
+        padding: 0;
+    }
+    
+    .day-event {
+        font-size: 0.875rem;
+        padding: 8px 12px;
+        border-radius: 6px;
+        min-height: 36px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .event-time {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .event-title {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        line-height: 1.3;
+    }
+    
+    /* Mostra giorno della settimana su mobile */
+    .calendar-day-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .calendar-day-header::before {
+        content: attr(data-weekday);
+        font-weight: 600;
+        color: #718096;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-header {
+        padding: 15px;
+    }
+    
+    .calendar-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .calendar-day {
+        padding: 12px;
+    }
+    
+    .day-event {
+        padding: 6px 10px;
+        min-height: 32px;
+        font-size: 0.8125rem;
+    }
+}
+
+/* Stati di caricamento */
+.calendar-month-view.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.calendar-month-view.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 32px;
+    border: 3px solid #e2e8f0;
+    border-top: 3px solid #4299e1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 100;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Tooltip per eventi troncati */
+.day-event[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(45, 55, 72, 0.95);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    max-width: 200px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.day-event[title]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(45, 55, 72, 0.95);
+    z-index: 1000;
+}
+
+/* Fix per scrollbar su giorni con molti eventi */
+.day-events::-webkit-scrollbar {
+    width: 3px;
+}
+
+.day-events::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.day-events::-webkit-scrollbar-thumb {
+    background: rgba(160, 174, 192, 0.5);
+    border-radius: 3px;
+}
+
+.day-events::-webkit-scrollbar-thumb:hover {
+    background: rgba(160, 174, 192, 0.8);
+}
+
+/* Focus states per accessibilità */
+.calendar-day:focus {
+    outline: 2px solid #4299e1;
+    outline-offset: -2px;
+}
+
+.day-event:focus {
+    outline: 2px solid rgba(255,255,255,0.8);
+    outline-offset: 1px;
+}

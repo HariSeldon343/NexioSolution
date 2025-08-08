@@ -3,15 +3,28 @@
  * Vista calendario giornaliera
  */
 
-// Filtra eventi per il giorno selezionato
-$eventiGiorno = array_filter($eventi, function($evento) use ($date) {
-    return date('Y-m-d', strtotime($evento['data_inizio'])) === $date;
-});
+// Gli eventi sono già filtrati da getEventsForView
+$eventiGiorno = $eventi;
 
 // Ordina eventi per ora
 usort($eventiGiorno, function($a, $b) {
     return strtotime($a['data_inizio']) - strtotime($b['data_inizio']);
 });
+
+// Filtra i task per oggi
+$taskGiorno = [];
+if (isset($user_tasks) && !empty($user_tasks)) {
+    foreach ($user_tasks as $task) {
+        $dataInizio = strtotime($task['data_inizio']);
+        $dataFine = strtotime($task['data_fine']);
+        $oggi = strtotime($date);
+        
+        // Controlla se il task è attivo oggi
+        if ($oggi >= $dataInizio && $oggi <= $dataFine) {
+            $taskGiorno[] = $task;
+        }
+    }
+}
 
 // Ore del giorno (6:00 - 23:00)
 $ore = range(6, 23);
@@ -32,15 +45,27 @@ foreach ($eventiGiorno as $evento) {
         <div class="day-info">
             <h2><?= date('l, d F Y', strtotime($date)) ?></h2>
             <div class="day-stats">
-                <?php if (count($eventiGiorno) > 0): ?>
+                <?php 
+                $totaleAttivita = count($eventiGiorno) + count($taskGiorno);
+                if ($totaleAttivita > 0): 
+                ?>
+                    <?php if (count($eventiGiorno) > 0): ?>
                     <span class="events-count">
                         <i class="fas fa-calendar-check"></i>
                         <?= count($eventiGiorno) ?> evento<?= count($eventiGiorno) > 1 ? 'i' : '' ?>
                     </span>
+                    <?php endif; ?>
+                    
+                    <?php if (count($taskGiorno) > 0): ?>
+                    <span class="tasks-count">
+                        <i class="fas fa-tasks"></i>
+                        <?= count($taskGiorno) ?> task
+                    </span>
+                    <?php endif; ?>
                 <?php else: ?>
                     <span class="no-events">
                         <i class="fas fa-calendar"></i>
-                        Nessun evento programmato
+                        Nessun evento o task programmato
                     </span>
                 <?php endif; ?>
             </div>
@@ -168,6 +193,57 @@ foreach ($eventiGiorno as $evento) {
                 </div>
             <?php endif; ?>
         </div>
+        
+        <!-- Task del giorno -->
+        <?php if (!empty($taskGiorno)): ?>
+        <div class="day-tasks-section">
+            <h3><i class="fas fa-tasks"></i> Task Attivi</h3>
+            <div class="tasks-list">
+                <?php foreach ($taskGiorno as $task): 
+                    $prodottoServizio = $task['prodotto_servizio'] ?? 'Non specificato';
+                ?>
+                <div class="day-task-card">
+                    <div class="task-header">
+                        <h4 class="task-title">
+                            <?= htmlspecialchars($task['attivita']) ?> - <?= htmlspecialchars($prodottoServizio) ?>
+                        </h4>
+                        <span class="task-duration"><?= $task['giornate_previste'] ?> gg</span>
+                    </div>
+                    
+                    <?php if ($task['descrizione']): ?>
+                    <p class="task-description"><?= htmlspecialchars($task['descrizione']) ?></p>
+                    <?php endif; ?>
+                    
+                    <div class="task-meta">
+                        <span><i class="fas fa-building"></i> <?= htmlspecialchars($task['azienda_nome']) ?></span>
+                        <span><i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($task['citta']) ?></span>
+                        <span><i class="fas fa-user"></i> <?= htmlspecialchars($task['utente_nome'] . ' ' . $task['utente_cognome']) ?></span>
+                        <?php if ($task['costo_giornata']): ?>
+                        <span><i class="fas fa-euro-sign"></i> €<?= number_format($task['costo_giornata'], 2, ',', '.') ?>/gg</span>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div class="task-period">
+                        <i class="fas fa-calendar-alt"></i>
+                        <?= date('d/m/Y', strtotime($task['data_inizio'])) ?> - <?= date('d/m/Y', strtotime($task['data_fine'])) ?>
+                    </div>
+                    
+                    <?php if ($auth->isSuperAdmin()): ?>
+                    <div class="task-actions">
+                        <a href="?action=modifica_task&id=<?= $task['id'] ?>" class="btn btn-sm btn-outline">
+                            <i class="fas fa-edit"></i> Modifica
+                        </a>
+                        <a href="?action=elimina_task&id=<?= $task['id'] ?>" class="btn btn-sm btn-danger"
+                           onclick="return confirm('Sei sicuro di voler eliminare questo task?')">
+                            <i class="fas fa-trash"></i> Elimina
+                        </a>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
         
         <!-- Sidebar riassunto giornata -->
         <div class="day-sidebar">
@@ -653,6 +729,119 @@ foreach ($eventiGiorno as $evento) {
 .btn-primary:hover {
     background: #3182ce;
     transform: translateY(-1px);
+}
+
+/* Task section */
+.day-tasks-section {
+    margin: 30px 20px;
+    padding: 25px;
+    background: #f0fff4;
+    border-radius: 12px;
+    border: 2px solid #48bb78;
+}
+
+.day-tasks-section h3 {
+    color: #22543d;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.day-task-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid #9ae6b4;
+    transition: all 0.2s ease;
+}
+
+.day-task-card:hover {
+    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.15);
+    transform: translateY(-2px);
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.task-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #22543d;
+    flex: 1;
+}
+
+.task-duration {
+    background: #48bb78;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.task-description {
+    color: #4a5568;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    color: #718096;
+}
+
+.task-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.task-period {
+    background: #f7fafc;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #4a5568;
+    margin-bottom: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.task-actions {
+    display: flex;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.tasks-count {
+    background: #48bb78;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 
 /* Responsive */

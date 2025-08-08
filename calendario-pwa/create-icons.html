@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PWA Icons Generator</title>
+    <style>
+        canvas { display: none; }
+        .preview { display: inline-block; margin: 10px; text-align: center; }
+        .preview img { border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Nexio Calendar PWA Icons</h1>
+    <div id="previews"></div>
+    <button onclick="downloadAll()">Download All Icons</button>
+    
+    <script>
+        // Define icon sizes
+        const iconSizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        // SVG template for the calendar icon
+        const iconSVG = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                <!-- Calendar base -->
+                <rect x="15" y="25" width="70" height="60" rx="8" fill="#2d5a9f" stroke="#1e3d6f" stroke-width="2"/>
+                
+                <!-- Calendar top bar -->
+                <rect x="15" y="25" width="70" height="15" rx="8" fill="#1e3d6f"/>
+                <rect x="15" y="35" width="70" height="5" fill="#1e3d6f"/>
+                
+                <!-- Binding holes -->
+                <circle cx="30" cy="20" r="3" fill="#6b7280"/>
+                <circle cx="70" cy="20" r="3" fill="#6b7280"/>
+                
+                <!-- Binding rings -->
+                <rect x="27" y="15" width="6" height="15" rx="3" fill="none" stroke="#6b7280" stroke-width="2"/>
+                <rect x="67" y="15" width="6" height="15" rx="3" fill="none" stroke="#6b7280" stroke-width="2"/>
+                
+                <!-- Calendar grid -->
+                <g fill="#ffffff" opacity="0.9">
+                    <!-- Week days -->
+                    <rect x="20" y="45" width="6" height="6" rx="1"/>
+                    <rect x="30" y="45" width="6" height="6" rx="1"/>
+                    <rect x="40" y="45" width="6" height="6" rx="1"/>
+                    <rect x="50" y="45" width="6" height="6" rx="1"/>
+                    <rect x="60" y="45" width="6" height="6" rx="1"/>
+                    <rect x="70" y="45" width="6" height="6" rx="1"/>
+                    
+                    <!-- Second week -->
+                    <rect x="20" y="55" width="6" height="6" rx="1"/>
+                    <rect x="30" y="55" width="6" height="6" rx="1"/>
+                    <rect x="40" y="55" width="6" height="6" rx="1"/>
+                    <rect x="50" y="55" width="6" height="6" rx="1"/>
+                    <rect x="60" y="55" width="6" height="6" rx="1"/>
+                    <rect x="70" y="55" width="6" height="6" rx="1"/>
+                    
+                    <!-- Third week -->
+                    <rect x="20" y="65" width="6" height="6" rx="1"/>
+                    <rect x="30" y="65" width="6" height="6" rx="1"/>
+                    <rect x="40" y="65" width="6" height="6" rx="1"/>
+                    <rect x="50" y="65" width="6" height="6" rx="1"/>
+                    <rect x="60" y="65" width="6" height="6" rx="1"/>
+                    <rect x="70" y="65" width="6" height="6" rx="1"/>
+                    
+                    <!-- Fourth week (partial) -->
+                    <rect x="20" y="75" width="6" height="6" rx="1"/>
+                    <rect x="30" y="75" width="6" height="6" rx="1"/>
+                    <rect x="40" y="75" width="6" height="6" rx="1"/>
+                </g>
+                
+                <!-- Today highlight -->
+                <rect x="48" y="53" width="10" height="10" rx="2" fill="#10b981"/>
+                <text x="53" y="63" font-family="Arial, sans-serif" font-size="8" font-weight="bold" text-anchor="middle" fill="white">15</text>
+            </svg>
+        `;
+        
+        // Function to create canvas and draw icon
+        function createIcon(size) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                // Create background with gradient
+                const gradient = ctx.createLinearGradient(0, 0, 0, size);
+                gradient.addColorStop(0, '#3b72c4');
+                gradient.addColorStop(1, '#2d5a9f');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, size, size);
+                
+                // Create SVG image
+                const img = new Image();
+                const svgBlob = new Blob([iconSVG], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(svgBlob);
+                
+                img.onload = () => {
+                    // Draw the SVG on canvas with padding
+                    const padding = size * 0.1; // 10% padding
+                    const iconSize = size - (padding * 2);
+                    ctx.drawImage(img, padding, padding, iconSize, iconSize);
+                    
+                    // Convert to blob
+                    canvas.toBlob((blob) => {
+                        URL.revokeObjectURL(url);
+                        resolve({
+                            size: size,
+                            blob: blob,
+                            canvas: canvas
+                        });
+                    }, 'image/png');
+                };
+                
+                img.src = url;
+            });
+        }
+        
+        // Generate all icons
+        async function generateIcons() {
+            const previewsDiv = document.getElementById('previews');
+            const icons = {};
+            
+            for (const size of iconSizes) {
+                try {
+                    const iconData = await createIcon(size);
+                    icons[size] = iconData;
+                    
+                    // Create preview
+                    const preview = document.createElement('div');
+                    preview.className = 'preview';
+                    
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(iconData.blob);
+                    img.style.width = '64px';
+                    img.style.height = '64px';
+                    img.title = `${size}x${size}`;
+                    
+                    const label = document.createElement('div');
+                    label.textContent = `${size}x${size}`;
+                    
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.textContent = 'Download';
+                    downloadBtn.onclick = () => downloadIcon(iconData.blob, `icon-${size}.png`);
+                    
+                    preview.appendChild(img);
+                    preview.appendChild(label);
+                    preview.appendChild(downloadBtn);
+                    previewsDiv.appendChild(preview);
+                    
+                    console.log(`Generated ${size}x${size} icon`);
+                } catch (error) {
+                    console.error(`Failed to generate ${size}x${size} icon:`, error);
+                }
+            }
+            
+            // Create special icons
+            await createSpecialIcons(icons);
+        }
+        
+        // Create special icons (favicon, apple-touch-icon)
+        async function createSpecialIcons(icons) {
+            // Favicon (16x16, 32x32, 48x48 in ICO format - simplified as PNG)
+            if (icons[72]) {
+                const faviconSizes = [16, 32, 48];
+                for (const size of faviconSizes) {
+                    try {
+                        const iconData = await createIcon(size);
+                        
+                        const preview = document.createElement('div');
+                        preview.className = 'preview';
+                        
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(iconData.blob);
+                        img.style.width = `${size}px`;
+                        img.style.height = `${size}px`;
+                        
+                        const label = document.createElement('div');
+                        label.textContent = `favicon-${size}`;
+                        
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.textContent = 'Download';
+                        downloadBtn.onclick = () => downloadIcon(iconData.blob, `favicon-${size}.png`);
+                        
+                        preview.appendChild(img);
+                        preview.appendChild(label);
+                        preview.appendChild(downloadBtn);
+                        document.getElementById('previews').appendChild(preview);
+                    } catch (error) {
+                        console.error(`Failed to generate favicon ${size}:`, error);
+                    }
+                }
+            }
+            
+            // Apple touch icon (180x180)
+            try {
+                const appleIconData = await createIcon(180);
+                
+                const preview = document.createElement('div');
+                preview.className = 'preview';
+                
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(appleIconData.blob);
+                img.style.width = '64px';
+                img.style.height = '64px';
+                
+                const label = document.createElement('div');
+                label.textContent = 'Apple Touch Icon';
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = 'Download';
+                downloadBtn.onclick = () => downloadIcon(appleIconData.blob, 'apple-touch-icon.png');
+                
+                preview.appendChild(img);
+                preview.appendChild(label);
+                preview.appendChild(downloadBtn);
+                document.getElementById('previews').appendChild(preview);
+                
+                console.log('Generated Apple Touch Icon (180x180)');
+            } catch (error) {
+                console.error('Failed to generate Apple Touch Icon:', error);
+            }
+        }
+        
+        // Download single icon
+        function downloadIcon(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Download all icons
+        async function downloadAll() {
+            const allSizes = [...iconSizes, 16, 32, 48, 180];
+            
+            for (const size of allSizes) {
+                try {
+                    const iconData = await createIcon(size);
+                    let filename;
+                    
+                    if (size === 180) {
+                        filename = 'apple-touch-icon.png';
+                    } else if ([16, 32, 48].includes(size)) {
+                        filename = `favicon-${size}.png`;
+                    } else {
+                        filename = `icon-${size}.png`;
+                    }
+                    
+                    downloadIcon(iconData.blob, filename);
+                    
+                    // Small delay to prevent browser blocking multiple downloads
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                } catch (error) {
+                    console.error(`Failed to download ${size}x${size} icon:`, error);
+                }
+            }
+        }
+        
+        // Generate icons on page load
+        window.addEventListener('load', generateIcons);
+    </script>
+</body>
+</html>

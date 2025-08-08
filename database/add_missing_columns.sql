@@ -1,5 +1,5 @@
 -- Aggiunge colonne mancanti e corregge struttura database
-USE piattaforma_collaborativa;
+USE NexioSol;
 
 -- Aggiungi colonna data_iscrizione a partecipanti_eventi se non esiste
 ALTER TABLE partecipanti_eventi 

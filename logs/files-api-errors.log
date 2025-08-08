@@ -1,0 +1,12 @@
+[06-Aug-2025 11:21:49 Europe/Rome] PHP Error [2]: require_once(../config/config.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\files-api.php on line 64
+[06-Aug-2025 11:21:49 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '../config/config.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\files-api.php:64
+Stack trace:
+#0 Command line code(9): require_once()
+#1 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\files-api.php on line 64
+[06-Aug-2025 11:23:52 Europe/Rome] PHP Error [2]: require_once(../config/config.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\files-api.php on line 64
+[06-Aug-2025 11:23:52 Europe/Rome] Uncaught Exception: Failed opening required '../config/config.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\files-api.php on line 64
+[06-Aug-2025 11:35:04 Europe/Rome] PHP Error [2]: require_once(../config/config.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\files-api.php on line 64
+[06-Aug-2025 11:35:04 Europe/Rome] Uncaught Exception: Failed opening required '../config/config.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\files-api.php on line 64
+[06-Aug-2025 11:36:54 Europe/Rome] PHP Error [2]: require_once(../config/config.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\files-api.php on line 64
+[06-Aug-2025 11:36:54 Europe/Rome] Uncaught Exception: Failed opening required '../config/config.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\files-api.php on line 64

@@ -3,6 +3,34 @@
    Mobile-First Approach
    ======================================== */
 
+/* Page Header - Stile Standard per tutte le pagine */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: white;
+}
+
+.page-header h1 i {
+    margin-right: 0.5rem;
+}
+
+.page-subtitle {
+    margin-top: 0.5rem;
+    opacity: 0.9;
+    font-size: 16px;
+    color: white;
+}
+
 /* Reset e variabili CSS */
 :root {
     /* Colori principali - Stile elegante login */
@@ -619,6 +647,43 @@ table {
     background: rgba(0, 0, 0, 0.1);
     text-align: center;
     color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* NEXIO LOGO CENTRATO NELLA SIDEBAR - FIX DEFINITIVO */
+.sidebar-header img.sidebar-logo,
+.sidebar-logo {
+    display: block !important;
+    margin: 0 auto 15px auto !important;
+    max-width: 60px !important;
+    max-height: 60px !important;
+    width: 60px !important;
+    height: auto !important;
+    object-fit: contain !important;
+    filter: none !important;
+    text-align: center !important;
+}
+
+/* Logo centrato nella sidebar header */
+.sidebar-header .azienda-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 0.5rem 0;
+}
+
+.sidebar-header .azienda-logo img {
+    max-width: 120px;
+    max-height: 45px;
+    height: auto;
+    width: auto;
+    object-fit: contain;
+    /* Rimuovi qualsiasi filter che potrebbe invertire il logo */
+    filter: none !important;
 }
 
 .sidebar-header h2 {
@@ -1615,4 +1680,378 @@ textarea:focus {
 /* Dark mode support preparation */
 @media (prefers-color-scheme: dark) {
     /* Future dark mode styles can be added here */
+}
+
+/* ========================================
+   NEXIO DESIGN SYSTEM - CONSISTENT COMPONENTS
+   ======================================== */
+
+/* Base Card Component */
+.card,
+.dashboard-panel {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+    margin-bottom: 25px;
+    transition: all 0.2s ease;
+}
+
+.card:hover,
+.dashboard-panel:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Header */
+.card-header,
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-header h2,
+.card-header h3,
+.panel-header h2,
+.panel-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-header h2 i,
+.card-header h3 i,
+.panel-header h2 i,
+.panel-header h3 i {
+    color: var(--primary-color);
+}
+
+/* Stat Cards */
+.stat-card,
+.stat-card-modern {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.stat-card:hover,
+.stat-card-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Tables - Clean Style */
+.table,
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-primary);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.table thead,
+.data-table thead {
+    background: var(--gray-50);
+}
+
+.table th,
+.data-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--gray-700);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table td,
+.data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--text-primary);
+}
+
+.table tbody tr:hover,
+.data-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+/* Buttons - Clean Style */
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-secondary {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border: 1px solid var(--gray-300);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-200);
+}
+
+.btn-success {
+    background: var(--success-color);
+    color: white;
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-outline {
+    background: white;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+.btn-outline:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Form Controls - Clean Style */
+.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--bg-primary);
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(45, 90, 159, 0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: var(--gray-700);
+    font-size: 14px;
+}
+
+/* Badges - Clean Style */
+.badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-primary {
+    background: var(--info-bg);
+    color: var(--info-color);
+}
+
+.badge-success {
+    background: var(--success-bg);
+    color: var(--success-color);
+}
+
+.badge-danger {
+    background: var(--danger-bg);
+    color: var(--danger-color);
+}
+
+.badge-warning {
+    background: var(--warning-bg);
+    color: var(--warning-color);
+}
+
+/* Activity Items - Clean Style */
+.activity-item {
+    display: flex;
+    align-items: start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    flex-shrink: 0;
+    font-size: 16px;
+    background: var(--gray-100);
+}
+
+/* Alert Messages - Clean Style */
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.alert-success {
+    background: var(--success-bg);
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
+}
+
+.alert-danger {
+    background: var(--danger-bg);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+}
+
+.alert-warning {
+    background: var(--warning-bg);
+    color: var(--warning-color);
+    border: 1px solid var(--warning-color);
+}
+
+.alert-info {
+    background: var(--info-bg);
+    color: var(--info-color);
+    border: 1px solid var(--info-color);
+}
+
+/* Sections & Containers */
+.section {
+    margin-bottom: 25px;
+}
+
+.section-header {
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Remove excessive gradients and shadows */
+.gradient-bg,
+.gradient-card {
+    background: var(--bg-primary) !important;
+    background-image: none !important;
+}
+
+/* Override any heavy shadows */
+.shadow-heavy,
+.shadow-xl {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Clean modal styles */
+.modal-content {
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border-color);
+    padding: 20px;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border-color);
+    padding: 15px 20px;
+    background: var(--gray-50);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card,
+    .dashboard-panel {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .card-header,
+    .panel-header {
+        flex-direction: column;
+        align-items: start;
+        gap: 10px;
+    }
+    
+    .stat-card,
+    .stat-card-modern {
+        padding: 16px;
+    }
+    
+    .table,
+    .data-table {
+        font-size: 14px;
+    }
+    
+    .table th,
+    .table td,
+    .data-table th,
+    .data-table td {
+        padding: 10px 12px;
+    }
 } 

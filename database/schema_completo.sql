@@ -5,9 +5,9 @@
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
--- Database: piattaforma_collaborativa
-CREATE DATABASE IF NOT EXISTS piattaforma_collaborativa CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE piattaforma_collaborativa;
+-- Database: NexioSol
+CREATE DATABASE IF NOT EXISTS NexioSol CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE NexioSol;
 
 -- --------------------------------------------------------
 -- Tabella aziende

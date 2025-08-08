@@ -125,17 +125,29 @@ class MultiFileManager {
      * Salva documento nel database
      */
     private function saveToDatabase($fileName, $fileInfo, $metadata, $aziendaId) {
-        // Auth non è in namespace, quindi non serve il backslash
-        $auth = Auth::getInstance();
+        // Auth non è in namespace, quindi serve il backslash per la classe globale
+        $auth = \Auth::getInstance();
         $user = $auth->getUser();
+        $isSuperAdmin = $auth->isSuperAdmin();
+        $isUtenteSpeciale = ($user['ruolo'] === 'utente_speciale');
+        
+        // Gestione azienda_id per utenti globali
+        $dbAziendaId = $aziendaId;
+        if ($aziendaId === 0 && ($isSuperAdmin || $isUtenteSpeciale)) {
+            // Per super_admin e utente_speciale, azienda_id = 0 significa file globale
+            $dbAziendaId = null;
+        } else if ($aziendaId === 0) {
+            // Utente normale senza azienda - errore
+            throw new Exception("Azienda non valida per questo utente");
+        }
         
         $sql = "INSERT INTO documenti (
-                    azienda_id, titolo, file_path, file_size, file_type,
-                    cartella_id, tipo_documento, tags, creato_da, data_creazione
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                    azienda_id, titolo, file_path, dimensione_file, mime_type,
+                    cartella_id, tipo_documento, tags, creato_da, data_creazione, data_modifica
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())";
         
         $params = [
-            $aziendaId,
+            $dbAziendaId,
             $metadata['titolo'] ?? $fileInfo['name'],
             'uploads/documenti/' . $fileName,
             $fileInfo['size'],

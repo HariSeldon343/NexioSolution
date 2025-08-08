@@ -23,17 +23,8 @@ $auth->requireAuth();
 $user = $auth->getUser();
 
 try {
-    // Configurazione database
-    $host = 'localhost';
-    $dbname = 'piattaforma_collaborativa';
-    $username = 'root';
-    $password = '';
-    
-    $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
-    $pdo = new PDO($dsn, $username, $password, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-    ]);
+    // Usa la connessione dal config globale
+    $pdo = db_connection();
 
     $aziendaId = $_GET['azienda_id'] ?? null;
     

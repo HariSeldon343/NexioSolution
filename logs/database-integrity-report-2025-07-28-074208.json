@@ -1,0 +1,80 @@
+{
+    "timestamp": "2025-07-28 07:42:08",
+    "database": "NexioSol",
+    "errors": [
+        {
+            "message": "CRITICAL: log_attivita table is not protected against deletion!",
+            "details": null
+        }
+    ],
+    "warnings": [
+        {
+            "message": "ISO table 'iso_standard' not found - ISO module may not be installed",
+            "details": null
+        },
+        {
+            "message": "ISO table 'iso_sezioni' not found - ISO module may not be installed",
+            "details": null
+        },
+        {
+            "message": "ISO table 'iso_requisiti' not found - ISO module may not be installed",
+            "details": null
+        },
+        {
+            "message": "ISO table 'iso_documenti' not found - ISO module may not be installed",
+            "details": null
+        },
+        {
+            "message": "ISO table 'iso_audit' not found - ISO module may not be installed",
+            "details": null
+        },
+        {
+            "message": "ISO table 'iso_non_conformita' not found - ISO module may not be installed",
+            "details": null
+        },
+        {
+            "message": "ISO table 'iso_azioni_correttive' not found - ISO module may not be installed",
+            "details": null
+        }
+    ],
+    "info": [],
+    "performance": [
+        {
+            "query": "User Login",
+            "time": 0.12,
+            "rows": 0
+        },
+        {
+            "query": "Document Listing",
+            "time": 0.18,
+            "rows": 0
+        },
+        {
+            "query": "Activity Log",
+            "time": 0.18,
+            "rows": 0
+        },
+        {
+            "query": "Calendar Events",
+            "time": 0.14,
+            "rows": 0
+        }
+    ],
+    "summary": {
+        "total_errors": 1,
+        "total_warnings": 7,
+        "total_info": 0,
+        "database_size": "8.42 MB",
+        "total_records": {
+            "utenti": 3,
+            "aziende": 5,
+            "documenti": 0,
+            "eventi": 0,
+            "tickets": 1
+        },
+        "recommendations": [
+            "CRITICAL: Fix all errors before going to production",
+            "Review and address warnings to improve system reliability"
+        ]
+    }
+}

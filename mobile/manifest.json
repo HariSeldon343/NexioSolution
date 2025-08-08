@@ -1,0 +1,72 @@
+{
+    "name": "Nexio Calendar",
+    "short_name": "NexioCalendar",
+    "description": "Nexio Calendar - Sistema calendario mobile per la gestione eventi aziendali",
+    "start_url": "/piattaforma-collaborativa/mobile/",
+    "scope": "/piattaforma-collaborativa/mobile/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "theme_color": "#2d5a9f",
+    "background_color": "#ffffff",
+    "lang": "it",
+    "categories": ["business", "productivity", "utilities"],
+    "dir": "ltr",
+    "icons": [
+        {
+            "src": "../assets/images/nexio-icon.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "../assets/images/nexio-logo.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "maskable any"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Nuovo Evento",
+            "short_name": "Nuovo",
+            "description": "Crea un nuovo evento nel calendario",
+            "url": "/piattaforma-collaborativa/mobile/#/nuovo-evento",
+            "icons": [{ "src": "../assets/images/nexio-icon.svg", "sizes": "96x96" }]
+        },
+        {
+            "name": "Calendario Mese",
+            "short_name": "Mese",
+            "description": "Visualizza calendario mensile",
+            "url": "/piattaforma-collaborativa/mobile/#/calendar/month",
+            "icons": [{ "src": "../assets/images/nexio-icon.svg", "sizes": "96x96" }]
+        },
+        {
+            "name": "Eventi Oggi",
+            "short_name": "Oggi",
+            "description": "Visualizza gli eventi di oggi",
+            "url": "/piattaforma-collaborativa/mobile/#/calendar/today",
+            "icons": [{ "src": "../assets/images/nexio-icon.svg", "sizes": "96x96" }]
+        }
+    ],
+    "share_target": {
+        "action": "/piattaforma-collaborativa/mobile/share",
+        "method": "POST",
+        "enctype": "multipart/form-data",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url"
+        }
+    },
+    "screenshots": [
+        {
+            "src": "../assets/images/screenshot-mobile.png",
+            "sizes": "320x640",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Calendar view on mobile"
+        }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false
+}

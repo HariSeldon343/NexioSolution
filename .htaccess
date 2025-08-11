@@ -7,9 +7,15 @@ RewriteEngine On
 RewriteBase /piattaforma-collaborativa/
 
 # Sicurezza: Proteggi file sensibili
-<FilesMatch "\.(env|json|lock|sql|md)$">
+<FilesMatch "\.(env|lock|sql|md)$">
     Order allow,deny
     Deny from all
+</FilesMatch>
+
+# Permetti accesso ai manifest PWA
+<FilesMatch "manifest.*\.json$">
+    Order allow,deny
+    Allow from all
 </FilesMatch>
 
 # Proteggi directory sensibili

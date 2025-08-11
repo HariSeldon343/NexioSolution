@@ -52,6 +52,12 @@ $pageTitle = 'Gestione Documenti';
 include 'components/header.php';
 ?>
 
+<!-- Page Header -->
+<div class="page-header">
+    <h1><i class="fas fa-folder-open"></i> Gestione Documenti</h1>
+    <div class="page-subtitle">Organizza e gestisci i tuoi file e documenti aziendali</div>
+</div>
+
 <style>
 /* Simple Clean Styles */
 .filesystem-container {
@@ -60,6 +66,53 @@ include 'components/header.php';
     margin: 0 auto;
     display: flex;
     gap: 20px;
+}
+
+/* Multi-select styles */
+.selection-toolbar {
+    background: #f3f4f6;
+    padding: 12px 20px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.selection-toolbar.show {
+    display: flex;
+}
+
+.selection-info {
+    color: #374151;
+    font-size: 14px;
+}
+
+.selection-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.file-checkbox {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 5;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.file-card.selected {
+    background: #dbeafe;
+    border-color: #3b82f6;
+}
+
+.company-info {
+    font-size: 11px;
+    color: #9ca3af;
+    font-style: italic;
+    margin-top: 2px;
 }
 
 .filesystem-sidebar {
@@ -156,8 +209,9 @@ include 'components/header.php';
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
 }
+.fs-toolbar > div:first-child { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .fs-content {
     background: white;
@@ -181,6 +235,7 @@ include 'components/header.php';
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
+    position: relative;
 }
 
 .file-card:hover {
@@ -188,49 +243,101 @@ include 'components/header.php';
     transform: translateY(-2px);
 }
 
+/* Pulsanti di azione file-card */
 .file-card-actions {
     position: absolute;
     top: 5px;
     right: 5px;
     display: none;
-    gap: 5px;
+    gap: 4px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 3px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
 }
 
-.file-card:hover .file-card-actions {
+.file-card:hover .file-card-actions,
+.file-card:focus-within .file-card-actions {
     display: flex;
 }
 
+/* Pulsanti in basso per migliore visibilità */
+.file-card-actions-bottom {
+    display: none;
+    gap: 4px;
+    justify-content: center;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.file-card:hover .file-card-actions-bottom,
+.file-card:focus-within .file-card-actions-bottom {
+    display: flex;
+}
+
+/* Pulsanti più grandi e visibili */
 .action-btn {
-    width: 24px;
-    height: 24px;
-    border: none;
-    border-radius: 4px;
-    background: rgba(0,0,0,0.1);
-    color: #374151;
+    width: 28px;
+    height: 28px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    color: #6b7280;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
+/* Icone dentro i pulsanti - più piccole e ben proporzionate */
+.action-btn i {
+    font-size: 12px !important;
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* Stati hover semplici */
 .action-btn:hover {
-    background: rgba(0,0,0,0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    border-color: #9ca3af;
+}
+
+.action-btn:hover:not(.delete) {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
 }
 
 .action-btn.delete:hover {
     background: #ef4444;
     color: white;
+    border-color: #ef4444;
 }
 
-.file-card {
-    position: relative;
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .file-card-actions,
+    .file-card-actions-bottom {
+        display: flex !important;
+    }
+    
+    .action-btn {
+        width: 26px;
+        height: 26px;
+    }
+    
+    .action-btn i {
+        font-size: 11px !important;
+    }
 }
 
 .file-card i {
-    font-size: 48px;
-    margin-bottom: 10px;
+    font-size: 60px;
+    margin-bottom: 12px;
     display: block;
 }
 
@@ -427,11 +534,35 @@ include 'components/header.php';
                     <button class="btn btn-secondary" onclick="showNewFolderModal()">
                         <i class="fas fa-folder-plus"></i> Nuova Cartella
                     </button>
+                    <button class="btn btn-secondary" onclick="toggleSelectMode()">
+                        <i class="fas fa-check-square"></i> Selezione Multipla
+                    </button>
                 </div>
                 
                 <div>
                     <input type="text" class="form-control" placeholder="Cerca..." 
                            id="searchInput" onkeyup="searchFiles()" style="width: 200px;">
+                </div>
+            </div>
+            
+            <!-- Selection Toolbar -->
+            <div class="selection-toolbar" id="selectionToolbar">
+                <div class="selection-info">
+                    <span id="selectedCount">0</span> elementi selezionati
+                </div>
+                <div class="selection-actions">
+                    <button class="btn btn-secondary" onclick="selectAllItems()">
+                        <i class="fas fa-check-double"></i> Seleziona Tutto
+                    </button>
+                    <button class="btn btn-secondary" onclick="deselectAllItems()">
+                        <i class="fas fa-times"></i> Deseleziona Tutto
+                    </button>
+                    <button class="btn btn-primary" onclick="downloadSelected()">
+                        <i class="fas fa-download"></i> Scarica Selezionati
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteSelected()">
+                        <i class="fas fa-trash"></i> Elimina Selezionati
+                    </button>
                 </div>
             </div>
         </div>
@@ -573,6 +704,8 @@ let currentPath = [];
 let selectedFiles = [];
 let deleteTarget = null;
 let renameTarget = null;
+let selectMode = false;
+let selectedItems = new Set(); // Per tracciare elementi selezionati
 
 // Initial load
 document.addEventListener('DOMContentLoaded', function() {
@@ -624,19 +757,42 @@ function renderFiles(data) {
     
     // Render folders
     data.folders.forEach(folder => {
+        const isSelected = selectedItems.has(`folder-${folder.id}`);
+        const companyName = folder.azienda_nome || 'Personale';
         html += `
-            <div class="file-card" onclick="loadFolder(${folder.id})">
-                <div class="file-card-actions">
-                    <button class="action-btn" onclick="event.stopPropagation(); handleRename(${folder.id}, 'folder', '${escapeHtml(folder.nome).replace(/'/g, '\\\'')}')" title="Rinomina">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn delete" onclick="event.stopPropagation(); handleDelete(${folder.id}, 'folder', '${escapeHtml(folder.nome).replace(/'/g, '\\\'')}')" title="Elimina">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+            <div class="file-card ${isSelected ? 'selected' : ''}" 
+                 data-type="folder" data-id="${folder.id}"
+                 onclick="${selectMode ? 'toggleSelection(event, \'folder\', ${folder.id})' : 'loadFolder(' + folder.id + ')'}">
+                ${selectMode ? `<input type="checkbox" class="file-checkbox" 
+                                       ${isSelected ? 'checked' : ''} 
+                                       onclick="event.stopPropagation(); toggleSelection(event, 'folder', ${folder.id})">` : ''}
                 <i class="fas fa-folder folder-icon"></i>
                 <div class="file-name">${escapeHtml(folder.nome)}</div>
                 <div class="file-meta">${folder.count || 0} elementi</div>
+                <div class="company-info">(${escapeHtml(companyName)})</div>
+                <div class="file-card-actions-bottom">
+                    <button class="action-btn" 
+                            onclick="event.stopPropagation(); handleRename(${folder.id}, 'folder', '${escapeHtml(folder.nome).replace(/'/g, '\\\'')}')" 
+                            title="Rinomina" 
+                            aria-label="Rinomina cartella ${escapeHtml(folder.nome).replace(/'/g, '\\\'')}"
+                            tabindex="0">
+                        <i class="fas fa-edit" aria-hidden="true"></i>
+                    </button>
+                    <button class="action-btn" 
+                            onclick="event.stopPropagation(); downloadFolder(${folder.id})" 
+                            title="Scarica cartella come ZIP" 
+                            aria-label="Scarica cartella ${escapeHtml(folder.nome).replace(/'/g, '\\\'')} come ZIP"
+                            tabindex="0">
+                        <i class="fas fa-download" aria-hidden="true"></i>
+                    </button>
+                    <button class="action-btn delete" 
+                            onclick="event.stopPropagation(); handleDelete(${folder.id}, 'folder', '${escapeHtml(folder.nome).replace(/'/g, '\\\'')}')" 
+                            title="Elimina" 
+                            aria-label="Elimina cartella ${escapeHtml(folder.nome).replace(/'/g, '\\\'')}"
+                            tabindex="0">
+                        <i class="fas fa-trash" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
         `;
     });
@@ -644,19 +800,43 @@ function renderFiles(data) {
     // Render files
     data.files.forEach(file => {
         const icon = getFileIcon(file.mime_type || file.tipo_documento);
+        const isSelected = selectedItems.has(`file-${file.id}`);
+        const companyName = file.azienda_nome || 'Personale';
         html += `
-            <div class="file-card" ondblclick="openFile(${file.id})">
-                <div class="file-card-actions">
-                    <button class="action-btn" onclick="event.stopPropagation(); handleRename(${file.id}, 'file', '${escapeHtml(file.nome).replace(/'/g, '\\\'')}')" title="Rinomina">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="action-btn delete" onclick="event.stopPropagation(); handleDelete(${file.id}, 'file', '${escapeHtml(file.nome).replace(/'/g, '\\\'')}')" title="Elimina">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+            <div class="file-card ${isSelected ? 'selected' : ''}" 
+                 data-type="file" data-id="${file.id}"
+                 ondblclick="${selectMode ? '' : 'openFile(' + file.id + ')'}"
+                 onclick="${selectMode ? 'toggleSelection(event, \'file\', ' + file.id + ')' : ''}">
+                ${selectMode ? `<input type="checkbox" class="file-checkbox" 
+                                       ${isSelected ? 'checked' : ''} 
+                                       onclick="event.stopPropagation(); toggleSelection(event, 'file', ${file.id})">` : ''}
                 <i class="fas ${icon.class}" style="color: ${icon.color}"></i>
                 <div class="file-name">${escapeHtml(file.nome)}</div>
                 <div class="file-meta">${formatFileSize(file.dimensione_file)}</div>
+                <div class="company-info">(${escapeHtml(companyName)})</div>
+                <div class="file-card-actions-bottom">
+                    <button class="action-btn" 
+                            onclick="event.stopPropagation(); handleRename(${file.id}, 'file', '${escapeHtml(file.nome).replace(/'/g, '\\\'')}')" 
+                            title="Rinomina" 
+                            aria-label="Rinomina file ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
+                            tabindex="0">
+                        <i class="fas fa-edit" aria-hidden="true"></i>
+                    </button>
+                    <button class="action-btn" 
+                            onclick="event.stopPropagation(); openFile(${file.id})" 
+                            title="Scarica file" 
+                            aria-label="Scarica file ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
+                            tabindex="0">
+                        <i class="fas fa-download" aria-hidden="true"></i>
+                    </button>
+                    <button class="action-btn delete" 
+                            onclick="event.stopPropagation(); handleDelete(${file.id}, 'file', '${escapeHtml(file.nome).replace(/'/g, '\\\'')}')" 
+                            title="Elimina" 
+                            aria-label="Elimina file ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
+                            tabindex="0">
+                        <i class="fas fa-trash" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
         `;
     });
@@ -1087,6 +1267,146 @@ function toggleTreeNode(nodeId) {
         node.classList.add('show');
         toggle.classList.add('expanded');
     }
+}
+
+// Multi-selection functions
+function toggleSelectMode() {
+    selectMode = !selectMode;
+    selectedItems.clear();
+    
+    const toolbar = document.getElementById('selectionToolbar');
+    if (selectMode) {
+        toolbar.classList.add('show');
+    } else {
+        toolbar.classList.remove('show');
+    }
+    
+    // Re-render current view
+    loadFolder(currentFolder);
+}
+
+function toggleSelection(event, type, id) {
+    const itemKey = `${type}-${id}`;
+    
+    if (selectedItems.has(itemKey)) {
+        selectedItems.delete(itemKey);
+    } else {
+        selectedItems.add(itemKey);
+    }
+    
+    updateSelectionCount();
+    
+    // Update visual state
+    const card = event.target.closest('.file-card');
+    if (card) {
+        card.classList.toggle('selected');
+    }
+}
+
+function selectAllItems() {
+    // Select all visible items
+    document.querySelectorAll('.file-card').forEach(card => {
+        const type = card.dataset.type;
+        const id = card.dataset.id;
+        if (type && id) {
+            selectedItems.add(`${type}-${id}`);
+            card.classList.add('selected');
+            const checkbox = card.querySelector('.file-checkbox');
+            if (checkbox) checkbox.checked = true;
+        }
+    });
+    updateSelectionCount();
+}
+
+function deselectAllItems() {
+    selectedItems.clear();
+    document.querySelectorAll('.file-card').forEach(card => {
+        card.classList.remove('selected');
+        const checkbox = card.querySelector('.file-checkbox');
+        if (checkbox) checkbox.checked = false;
+    });
+    updateSelectionCount();
+}
+
+function updateSelectionCount() {
+    document.getElementById('selectedCount').textContent = selectedItems.size;
+}
+
+// Download functions
+function downloadSelected() {
+    if (selectedItems.size === 0) {
+        alert('Nessun elemento selezionato');
+        return;
+    }
+    
+    // Prepare data for download
+    const items = Array.from(selectedItems).map(item => {
+        const [type, id] = item.split('-');
+        return { type, id };
+    });
+    
+    // Create form and submit
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'backend/api/filesystem-simple-api.php?action=download_multiple';
+    form.target = '_blank';
+    
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'items';
+    input.value = JSON.stringify(items);
+    form.appendChild(input);
+    
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
+function downloadFolder(folderId) {
+    window.open('backend/api/filesystem-simple-api.php?action=download_folder&id=' + folderId, '_blank');
+}
+
+// Delete selected items
+function deleteSelected() {
+    if (selectedItems.size === 0) {
+        alert('Nessun elemento selezionato');
+        return;
+    }
+    
+    if (!confirm(`Vuoi eliminare ${selectedItems.size} elementi selezionati?`)) {
+        return;
+    }
+    
+    // Prepare items for deletion
+    const items = Array.from(selectedItems).map(item => {
+        const [type, id] = item.split('-');
+        return { type, id };
+    });
+    
+    // Send delete request
+    fetch('backend/api/filesystem-simple-api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: 'delete_multiple',
+            items: items
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            selectedItems.clear();
+            loadFolder(currentFolder);
+            loadFolderTree();
+            updateSelectionCount();
+        } else {
+            alert('Errore: ' + (data.error || 'Eliminazione fallita'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Errore di connessione');
+    });
 }
 </script>
 

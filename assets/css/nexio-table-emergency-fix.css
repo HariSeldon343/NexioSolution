@@ -1,0 +1,391 @@
+/**
+ * Nexio Table Emergency Fix - MAXIMUM PRIORITY
+ * Forces proper table layout and visibility with highest specificity
+ * Created: 2025-08-11
+ */
+
+/* FORCE PROPER TABLE LAYOUT */
+html body table,
+html body .table,
+html body .log-table,
+html body .activity-table,
+html body .log-attivita table,
+html body #log-table {
+    table-layout: auto !important; /* Changed from fixed to auto for better content fitting */
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    background: #ffffff !important;
+    margin-bottom: 1rem !important;
+}
+
+/* FORCE ALL TABLE CELLS TO BE VISIBLE */
+html body table td,
+html body .table td,
+html body table th,
+html body .table th {
+    /* Remove ALL constraints */
+    max-width: none !important;
+    min-width: auto !important;
+    width: auto !important;
+    
+    /* Proper text handling */
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: auto !important;
+    
+    /* Visibility */
+    overflow: visible !important;
+    text-overflow: clip !important;
+    
+    /* Spacing */
+    padding: 12px !important;
+    
+    /* Text properties */
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    color: #212529 !important;
+    
+    /* Background */
+    background-color: transparent !important;
+    
+    /* Border */
+    border: 1px solid #dee2e6 !important;
+}
+
+/* SPECIFIC COLUMN WIDTHS FOR LOG TABLES */
+/* Date column - narrow */
+html body .log-table td:nth-child(1),
+html body .log-table th:nth-child(1),
+html body .activity-table td:nth-child(1),
+html body .activity-table th:nth-child(1) {
+    width: 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+}
+
+/* User column - medium */
+html body .log-table td:nth-child(2),
+html body .log-table th:nth-child(2),
+html body .activity-table td:nth-child(2),
+html body .activity-table th:nth-child(2) {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+}
+
+/* Type column - narrow */
+html body .log-table td:nth-child(3),
+html body .log-table th:nth-child(3),
+html body .activity-table td:nth-child(3),
+html body .activity-table th:nth-child(3) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+}
+
+/* Action column - medium */
+html body .log-table td:nth-child(4),
+html body .log-table th:nth-child(4),
+html body .activity-table td:nth-child(4),
+html body .activity-table th:nth-child(4) {
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+}
+
+/* Details column - flexible, gets remaining space */
+html body .log-table td:nth-child(5),
+html body .log-table th:nth-child(5),
+html body .activity-table td:nth-child(5),
+html body .activity-table th:nth-child(5) {
+    width: auto !important;
+    min-width: 300px !important;
+    max-width: none !important;
+}
+
+/* Company column - narrow */
+html body .log-table td:nth-child(6),
+html body .log-table th:nth-child(6),
+html body .activity-table td:nth-child(6),
+html body .activity-table th:nth-child(6) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+}
+
+/* REMOVE INLINE STYLE OVERRIDES */
+html body table td[style*="max-width"],
+html body .table td[style*="max-width"] {
+    max-width: none !important;
+}
+
+html body table td[style*="white-space: nowrap"],
+html body .table td[style*="white-space: nowrap"] {
+    white-space: normal !important;
+}
+
+html body table td[style*="overflow: hidden"],
+html body .table td[style*="overflow: hidden"] {
+    overflow: visible !important;
+}
+
+html body table td[style*="text-overflow: ellipsis"],
+html body .table td[style*="text-overflow: ellipsis"] {
+    text-overflow: clip !important;
+}
+
+/* FIX DETAILS CELL SPECIFICALLY */
+html body .details-cell,
+html body td.details-cell,
+html body .table .details-cell,
+html body td[class*="detail"] {
+    width: auto !important;
+    min-width: 300px !important;
+    max-width: none !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow: visible !important;
+    padding: 12px !important;
+}
+
+/* IMPROVE COLOR CONTRAST */
+/* Success - Green */
+html body table td[style*="color: green"],
+html body table td[style*="color: #28a745"],
+html body table .text-success {
+    color: #0d6f29 !important;
+    background-color: #d1f2db !important;
+    padding: 8px 12px !important;
+    border-radius: 4px !important;
+}
+
+/* Error - Red */
+html body table td[style*="color: red"],
+html body table td[style*="color: #dc3545"],
+html body table .text-danger {
+    color: #842029 !important;
+    background-color: #f8d7da !important;
+    padding: 8px 12px !important;
+    border-radius: 4px !important;
+}
+
+/* Warning - Orange/Yellow */
+html body table td[style*="color: orange"],
+html body table td[style*="color: #ffc107"],
+html body table .text-warning {
+    color: #664d03 !important;
+    background-color: #fff3cd !important;
+    padding: 8px 12px !important;
+    border-radius: 4px !important;
+}
+
+/* Info - Blue */
+html body table td[style*="color: blue"],
+html body table td[style*="color: #007bff"],
+html body table .text-info {
+    color: #055160 !important;
+    background-color: #cff4fc !important;
+    padding: 8px 12px !important;
+    border-radius: 4px !important;
+}
+
+/* TABLE HEADERS */
+html body table thead th,
+html body .table thead th {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 12px !important;
+    border: 1px solid #dee2e6 !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
+}
+
+/* ZEBRA STRIPING */
+html body table tbody tr:nth-child(odd),
+html body .table tbody tr:nth-child(odd) {
+    background-color: #ffffff !important;
+}
+
+html body table tbody tr:nth-child(even),
+html body .table tbody tr:nth-child(even) {
+    background-color: #f8f9fa !important;
+}
+
+/* HOVER EFFECT */
+html body table tbody tr:hover,
+html body .table tbody tr:hover {
+    background-color: #e2e6ea !important;
+    transition: background-color 0.2s !important;
+}
+
+/* RESPONSIVE TABLE WRAPPER */
+.table-responsive {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    width: 100% !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/* ENSURE MINIMUM TABLE WIDTH */
+html body table,
+html body .table {
+    min-width: 900px !important;
+}
+
+/* BADGES IN TABLES */
+html body table .badge,
+html body .table .badge {
+    display: inline-block !important;
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    border-radius: 4px !important;
+    white-space: nowrap !important;
+}
+
+/* Badge colors with good contrast */
+html body table .badge-success {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+}
+
+html body table .badge-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+html body table .badge-warning {
+    background-color: #ffc107 !important;
+    color: #000000 !important;
+}
+
+html body table .badge-info {
+    background-color: #0dcaf0 !important;
+    color: #000000 !important;
+}
+
+/* FIX FOR INLINE STYLES WITH !important */
+html body table td[style*="important"] {
+    /* Override with even higher specificity */
+    all: revert !important;
+    padding: 12px !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow: visible !important;
+    color: #212529 !important;
+}
+
+/* EMERGENCY OVERRIDE FOR PROBLEM CELLS */
+html body table td {
+    display: table-cell !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+}
+
+/* FIX OVERLAPPING TEXT */
+html body table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+html body table td,
+html body table th {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* ENSURE READABILITY ON ALL SCREENS */
+@media screen and (max-width: 1200px) {
+    html body table {
+        font-size: 13px !important;
+    }
+    
+    html body table td,
+    html body table th {
+        padding: 10px !important;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    html body table {
+        font-size: 12px !important;
+    }
+    
+    html body table td,
+    html body table th {
+        padding: 8px !important;
+    }
+}
+
+/* CRITICAL: Force table to respect content */
+html body .main-content table,
+html body .content table,
+html body .container table {
+    table-layout: auto !important;
+    width: 100% !important;
+}
+
+/* Remove any transform or scale that might affect visibility */
+html body table,
+html body table * {
+    transform: none !important;
+    scale: none !important;
+}
+
+/* Ensure text is always readable */
+html body table td,
+html body table th {
+    min-height: 40px !important;
+    vertical-align: middle !important;
+}
+
+/* Fix JSON and code display in cells */
+html body table pre,
+html body table code {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    max-width: 100% !important;
+    display: block !important;
+    background: #f8f9fa !important;
+    padding: 8px !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+}
+
+/* Final override to ensure visibility */
+html body table * {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: revert !important;
+}
+
+/* Specific fix for log activity page */
+body.log-attivita table,
+#log-attivita table,
+.log-attivita-container table {
+    width: 100% !important;
+    table-layout: auto !important;
+}
+
+/* Force minimum column widths to prevent crushing */
+html body table td {
+    min-width: 80px !important;
+}
+
+/* Details column should expand */
+html body table td:last-child,
+html body table td.details-cell {
+    min-width: 300px !important;
+    width: auto !important;
+}

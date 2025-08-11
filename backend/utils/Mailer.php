@@ -158,7 +158,7 @@ class Mailer {
      * @param string|array $to Destinatario o array di destinatari
      * @param string $subject Oggetto dell'email
      * @param string $body Corpo dell'email (HTML)
-     * @param array $options Opzioni aggiuntive (cc, bcc, attachments, etc.)
+     * @param array $options Opzioni aggiuntive (cc, bcc, attachments, disable_tracking, etc.)
      * @return bool True se l'invio è riuscito, false altrimenti
      */
     public function send($to, $subject, $body, $options = []) {
@@ -167,7 +167,44 @@ class Mailer {
         error_log('[MAILER DEBUG] Destinatario: ' . (is_array($to) ? implode(',', $to) : $to));
         error_log('[MAILER DEBUG] Oggetto: ' . $subject);
         
-        // USA SOLO BrevoSMTP per tutte le email
+        // Controlla se dobbiamo disabilitare il tracking (per email di benvenuto, reset password, etc.)
+        $disableTracking = isset($options['disable_tracking']) && $options['disable_tracking'] === true;
+        
+        // Per email critiche come benvenuto e reset password, disabilita sempre il tracking
+        $criticalSubjects = [
+            'Benvenuto su Nexio',
+            'Password Reimpostata',
+            'Le tue credenziali di accesso',
+            'Reset Password'
+        ];
+        
+        foreach ($criticalSubjects as $criticalSubject) {
+            if (stripos($subject, $criticalSubject) !== false) {
+                $disableTracking = true;
+                error_log('[MAILER DEBUG] Email critica rilevata, disabilito tracking');
+                break;
+            }
+        }
+        
+        // Se dobbiamo disabilitare il tracking, usa l'API HTTP di Brevo
+        if ($disableTracking) {
+            try {
+                require_once __DIR__ . '/BrevoAPI.php';
+                $brevoAPI = BrevoAPI::getInstance();
+                
+                if ($brevoAPI->send($to, $subject, $body, true)) {
+                    error_log('[MAILER DEBUG] ✅ Email inviata con successo tramite BrevoAPI (no tracking)');
+                    $this->logEmail($to, $subject, 'success', 'BrevoAPI - No Tracking');
+                    return true;
+                } else {
+                    error_log('[MAILER DEBUG] ❌ BrevoAPI fallito, provo con SMTP');
+                }
+            } catch (Exception $e) {
+                error_log('[MAILER DEBUG] ❌ BrevoAPI eccezione: ' . $e->getMessage());
+            }
+        }
+        
+        // Fallback o invio normale con BrevoSMTP
         try {
             require_once __DIR__ . '/BrevoSMTP.php';
             $brevoSMTP = BrevoSMTP::getInstance();

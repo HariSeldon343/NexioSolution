@@ -8,6 +8,17 @@ $auth = Auth::getInstance();
 $rateLimiter = RateLimiter::getInstance();
 $logger = ActivityLogger::getInstance();
 
+// Rileva se è un dispositivo mobile
+function isMobile() {
+    return preg_match('/(android|webos|iphone|ipad|ipod|blackberry|windows phone)/i', $_SERVER['HTTP_USER_AGENT'] ?? '');
+}
+
+// Se mobile, redirect a mobile.php
+if (isMobile() && !isset($_GET['desktop'])) {
+    header('Location: mobile.php');
+    exit();
+}
+
 // Se già loggato, redirect a dashboard
 if ($auth->isAuthenticated()) {
     redirect(APP_PATH . '/dashboard.php');
@@ -87,6 +98,17 @@ if (isset($_GET['expired'])) {
     <link rel="icon" type="image/svg+xml" href="<?php echo APP_PATH; ?>/assets/images/favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="<?php echo APP_PATH; ?>/assets/images/favicon.svg">
     
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- NEXIO REDESIGN CSS -->
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/nexio-redesign.css?v=<?php echo time(); ?>">
+    
+    <!-- Fix colori e UI - Risolve problemi di contrasto e bottoni -->
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/nexio-color-fixes.css?v=<?php echo time(); ?>">
+    
     <style>
         * {
             margin: 0;
@@ -95,27 +117,27 @@ if (isset($_GET['expired'])) {
         }
         
         :root {
-            --bg-primary: #faf8f5;
+            --bg-primary: #ffffff;
             --bg-secondary: #ffffff;
-            --text-primary: #2c2c2c;
-            --text-secondary: #6b6b6b;
-            --border-color: #e8e8e8;
-            --accent-color: #1b3f76;
-            --accent-hover: #0f2847;
-            --error-bg: #fef2f2;
-            --error-text: #991b1b;
-            --error-border: #fecaca;
-            --success-bg: #f0fdf4;
-            --success-text: #166534;
-            --success-border: #bbf7d0;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --accent-color: #2d5a9f;
+            --accent-hover: #1e3a5f;
+            --error-bg: #ffffff;
+            --error-text: #dc2626;
+            --error-border: #dc2626;
+            --success-bg: #ffffff;
+            --success-text: #10b981;
+            --success-border: #10b981;
+            --shadow-sm: none;
+            --shadow-md: none;
+            --shadow-lg: none;
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #fafafa;
             color: var(--text-primary);
             line-height: 1.5;
             min-height: 100vh;
@@ -126,24 +148,24 @@ if (isset($_GET['expired'])) {
         }
         
         .login-container {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            box-shadow: var(--shadow-lg);
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
             width: 100%;
-            max-width: 400px;
+            max-width: 380px;
             overflow: hidden;
         }
         
         .login-header {
-            padding: 2.5rem 2rem 2rem;
+            padding: 2rem 1.5rem 1.5rem;
             text-align: center;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid #f3f4f6;
         }
         
         .logo {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
         }
         
         .logo img {
@@ -152,26 +174,30 @@ if (isset($_GET['expired'])) {
         }
         
         .login-header h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
+            font-size: 1.25rem;
+            font-weight: 400;
             color: var(--text-primary);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         
         .login-header p {
             color: var(--text-secondary);
-            font-size: 0.875rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
         }
         
         .login-body {
-            padding: 2rem;
+            padding: 1.5rem;
         }
         
         .alert {
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
-            margin-bottom: 1.5rem;
-            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 2px;
+            margin-bottom: 1rem;
+            font-size: 0.75rem;
             border: 1px solid;
         }
         
@@ -189,30 +215,50 @@ if (isset($_GET['expired'])) {
         
         .form-group {
             margin-bottom: 1.5rem;
+            position: relative;
         }
         
         .form-label {
             display: block;
             margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-primary);
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            position: static !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: none;
+            background: transparent !important;
+            z-index: auto !important;
         }
         
         .form-input {
             width: 100%;
-            padding: 0.625rem 0.875rem;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 2px;
             font-size: 0.875rem;
-            transition: all 0.2s;
-            background-color: var(--bg-secondary);
+            transition: border-color 0.15s;
+            background-color: white !important;
+            color: #1e293b !important;
+            -webkit-text-fill-color: #1e293b !important;
+            position: relative !important;
+            z-index: 1;
+        }
+        
+        .form-input::placeholder {
+            color: #9ca3af !important;
+            opacity: 1 !important;
+            -webkit-text-fill-color: #9ca3af !important;
         }
         
         .form-input:focus {
             outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(43, 87, 154, 0.1);
+            border-color: #2d5a9f;
+            background-color: white !important;
+            color: #1e293b !important;
         }
         
         .form-input:disabled {
@@ -243,40 +289,42 @@ if (isset($_GET['expired'])) {
         .checkbox-wrapper label {
             color: var(--text-secondary);
             cursor: pointer;
+            font-size: 0.75rem;
         }
         
         .link {
-            color: var(--accent-color);
+            color: #2d5a9f;
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 400;
+            font-size: 0.75rem;
         }
         
         .link:hover {
-            color: var(--accent-hover);
             text-decoration: underline;
         }
         
         .btn-submit {
             width: 100%;
-            padding: 0.75rem 1rem;
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-weight: 500;
+            padding: 0.5rem 1rem;
+            background-color: white;
+            color: #2d5a9f;
+            border: 1px solid #2d5a9f;
+            border-radius: 2px;
+            font-size: 0.75rem;
+            font-weight: 400;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         
         .btn-submit:hover:not(:disabled) {
-            background-color: var(--accent-hover);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
+            background-color: #2d5a9f;
+            color: white;
         }
         
         .btn-submit:active:not(:disabled) {
-            transform: translateY(0);
+            transform: none;
         }
         
         .btn-submit:disabled {
@@ -309,12 +357,14 @@ if (isset($_GET['expired'])) {
         }
         
         .login-footer {
-            padding: 1.5rem 2rem;
+            padding: 1rem 1.5rem;
             background-color: #fafafa;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid #f3f4f6;
             text-align: center;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
+            font-size: 0.625rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
         }
         
         /* Responsive */
@@ -396,6 +446,7 @@ if (isset($_GET['expired'])) {
                         id="username" 
                         name="username" 
                         class="form-input"
+                        placeholder="Inserisci username o email"
                         required 
                         autofocus
                         autocomplete="username"
@@ -410,6 +461,7 @@ if (isset($_GET['expired'])) {
                         id="password" 
                         name="password" 
                         class="form-input"
+                        placeholder="Inserisci password"
                         required
                         autocomplete="current-password"
                         <?php echo $isBlocked ? 'disabled' : ''; ?>

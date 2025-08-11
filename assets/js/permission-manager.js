@@ -37,9 +37,9 @@ class PermissionManager {
             // Auto-refresh permessi ogni 5 minuti
             setInterval(() => this.refreshPermissions(), 5 * 60 * 1000);
             
-            console.log('Permission Manager initialized');
+            // Permission Manager initialized
         } catch (error) {
-            console.error('Errore inizializzazione Permission Manager:', error);
+            // Error during initialization
         }
     }
     
@@ -72,12 +72,12 @@ class PermissionManager {
                 // Aggiorna meta tag CSRF
                 this.updateCSRFMeta();
                 
-                console.log('Permessi caricati:', this.userPermissions);
+                // Permissions loaded successfully
             } else {
                 throw new Error(data.error || 'Errore caricamento permessi');
             }
         } catch (error) {
-            console.error('Errore caricamento permessi:', error);
+            // Error loading permissions
             // Fallback: nascondi tutto tranne elementi base
             this.applyFallbackPermissions();
         }
@@ -135,7 +135,7 @@ class PermissionManager {
             
             return result;
         } catch (error) {
-            console.error('Errore verifica permesso documento:', error);
+            // Error checking document permission
             return false;
         }
     }
@@ -179,7 +179,7 @@ class PermissionManager {
             
             return result;
         } catch (error) {
-            console.error('Errore verifica permesso cartella:', error);
+            // Error checking folder permission
             return false;
         }
     }
@@ -370,7 +370,7 @@ class PermissionManager {
         await this.loadUserPermissions();
         this.permissionCache.clear();
         this.applyPermissionsToDOM();
-        console.log('Permessi aggiornati');
+        // Permissions updated
     }
     
     /**
@@ -561,7 +561,7 @@ class PermissionManager {
                 this.populatePermissionModal(data.users, data.permissions);
             }
         } catch (error) {
-            console.error('Errore caricamento dati permessi:', error);
+            // Error loading permission data
         }
     }
     

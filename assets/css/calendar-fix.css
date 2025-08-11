@@ -22,7 +22,7 @@
 
 .calendar-header h2 {
     margin: 0;
-    color: #2d3748;
+    color: #ffffff;
     font-size: 1.5rem;
     font-weight: 600;
     text-transform: capitalize;
@@ -436,4 +436,365 @@
 .day-event:focus {
     outline: 2px solid rgba(255,255,255,0.8);
     outline-offset: 1px;
+}
+/* ==============================================
+   CALENDAR BUTTON FIXES
+   Fixes oversized buttons and icons in calendar views
+   ============================================== */
+
+/* Base button styling for calendar context */
+.calendar-container .btn,
+.calendar-month-view .btn,
+.calendar-week-view .btn,
+.calendar-day-view .btn,
+.calendar-list-view .btn,
+.calendar-actions .btn,
+.empty-state .btn {
+    padding: 8px 16px \!important;
+    font-size: 14px \!important;
+    font-weight: 500 \!important;
+    line-height: 1.5 \!important;
+    border-radius: 6px \!important;
+    display: inline-flex \!important;
+    align-items: center \!important;
+    justify-content: center \!important;
+    gap: 6px \!important;
+    transition: all 0.2s ease \!important;
+    text-decoration: none \!important;
+    white-space: nowrap \!important;
+}
+
+/* Icon sizing within buttons */
+.calendar-container .btn i,
+.calendar-month-view .btn i,
+.calendar-week-view .btn i,
+.calendar-day-view .btn i,
+.calendar-list-view .btn i,
+.calendar-actions .btn i,
+.empty-state .btn i,
+.calendar-container .btn .fas,
+.calendar-month-view .btn .fas,
+.calendar-week-view .btn .fas,
+.calendar-day-view .btn .fas,
+.calendar-list-view .btn .fas,
+.calendar-actions .btn .fas,
+.empty-state .btn .fas,
+.calendar-container .btn .fa,
+.calendar-month-view .btn .fa,
+.calendar-week-view .btn .fa,
+.calendar-day-view .btn .fa,
+.calendar-list-view .btn .fa,
+.calendar-actions .btn .fa,
+.empty-state .btn .fa {
+    font-size: 16px \!important;
+    width: 16px \!important;
+    height: 16px \!important;
+    line-height: 1 \!important;
+    display: inline-flex \!important;
+    align-items: center \!important;
+    justify-content: center \!important;
+    flex-shrink: 0 \!important;
+}
+
+/* Specific button variants */
+.calendar-container .btn-primary,
+.calendar-actions .btn-primary,
+.empty-state .btn-primary {
+    background: #6366f1 \!important;
+    color: white \!important;
+    border: 1px solid #6366f1 \!important;
+}
+
+.calendar-container .btn-primary:hover,
+.calendar-actions .btn-primary:hover,
+.empty-state .btn-primary:hover {
+    background: #4f46e5 \!important;
+    border-color: #4f46e5 \!important;
+    transform: translateY(-1px) \!important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25) \!important;
+}
+
+.calendar-container .btn-success,
+.calendar-actions .btn-success,
+.empty-state .btn-success {
+    background: #10b981 \!important;
+    color: white \!important;
+    border: 1px solid #10b981 \!important;
+}
+
+.calendar-container .btn-success:hover,
+.calendar-actions .btn-success:hover,
+.empty-state .btn-success:hover {
+    background: #059669 \!important;
+    border-color: #059669 \!important;
+    transform: translateY(-1px) \!important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) \!important;
+}
+
+/* Action bar styling */
+.calendar-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+
+/* Empty state specific adjustments */
+.empty-state .btn {
+    margin: 10px 5px 0 5px \!important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .calendar-container .btn,
+    .calendar-month-view .btn,
+    .calendar-week-view .btn,
+    .calendar-day-view .btn,
+    .calendar-list-view .btn,
+    .calendar-actions .btn,
+    .empty-state .btn {
+        padding: 10px 18px \!important;
+        font-size: 14px \!important;
+    }
+    
+    .calendar-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .calendar-actions .btn {
+        width: 100%;
+        justify-content: center \!important;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-container .btn,
+    .calendar-month-view .btn,
+    .calendar-week-view .btn,
+    .calendar-day-view .btn,
+    .calendar-list-view .btn,
+    .calendar-actions .btn,
+    .empty-state .btn {
+        padding: 8px 14px \!important;
+        font-size: 13px \!important;
+    }
+    
+    .calendar-container .btn i,
+    .calendar-month-view .btn i,
+    .calendar-week-view .btn i,
+    .calendar-day-view .btn i,
+    .calendar-list-view .btn i,
+    .calendar-actions .btn i,
+    .empty-state .btn i,
+    .calendar-container .btn .fas,
+    .calendar-month-view .btn .fas,
+    .calendar-week-view .btn .fas,
+    .calendar-day-view .btn .fas,
+    .calendar-list-view .btn .fas,
+    .calendar-actions .btn .fas,
+    .empty-state .btn .fas {
+        font-size: 14px \!important;
+        width: 14px \!important;
+        height: 14px \!important;
+    }
+}
+
+/* Button group styling */
+.btn-group {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-group .btn {
+    margin: 0 \!important;
+}
+
+/* Floating action button for mobile */
+@media (max-width: 768px) {
+    .floating-action-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 56px \!important;
+        height: 56px \!important;
+        border-radius: 50% \!important;
+        padding: 0 \!important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) \!important;
+        z-index: 1000;
+    }
+    
+    .floating-action-btn i,
+    .floating-action-btn .fas {
+        font-size: 24px \!important;
+        width: 24px \!important;
+        height: 24px \!important;
+    }
+}
+
+
+/* ==============================================
+   Empty State Improvements
+   ============================================== */
+
+/* Fix oversized icons in empty states */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #718096;
+}
+
+.empty-state > i,
+.empty-state > .fas,
+.empty-state > .far,
+.empty-state > .fa {
+    font-size: 36px \!important;  /* Reduced from 48px for better proportion */
+    color: #cbd5e0 \!important;
+    margin-bottom: 20px \!important;
+    display: inline-block \!important;
+    width: auto \!important;
+    height: auto \!important;
+    line-height: 1 \!important;
+}
+
+.empty-state h2 {
+    font-size: 20px \!important;
+    font-weight: 600 \!important;
+    color: #4a5568 \!important;
+    margin: 16px 0 \!important;
+}
+
+.empty-state p {
+    font-size: 14px \!important;
+    color: #718096 \!important;
+    margin-bottom: 24px \!important;
+}
+
+/* Button improvements in empty state */
+.empty-state .btn {
+    display: inline-flex \!important;
+    align-items: center \!important;
+    justify-content: center \!important;
+    gap: 6px \!important;
+    padding: 10px 18px \!important;
+    font-size: 14px \!important;
+    font-weight: 500 \!important;
+    border-radius: 6px \!important;
+    transition: all 0.2s ease \!important;
+    text-decoration: none \!important;
+    margin: 8px 4px \!important;
+    min-width: 140px \!important;
+    white-space: nowrap \!important;
+}
+
+.empty-state .btn i {
+    font-size: 14px \!important;
+    width: 14px \!important;
+    height: 14px \!important;
+    line-height: 1 \!important;
+    flex-shrink: 0 \!important;
+}
+
+/* Improve "Crea il primo evento" button */
+.empty-state .btn-primary {
+    background: #6366f1 \!important;
+    border: 1px solid #6366f1 \!important;
+    color: white \!important;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.15) \!important;
+}
+
+.empty-state .btn-primary:hover {
+    background: #4f46e5 \!important;
+    border-color: #4f46e5 \!important;
+    transform: translateY(-1px) \!important;
+    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.25) \!important;
+}
+
+/* Improve "Assegna Task" button */
+.btn[style*="background: #10b981"],
+.empty-state .btn-success {
+    background: #10b981 \!important;
+    border: 1px solid #10b981 \!important;
+    color: white \!important;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.15) \!important;
+}
+
+.btn[style*="background: #10b981"]:hover,
+.empty-state .btn-success:hover {
+    background: #059669 \!important;
+    border-color: #059669 \!important;
+    transform: translateY(-1px) \!important;
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.25) \!important;
+}
+
+/* ==============================================
+   Duration Display Formatting
+   ============================================== */
+
+/* Style for duration displays */
+.duration,
+.task-duration,
+.duration-text,
+.event-duration {
+    font-size: 13px \!important;
+    color: #718096 \!important;
+    font-weight: 400 \!important;
+    white-space: nowrap \!important;
+}
+
+/* Task duration badges */
+.task-duration {
+    display: inline-block \!important;
+    background: #edf2f7 \!important;
+    color: #4a5568 \!important;
+    padding: 2px 8px \!important;
+    border-radius: 12px \!important;
+    font-size: 12px \!important;
+    font-weight: 500 \!important;
+    margin-left: 8px \!important;
+}
+
+/* Event time range with duration */
+.event-time-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #718096;
+}
+
+.event-time-range .duration {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+/* ==============================================
+   Mobile Responsive Improvements
+   ============================================== */
+
+@media (max-width: 768px) {
+    .empty-state {
+        padding: 30px 15px;
+    }
+    
+    .empty-state > i,
+    .empty-state > .fas {
+        font-size: 40px \!important;
+    }
+    
+    .empty-state h2 {
+        font-size: 18px \!important;
+    }
+    
+    .empty-state p {
+        font-size: 13px \!important;
+    }
+    
+    .empty-state .btn {
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+    }
 }

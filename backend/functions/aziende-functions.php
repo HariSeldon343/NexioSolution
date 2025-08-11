@@ -108,7 +108,7 @@ function createAzienda($data) {
 
 function updateAzienda($id, $data) {
     try {
-        $result = db_update("aziende", $data, "id = :id", [":id" => $id]);
+        $result = db_update("aziende", $data, "id = ?", [$id]);
         return ["success" => true, "message" => "Azienda aggiornata con successo"];
     } catch (Exception $e) {
         error_log("Errore updateAzienda: " . $e->getMessage());

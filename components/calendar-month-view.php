@@ -4,6 +4,9 @@
  * Griglia calendario con eventi visualizzati come badge
  */
 
+// Include calendar helper
+require_once 'backend/utils/CalendarHelper.php';
+
 // Calcola date per il mese
 $currentDate = strtotime($date);
 $year = date('Y', $currentDate);
@@ -118,7 +121,7 @@ $giorniSettimana = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
                     $itemsShown++;
                 ?>
                 <div class="task-badge" 
-                     title="Task: <?= htmlspecialchars($task['attivita']) ?> (<?= $task['giornate_previste'] ?>gg)">
+                     title="Task: <?= htmlspecialchars($task['attivita']) ?> (<?= CalendarHelper::formatTaskDuration($task['giornate_previste']) ?>)">
                     T: <?= htmlspecialchars(substr($task['attivita'], 0, 8)) ?>
                 </div>
                 <?php endforeach; ?>

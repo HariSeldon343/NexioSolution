@@ -3,6 +3,15 @@
  * Vista calendario giornaliera
  */
 
+// Initialize CSRF token manager if not already done
+if (!isset($csrf)) {
+    require_once 'backend/utils/CSRFTokenManager.php';
+    $csrf = CSRFTokenManager::getInstance();
+}
+
+// Include calendar helper
+require_once 'backend/utils/CalendarHelper.php';
+
 // Gli eventi sono già filtrati da getEventsForView
 $eventiGiorno = $eventi;
 
@@ -121,13 +130,20 @@ foreach ($eventiGiorno as $evento) {
                                     <?php foreach ($eventiOra as $evento): 
                                         $startTime = date('H:i', strtotime($evento['data_inizio']));
                                         $endTime = $evento['data_fine'] ? date('H:i', strtotime($evento['data_fine'])) : '';
-                                        $duration = $evento['data_fine'] ? 
-                                            (strtotime($evento['data_fine']) - strtotime($evento['data_inizio'])) / 60 : 60;
+                                        $durationMinutes = CalendarHelper::calculateDurationMinutes($evento['data_inizio'], $evento['data_fine']);
+                                        
+                                        // Format duration nicely using helper
+                                        if (CalendarHelper::isAllDayEvent($durationMinutes)) {
+                                            $durationFormatted = 'Tutto il giorno';
+                                        } else {
+                                            $durationFormatted = CalendarHelper::formatDuration($durationMinutes);
+                                        }
+                                        
                                         $canEdit = $auth->canManageEvents() && ($auth->canViewAllEvents() || $evento['creato_da'] == $user['id']);
                                     ?>
                                     <div class="day-event event-type-<?= $evento['tipo'] ?>" 
                                          data-event-id="<?= $evento['id'] ?>"
-                                         data-duration="<?= $duration ?>">
+                                         data-duration="<?= $durationMinutes ?>">
                                         <div class="event-header">
                                             <div class="event-time-range">
                                                 <span class="start-time"><?= $startTime ?></span>
@@ -135,18 +151,20 @@ foreach ($eventiGiorno as $evento) {
                                                 <span class="time-separator">-</span>
                                                 <span class="end-time"><?= $endTime ?></span>
                                                 <?php endif; ?>
-                                                <span class="duration">(<?= $duration ?> min)</span>
+                                                <span class="duration">(<?= $durationFormatted ?>)</span>
                                             </div>
                                             
                                             <?php if ($canEdit): ?>
                                             <div class="event-actions">
-                                                <a href="?action=modifica&id=<?= $evento['id'] ?>" class="action-btn edit-btn">
+                                                <a href="?action=modifica&id=<?= $evento['id'] ?>&view=<?= $view ?>&date=<?= $date ?>" 
+                                                   class="action-btn edit-btn" title="Modifica evento">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <a href="?action=elimina&id=<?= $evento['id'] ?>" class="action-btn delete-btn"
-                                                   onclick="return confirm('Sei sicuro di voler eliminare questo evento?')">
+                                                <button type="button" class="action-btn delete-btn"
+                                                        onclick="deleteEvent(<?= $evento['id'] ?>, '<?= htmlspecialchars(addslashes($evento['titolo']), ENT_QUOTES) ?>')"
+                                                        title="Elimina evento">
                                                     <i class="fas fa-trash"></i>
-                                                </a>
+                                                </button>
                                             </div>
                                             <?php endif; ?>
                                         </div>
@@ -523,6 +541,8 @@ foreach ($eventiGiorno as $evento) {
     display: flex;
     align-items: center;
     justify-content: center;
+    border: none;
+    cursor: pointer;
 }
 
 .edit-btn {
@@ -903,6 +923,11 @@ foreach ($eventiGiorno as $evento) {
 }
 </style>
 
+<!-- Hidden form for secure event deletion with CSRF token -->
+<form id="deleteEventForm" method="POST" style="display: none;">
+    <input type="hidden" name="csrf_token" value="<?= $csrf->getToken() ?>">
+</form>
+
 <script>
 function createEventAt(date, hour) {
     <?php if ($auth->canManageEvents()): ?>
@@ -913,6 +938,29 @@ function createEventAt(date, hour) {
     
     window.location.href = url.toString();
     <?php endif; ?>
+}
+
+function deleteEvent(eventId, eventTitle) {
+    if (confirm('Sei sicuro di voler eliminare l\'evento "' + eventTitle + '"?')) {
+        const form = document.getElementById('deleteEventForm');
+        if (!form) {
+            console.error('Delete form not found');
+            return;
+        }
+        
+        const currentUrl = new URL(window.location.href);
+        
+        // Build the action URL with proper parameters
+        const actionUrl = new URL('<?= APP_PATH ?>/calendario-eventi.php', window.location.origin);
+        actionUrl.searchParams.set('action', 'elimina');
+        actionUrl.searchParams.set('id', eventId);
+        actionUrl.searchParams.set('view', currentUrl.searchParams.get('view') || 'day');
+        actionUrl.searchParams.set('date', currentUrl.searchParams.get('date') || '<?= $date ?>');
+        
+        form.action = actionUrl.toString();
+        form.submit();
+    }
+    return false;
 }
 
 document.addEventListener('DOMContentLoaded', function() {

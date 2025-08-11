@@ -1,11 +1,45 @@
 <?php
 require_once 'backend/config/config.php';
 
+// Se è una richiesta AJAX, gestisci gli errori in modo diverso
+$isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest';
+
+if ($isAjax) {
+    // Error handler per richieste AJAX
+    set_error_handler(function($errno, $errstr, $errfile, $errline) {
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Errore del server',
+            'error' => $errstr
+        ]);
+        exit;
+    });
+    
+    // Exception handler per richieste AJAX
+    set_exception_handler(function($exception) {
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Errore del server',
+            'error' => $exception->getMessage()
+        ]);
+        exit;
+    });
+}
+
 // Verifica connessione database prima di procedere
 try {
     $test_connection = db_connection();
     $test_connection->query("SELECT 1");
 } catch (Exception $e) {
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Database non disponibile']);
+        exit;
+    }
     // Se siamo qui, significa che il database non è disponibile
     header('Location: ' . APP_PATH . '/check-database.php');
     exit;
@@ -16,6 +50,11 @@ $auth->requireAuth();
 
 // Solo i super admin possono accedere
 if (!$auth->isSuperAdmin()) {
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Accesso non autorizzato']);
+        exit;
+    }
     header('Location: dashboard.php');
     exit;
 }
@@ -141,7 +180,7 @@ function createUser($data) {
         return ['success' => false, 'message' => 'Email non valida'];
     }
     
-    if (!in_array($ruolo, ['admin', 'utente', 'super_admin', 'utente_speciale'])) {
+    if (!in_array($ruolo, ['utente', 'super_admin', 'utente_speciale'])) {
         return ['success' => false, 'message' => 'Ruolo non valido'];
     }
     
@@ -227,7 +266,7 @@ function createUser($data) {
                 'attivo' => 1,
                 'last_password_change' => date('Y-m-d H:i:s'),
                 'primo_accesso' => 1
-            ], ['id' => $inactiveUser['id']]);
+            ], 'id = ?', [$inactiveUser['id']]);
             
             $userId = $inactiveUser['id'];
             
@@ -303,13 +342,16 @@ function createUser($data) {
 }
 
 function sendWelcomeEmail($email, $nome, $password) {
-    global $baseUrl;
+    // Usa la configurazione corretta per l'URL base
+    $baseUrl = 'http://localhost/piattaforma-collaborativa';
     
     try {
         $mailer = Mailer::getInstance();
         
         $subject = "Benvenuto su Nexio - Le tue credenziali di accesso";
         
+        // Costruisci il corpo dell'email con link diretto (senza tracking)
+        // Importante: non usare tag <a> per evitare il tracking di Brevo
         $body = "
         <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
             <h2 style='color: #2d5a9f;'>Benvenuto su Nexio, {$nome}!</h2>
@@ -323,7 +365,12 @@ function sendWelcomeEmail($email, $nome, $password) {
             
             <p style='color: #d97706;'><strong>Importante:</strong> Al primo accesso ti verrà richiesto di cambiare la password.</p>
             
-            <p>Per accedere alla piattaforma, clicca sul link seguente:</p>
+            <p>Per accedere alla piattaforma, copia e incolla questo link nel tuo browser:</p>
+            <div style='background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0; word-break: break-all;'>
+                <code style='font-family: monospace; color: #2d5a9f;'>{$baseUrl}/login.php</code>
+            </div>
+            
+            <p style='margin-top: 20px;'>Oppure clicca sul pulsante sottostante:</p>
             <p><a href='{$baseUrl}/login.php' style='background: #2d5a9f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;'>Accedi a Nexio</a></p>
             
             <p style='color: #666; font-size: 12px; margin-top: 30px;'>
@@ -361,7 +408,7 @@ function resetPassword($userId) {
             'password' => $passwordHash,
             'last_password_change' => date('Y-m-d H:i:s'),
             'primo_accesso' => 1
-        ], ['id' => $userId]);
+        ], 'id = ?', [$userId]);
         
         // Log attività
         if (class_exists('ActivityLogger')) {
@@ -416,7 +463,7 @@ function toggleUserStatus($userId, $newStatus) {
         $newStatus = intval($newStatus);
         
         // Aggiorna stato
-        db_update('utenti', ['attivo' => $newStatus], ['id' => $userId]);
+        db_update('utenti', ['attivo' => $newStatus], 'id = ?', [$userId]);
         
         // Log attività
         if (class_exists('ActivityLogger')) {
@@ -453,8 +500,6 @@ function checkEmailExists($email) {
 }
 
 function deleteUser($userId) {
-    global $user;
-    
     try {
         // Protezione utente principale
         $stmt = db_query("SELECT email FROM utenti WHERE id = ?", [$userId]);
@@ -465,15 +510,18 @@ function deleteUser($userId) {
         }
         
         // Non eliminiamo fisicamente, ma disattiviamo
-        db_update('utenti', ['attivo' => 0], ['id' => $userId]);
+        // Corretto: db_update richiede WHERE come stringa e parametri separati
+        db_update('utenti', ['attivo' => 0], 'id = ?', [$userId]);
         
         // Disattiva anche le associazioni aziendali
         db_query("UPDATE utenti_aziende SET attivo = 0 WHERE utente_id = ?", [$userId]);
         
         // Log attività
         if (class_exists('ActivityLogger')) {
+            $auth = Auth::getInstance();
+            $currentUser = $auth->getUser();
             ActivityLogger::getInstance()->log('utente', 'delete', $userId, 
-                "Eliminato (disattivato) utente ID: {$userId}");
+                "Eliminato (disattivato) utente ID: {$userId} da utente ID: " . ($currentUser['id'] ?? 'sistema'));
         }
         
         return [
@@ -483,7 +531,7 @@ function deleteUser($userId) {
         
     } catch (Exception $e) {
         error_log("Errore eliminazione utente: " . $e->getMessage());
-        return ['success' => false, 'message' => 'Errore durante l\'eliminazione dell\'utente'];
+        return ['success' => false, 'message' => 'Errore durante l\'eliminazione dell\'utente: ' . $e->getMessage()];
     }
 }
 
@@ -619,6 +667,7 @@ try {
 }
 
 $pageTitle = 'Gestione Utenti';
+$bodyClass = 'gestione-utenti user-management';
 include 'components/header.php';
 require_once 'components/page-header.php';
 ?>
@@ -1142,7 +1191,6 @@ require_once 'components/page-header.php';
                     <select name="ruolo" id="ruolo" class="form-control" required onchange="checkRolePermissions(this.value)">
                         <option value="">Seleziona un ruolo</option>
                         <option value="utente">Utente</option>
-                        <option value="admin">Amministratore</option>
                         <option value="utente_speciale">Utente Speciale</option>
                         <option value="super_admin">Super Admin</option>
                     </select>
@@ -1292,7 +1340,7 @@ async function createUserAjax(event) {
     
     const form = event.target;
     const submitBtn = document.getElementById('createUserBtn');
-    const btnText = submitBtn.querySelector('span');
+    const btnText = submitBtn.querySelector('span') || submitBtn;
     const btnSpinner = submitBtn.querySelector('i');
     
     // Validazione password manuale
@@ -1314,17 +1362,33 @@ async function createUserAjax(event) {
     
     // Disabilita pulsante e mostra spinner
     submitBtn.disabled = true;
-    btnText.textContent = 'Creazione in corso...';
-    btnSpinner.style.display = 'inline-block';
+    if (btnText.textContent !== undefined) {
+        btnText.textContent = 'Creazione in corso...';
+    } else {
+        submitBtn.textContent = 'Creazione in corso...';
+    }
+    if (btnSpinner) {
+        btnSpinner.style.display = 'inline-block';
+    }
     
     try {
         const formData = new FormData(form);
         
+        // Ottieni il token CSRF
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+        
+        // Aggiungi il token CSRF se disponibile
+        if (csrfToken) {
+            headers['X-CSRF-Token'] = csrfToken;
+        }
+        
         const response = await fetch(window.location.href, {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: headers,
             body: formData
         });
         
@@ -1362,8 +1426,14 @@ async function createUserAjax(event) {
     } finally {
         // Ripristina pulsante
         submitBtn.disabled = false;
-        btnText.textContent = 'Crea Utente';
-        btnSpinner.style.display = 'none';
+        if (btnText.textContent !== undefined) {
+            btnText.textContent = 'Crea Utente';
+        } else {
+            submitBtn.textContent = 'Crea Utente';
+        }
+        if (btnSpinner) {
+            btnSpinner.style.display = 'none';
+        }
     }
     
     return false;
@@ -1381,11 +1451,14 @@ async function resetPassword(userId) {
         formData.append('action', 'reset_password');
         formData.append('user_id', userId);
         
+        // Ottieni il token CSRF
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const headers = {'X-Requested-With': 'XMLHttpRequest'};
+        if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+        
         const response = await fetch(window.location.href, {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: headers,
             body: formData
         });
         
@@ -1433,11 +1506,14 @@ async function toggleUserStatus(userId, newStatus) {
         formData.append('user_id', userId);
         formData.append('new_status', newStatus);
         
+        // Ottieni il token CSRF
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const headers = {'X-Requested-With': 'XMLHttpRequest'};
+        if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+        
         const response = await fetch(window.location.href, {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: headers,
             body: formData
         });
         
@@ -1468,11 +1544,14 @@ async function deleteUser(userId) {
         formData.append('action', 'delete_user');
         formData.append('user_id', userId);
         
+        // Ottieni il token CSRF
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const headers = {'X-Requested-With': 'XMLHttpRequest'};
+        if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+        
         const response = await fetch(window.location.href, {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: headers,
             body: formData
         });
         
@@ -1517,11 +1596,14 @@ async function checkEmail(email) {
         formData.append('action', 'check_email');
         formData.append('email', email);
         
+        // Ottieni il token CSRF
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const headers = {'X-Requested-With': 'XMLHttpRequest'};
+        if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+        
         const response = await fetch(window.location.href, {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: headers,
             body: formData
         });
         
@@ -1552,11 +1634,14 @@ async function checkAziendaLimits(aziendaId) {
         formData.append('action', 'check_azienda_limits');
         formData.append('azienda_id', aziendaId);
         
+        // Ottieni il token CSRF
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const headers = {'X-Requested-With': 'XMLHttpRequest'};
+        if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+        
         const response = await fetch(window.location.href, {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: headers,
             body: formData
         });
         

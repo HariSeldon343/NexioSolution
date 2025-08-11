@@ -92,17 +92,17 @@ try {
             $stats['aziende'] = 0;
         }
 
-        // Documenti pubblicati
+        // Documenti totali (tutti gli stati tranne cestino)
         try {
-            $stmt = db_query("SELECT COUNT(*) as count FROM documenti WHERE stato = 'pubblicato'");
+            $stmt = db_query("SELECT COUNT(*) as count FROM documenti WHERE stato != 'cestino'");
             $stats['documenti'] = $stmt && $stmt->rowCount() > 0 ? $stmt->fetch()['count'] : 0;
         } catch (Exception $e) {
             $stats['documenti'] = 0;
         }
 
-        // Eventi futuri
+        // Eventi futuri (prossimi 30 giorni per essere più rilevante)
         try {
-            $stmt = db_query("SELECT COUNT(*) as count FROM eventi WHERE data_inizio > NOW()");
+            $stmt = db_query("SELECT COUNT(*) as count FROM eventi WHERE data_inizio BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)");
             $stats['eventi'] = $stmt && $stmt->rowCount() > 0 ? $stmt->fetch()['count'] : 0;
         } catch (Exception $e) {
             $stats['eventi'] = 0;
@@ -140,22 +140,47 @@ try {
             $stats['attivita_24h'] = 0;
         }
         
-        // Spazio utilizzato (MB) - non disponibile senza colonna dimensione_file
-        $stats['spazio_utilizzato'] = 0; // Colonna dimensione_file non esiste
+        // Spazio utilizzato (MB) - calcola dalla colonna dimensione_file o file_size
+        try {
+            // Prima prova con dimensione_file, poi con file_size
+            $stmt = db_query("SELECT SUM(COALESCE(dimensione_file, file_size, 0)) as total_bytes FROM documenti WHERE stato != 'cestino'");
+            $totalBytes = $stmt && $stmt->rowCount() > 0 ? ($stmt->fetch()['total_bytes'] ?? 0) : 0;
+            
+            // Se non ci sono dati nel DB, calcola lo spazio reale su disco
+            if ($totalBytes == 0) {
+                $uploadsDir = __DIR__ . '/uploads/';
+                if (is_dir($uploadsDir)) {
+                    $totalBytes = 0;
+                    $iterator = new RecursiveIteratorIterator(
+                        new RecursiveDirectoryIterator($uploadsDir, RecursiveDirectoryIterator::SKIP_DOTS),
+                        RecursiveIteratorIterator::LEAVES_ONLY
+                    );
+                    foreach ($iterator as $file) {
+                        if ($file->isFile()) {
+                            $totalBytes += $file->getSize();
+                        }
+                    }
+                }
+            }
+            
+            $stats['spazio_utilizzato'] = round($totalBytes / 1048576, 2); // Convert bytes to MB
+        } catch (Exception $e) {
+            $stats['spazio_utilizzato'] = 0;
+        }
     } else if ($aziendaId) {
         // Vista specifica azienda
         
-        // Documenti pubblicati
+        // Documenti dell'azienda (tutti tranne cestino)
         try {
-            $stmt = db_query("SELECT COUNT(*) as count FROM documenti WHERE azienda_id = ? AND stato = 'pubblicato'", [$aziendaId]);
+            $stmt = db_query("SELECT COUNT(*) as count FROM documenti WHERE azienda_id = ? AND stato != 'cestino'", [$aziendaId]);
             $stats['documenti'] = $stmt && $stmt->rowCount() > 0 ? $stmt->fetch()['count'] : 0;
         } catch (Exception $e) {
             $stats['documenti'] = 0;
         }
 
-        // Eventi futuri
+        // Eventi futuri dell'azienda (prossimi 30 giorni)
         try {
-            $stmt = db_query("SELECT COUNT(*) as count FROM eventi WHERE data_inizio > NOW() AND azienda_id = ?", [$aziendaId]);
+            $stmt = db_query("SELECT COUNT(*) as count FROM eventi WHERE azienda_id = ? AND data_inizio BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)", [$aziendaId]);
             $stats['eventi'] = $stmt && $stmt->rowCount() > 0 ? $stmt->fetch()['count'] : 0;
         } catch (Exception $e) {
             $stats['eventi'] = 0;
@@ -235,8 +260,33 @@ try {
             $stats['attivita_24h'] = 0;
         }
         
-        // Spazio utilizzato dall'azienda (MB) - non disponibile senza colonna dimensione_file
-        $stats['spazio_utilizzato'] = 0; // Colonna dimensione_file non esiste
+        // Spazio utilizzato dall'azienda (MB)
+        try {
+            // Calcola spazio dai file dell'azienda nel database
+            $stmt = db_query("SELECT SUM(COALESCE(dimensione_file, file_size, 0)) as total_bytes FROM documenti WHERE azienda_id = ? AND stato != 'cestino'", [$aziendaId]);
+            $totalBytes = $stmt && $stmt->rowCount() > 0 ? ($stmt->fetch()['total_bytes'] ?? 0) : 0;
+            
+            // Se non ci sono dati nel DB, prova a calcolare dalla directory dell'azienda
+            if ($totalBytes == 0 && $aziendaId) {
+                $aziendaUploadsDir = __DIR__ . '/uploads/documenti/' . $aziendaId . '/';
+                if (is_dir($aziendaUploadsDir)) {
+                    $totalBytes = 0;
+                    $iterator = new RecursiveIteratorIterator(
+                        new RecursiveDirectoryIterator($aziendaUploadsDir, RecursiveDirectoryIterator::SKIP_DOTS),
+                        RecursiveIteratorIterator::LEAVES_ONLY
+                    );
+                    foreach ($iterator as $file) {
+                        if ($file->isFile()) {
+                            $totalBytes += $file->getSize();
+                        }
+                    }
+                }
+            }
+            
+            $stats['spazio_utilizzato'] = round($totalBytes / 1048576, 2); // Convert bytes to MB
+        } catch (Exception $e) {
+            $stats['spazio_utilizzato'] = 0;
+        }
     }
 
     // Documenti recenti
@@ -263,25 +313,29 @@ try {
 
     $documenti_recenti = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
     
-    // Attività recenti - SOLO FILESYSTEM
+    // File caricati recentemente - Prendi gli ultimi file dalla tabella documenti
     if ($aziendaId) {
         $stmt = db_query("
-            SELECT l.*, u.nome, u.cognome 
-            FROM log_attivita l
-            LEFT JOIN utenti u ON l.utente_id = u.id
-            WHERE l.azienda_id = ?
-            AND l.entita_tipo = 'filesystem'
-            ORDER BY l.data_azione DESC
+            SELECT d.*, u.nome, u.cognome,
+                   COALESCE(d.file_size, 0) as dimensione_file,
+                   COALESCE(d.mime_type, d.file_type, 'application/octet-stream') as tipo_mime
+            FROM documenti d
+            LEFT JOIN utenti u ON d.creato_da = u.id
+            WHERE d.azienda_id = ?
+            AND d.file_path IS NOT NULL
+            ORDER BY d.data_creazione DESC
             LIMIT 10
         ", [$aziendaId]);
     } else if ($hasElevatedPrivileges) {
         $stmt = db_query("
-            SELECT l.*, u.nome, u.cognome, a.nome as azienda_nome
-            FROM log_attivita l
-            LEFT JOIN utenti u ON l.utente_id = u.id
-            LEFT JOIN aziende a ON l.azienda_id = a.id
-            WHERE l.entita_tipo = 'filesystem'
-            ORDER BY l.data_azione DESC
+            SELECT d.*, u.nome, u.cognome, a.nome as azienda_nome,
+                   COALESCE(d.file_size, 0) as dimensione_file,
+                   COALESCE(d.mime_type, d.file_type, 'application/octet-stream') as tipo_mime
+            FROM documenti d
+            LEFT JOIN utenti u ON d.creato_da = u.id
+            LEFT JOIN aziende a ON d.azienda_id = a.id
+            WHERE d.file_path IS NOT NULL
+            ORDER BY d.data_creazione DESC
             LIMIT 10
         ");
     }
@@ -397,65 +451,67 @@ require_once 'components/page-header.php';
 <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/dashboard-clean.css">
 
 <style>
-/* Dashboard Styles - Clean & Modern */
+/* Dashboard Styles - Minimal & Clean */
 
 .stats-overview {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1.25rem;
+    gap: 1rem;
     margin-bottom: 2rem;
 }
 
 .stat-card-modern {
     background: white;
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 1.5rem;
     border: 1px solid #e5e7eb;
-    transition: all 0.2s ease;
+    transition: transform 0.15s ease;
     position: relative;
 }
 
 .stat-card-modern:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
 }
 
 .stat-card-modern .stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
-    margin-bottom: 12px;
-    background: #f3f4f6;
+    font-size: 18px;
+    margin-bottom: 1rem;
+    background: transparent;
+    border: 1px solid #e5e7eb;
 }
 
 .stat-card-modern .stat-value {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 600;
     color: #111827;
-    margin-bottom: 4px;
-    line-height: 1;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
 }
 
 .stat-card-modern .stat-label {
     color: #6b7280;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 13px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .dashboard-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 1rem;
     margin-bottom: 2rem;
 }
 
 .dashboard-panel {
     background: white;
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 1.5rem;
     border: 1px solid #e5e7eb;
 }
@@ -464,27 +520,32 @@ require_once 'components/page-header.php';
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
 }
 
 .panel-header h2 {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 500;
     color: #111827;
     display: flex;
     align-items: center;
     gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
 }
 
 .panel-header h2 i {
-    color: #2d5a9f;
+    color: #6b7280;
+    font-size: 14px;
 }
 
 .activity-item {
     display: flex;
     align-items: start;
-    padding: 12px 0;
-    border-bottom: 1px solid #f3f4f6;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f9fafb;
 }
 
 .activity-item:last-child {
@@ -492,15 +553,17 @@ require_once 'components/page-header.php';
 }
 
 .activity-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 12px;
     flex-shrink: 0;
-    font-size: 16px;
+    font-size: 14px;
+    border: 1px solid #e5e7eb;
+    background: white;
 }
 
 .activity-content {
@@ -508,89 +571,90 @@ require_once 'components/page-header.php';
 }
 
 .activity-title {
-    font-weight: 500;
+    font-weight: 400;
     color: #111827;
     margin-bottom: 2px;
     font-size: 14px;
 }
 
 .activity-meta {
-    font-size: 13px;
-    color: #6b7280;
+    font-size: 12px;
+    color: #9ca3af;
 }
 
 .quick-actions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
+    gap: 0.75rem;
 }
 
 .quick-action {
-    background: #f9fafb;
+    background: white;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 1.25rem;
     text-align: center;
     text-decoration: none;
     color: #374151;
-    transition: all 0.2s ease;
+    transition: border-color 0.15s ease;
 }
 
 .quick-action:hover {
-    background: white;
     border-color: #2d5a9f;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(45, 90, 159, 0.1);
 }
 
 .quick-action i {
-    font-size: 28px;
-    color: #2d5a9f;
-    margin-bottom: 8px;
+    font-size: 20px;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
 }
 
 .quick-action span {
     display: block;
-    font-weight: 500;
+    font-weight: 400;
     color: #374151;
-    font-size: 14px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
 }
 
-/* Info Widget - Simplified */
+/* Info Widget - Minimal */
 .info-widget {
-    background: #f9fafb;
+    background: white;
     border: 1px solid #e5e7eb;
-    padding: 1.25rem;
-    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    border-radius: 4px;
     margin-bottom: 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 1.5rem;
+    gap: 2rem;
 }
 
 .info-widget-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #374151;
-}
-
-.info-widget-item i {
-    font-size: 18px;
     color: #6b7280;
 }
 
-.info-widget-item span {
+.info-widget-item i {
     font-size: 14px;
-    font-weight: 500;
+    color: #9ca3af;
 }
 
-/* Workday Summary Table - Clean Design */
+.info-widget-item span {
+    font-size: 13px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+/* Workday Summary Table - Minimal Design */
 .workday-summary {
     background: white;
-    border-radius: 8px;
+    border-radius: 4px;
     padding: 1.5rem;
     border: 1px solid #e5e7eb;
     margin-bottom: 2rem;
@@ -598,16 +662,21 @@ require_once 'components/page-header.php';
 
 .workday-summary h3 {
     color: #111827;
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 1.25rem;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
     display: flex;
     align-items: center;
     gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
 }
 
 .workday-summary h3 i {
-    color: #2d5a9f;
+    color: #6b7280;
+    font-size: 14px;
 }
 
 .workday-table-container {
@@ -617,29 +686,30 @@ require_once 'components/page-header.php';
 .workday-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .workday-table th {
-    background: #f9fafb;
-    color: #4b5563;
-    font-weight: 600;
+    background: white;
+    color: #6b7280;
+    font-weight: 400;
     text-align: left;
-    padding: 10px 12px;
+    padding: 0.75rem;
     border-bottom: 1px solid #e5e7eb;
-    font-size: 13px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
 .workday-table td {
-    padding: 12px;
-    border-bottom: 1px solid #f3f4f6;
+    padding: 0.75rem;
+    border-bottom: 1px solid #f9fafb;
     vertical-align: middle;
+    color: #374151;
 }
 
 .workday-table tbody tr:hover {
-    background: #f9fafb;
+    background: #fafafa;
 }
 
 .user-name {
@@ -648,27 +718,29 @@ require_once 'components/page-header.php';
 }
 
 .role-badge {
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    border: 1px solid;
+    background: transparent;
 }
 
 .role-super_admin {
-    background: #dbeafe;
-    color: #1e40af;
+    border-color: #2d5a9f;
+    color: #2d5a9f;
 }
 
 .role-utente_speciale {
-    background: #fef3c7;
-    color: #92400e;
+    border-color: #d97706;
+    color: #d97706;
 }
 
 .role-admin {
-    background: #e9d5ff;
-    color: #6b21a8;
+    border-color: #7c3aed;
+    color: #7c3aed;
 }
 
 .text-center {
@@ -694,51 +766,69 @@ require_once 'components/page-header.php';
 }
 
 .activity-badge {
-    background: #f3f4f6;
-    color: #4b5563;
+    background: white;
+    color: #6b7280;
     padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 500;
+    border: 1px solid #e5e7eb;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
 }
 
 .summary-row {
-    background: #f9fafb;
-    font-weight: 600;
+    background: white;
+    font-weight: 500;
 }
 
 .summary-row td {
-    border-top: 2px solid #e5e7eb;
+    border-top: 1px solid #e5e7eb;
     border-bottom: none;
+    padding-top: 1rem;
 }
 
 .btn-outline {
     background: white;
-    color: #2d5a9f;
-    border: 1px solid #2d5a9f;
-    padding: 6px 12px;
-    border-radius: 6px;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+    padding: 4px 8px;
+    border-radius: 2px;
     text-decoration: none;
-    font-size: 12px;
-    font-weight: 500;
-    transition: all 0.2s ease;
+    font-size: 11px;
+    font-weight: 400;
+    transition: border-color 0.15s ease;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
 }
 
 .btn-outline:hover {
-    background: #2d5a9f;
-    color: white;
+    border-color: #2d5a9f;
+    color: #2d5a9f;
 }
 
-/* Icon colors - More subtle */
-.stat-icon-building { background: #ede9fe; color: #6b21a8; }
-.stat-icon-file { background: #dbeafe; color: #1e40af; }
-.stat-icon-users { background: #d1fae5; color: #047857; }
-.stat-icon-calendar { background: #fef3c7; color: #92400e; }
-.stat-icon-ticket { background: #fee2e2; color: #b91c1c; }
-.stat-icon-disk { background: #f3f4f6; color: #4b5563; }
+/* Icon colors - Minimal */
+.stat-icon-building { 
+    color: #2d5a9f !important; 
+}
+.stat-icon-file { 
+    color: #2d5a9f !important; 
+}
+.stat-icon-users { 
+    color: #2d5a9f !important; 
+}
+.stat-icon-calendar { 
+    color: #2d5a9f !important; 
+}
+.stat-icon-ticket { 
+    color: #2d5a9f !important; 
+}
+.stat-icon-disk { 
+    color: #2d5a9f !important; 
+}
 
 @media (max-width: 1024px) {
     .dashboard-grid {
@@ -832,12 +922,12 @@ renderPageHeader('Dashboard', 'Panoramica generale del sistema', 'tachometer-alt
                 </option>
             <?php endforeach; ?>
         </select>
-        <button type="submit" class="btn btn-primary" style="height: 38px; padding: 0 20px; background: #2d5a9f; border: none; border-radius: 6px; color: white; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-            <i class="fas fa-search"></i> Applica Filtro
+        <button type="submit" class="btn btn-primary" style="height: 36px; padding: 0 16px; background: white; border: 1px solid #2d5a9f; border-radius: 2px; color: #2d5a9f; font-weight: 400; cursor: pointer; transition: border-color 0.15s; text-transform: uppercase; letter-spacing: 0.025em; font-size: 12px;">
+            <i class="fas fa-search" style="font-size: 11px;"></i> Applica Filtro
         </button>
         <?php if (isset($_GET['azienda_filter']) && $_GET['azienda_filter']): ?>
-            <a href="?" class="btn btn-secondary" style="height: 38px; padding: 0 20px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; color: #374151; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
-                <i class="fas fa-times"></i> Rimuovi Filtro
+            <a href="?" class="btn btn-secondary" style="height: 36px; padding: 0 16px; background: white; border: 1px solid #e5e7eb; border-radius: 2px; color: #6b7280; font-weight: 400; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: border-color 0.15s; text-transform: uppercase; letter-spacing: 0.025em; font-size: 12px;">
+                <i class="fas fa-times" style="font-size: 11px;"></i> Rimuovi Filtro
             </a>
         <?php endif; ?>
     </form>
@@ -1075,7 +1165,7 @@ if ($isSuperAdmin) {
             <i class="fas fa-calendar-check"></i>
         </div>
         <div class="stat-value"><?php echo $stats['eventi'] ?? 0; ?></div>
-        <div class="stat-label">Eventi Futuri</div>
+        <div class="stat-label">Eventi (30gg)</div>
     </div>
     
     <div class="stat-card-modern">
@@ -1090,7 +1180,7 @@ if ($isSuperAdmin) {
         <div class="stat-icon stat-icon-disk">
             <i class="fas fa-hdd"></i>
         </div>
-        <div class="stat-value"><?php echo $stats['spazio_utilizzato'] ?? 0; ?> MB</div>
+        <div class="stat-value"><?php echo number_format($stats['spazio_utilizzato'] ?? 0, 1, ',', '.'); ?> MB</div>
         <div class="stat-label">Spazio Utilizzato</div>
     </div>
     
@@ -1149,102 +1239,132 @@ if ($isSuperAdmin) {
 
 <!-- Dashboard Grid -->
 <div class="dashboard-grid">
-    <!-- Attività Recenti -->
+    <!-- File Caricati Recentemente -->
     <div class="dashboard-panel">
         <div class="panel-header">
-            <h2><i class="fas fa-folder" style="margin-right: 10px; color: #667eea;"></i>Attività File System</h2>
-            <a href="<?php echo APP_PATH; ?>/log-attivita.php" style="color: #667eea; font-size: 14px; text-decoration: none;">
-                Vedi tutto <i class="fas fa-arrow-right"></i>
+            <h2><i class="fas fa-cloud-upload-alt"></i>File Caricati Recentemente</h2>
+            <a href="<?php echo APP_PATH; ?>/filesystem.php" style="color: #6b7280; font-size: 12px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.025em;">
+                File Manager <i class="fas fa-arrow-right" style="font-size: 10px;"></i>
             </a>
         </div>
         
         <?php if (empty($attivitaRecenti)): ?>
             <p style="color: #718096; text-align: center; padding: 40px 20px;">
-                <i class="fas fa-clock" style="font-size: 48px; color: #e2e8f0; margin-bottom: 10px; display: block;"></i>
-                Nessuna attività recente
+                <i class="fas fa-folder-open" style="font-size: 32px; color: #e5e7eb; margin-bottom: 10px; display: block;"></i>
+                Nessun file caricato recentemente
             </p>
         <?php else: ?>
-            <?php foreach (array_slice($attivitaRecenti, 0, 5) as $attivita): ?>
+            <?php 
+            // Funzione per formattare la data in formato relativo italiano
+            function formatRelativeDate($dateString) {
+                $date = new DateTime($dateString);
+                $now = new DateTime();
+                $diff = $now->diff($date);
+                
+                if ($diff->y > 0) {
+                    return $diff->y == 1 ? '1 anno fa' : $diff->y . ' anni fa';
+                } elseif ($diff->m > 0) {
+                    return $diff->m == 1 ? '1 mese fa' : $diff->m . ' mesi fa';
+                } elseif ($diff->d > 0) {
+                    if ($diff->d == 1) return 'ieri';
+                    if ($diff->d < 7) return $diff->d . ' giorni fa';
+                    $weeks = floor($diff->d / 7);
+                    return $weeks == 1 ? '1 settimana fa' : $weeks . ' settimane fa';
+                } elseif ($diff->h > 0) {
+                    return $diff->h == 1 ? '1 ora fa' : $diff->h . ' ore fa';
+                } elseif ($diff->i > 0) {
+                    return $diff->i == 1 ? '1 minuto fa' : $diff->i . ' minuti fa';
+                } else {
+                    return 'adesso';
+                }
+            }
+            
+            // Funzione per formattare la dimensione del file
+            function formatFileSize($bytes) {
+                if ($bytes == 0) return 'N/A';
+                $units = ['B', 'KB', 'MB', 'GB'];
+                $factor = floor((strlen($bytes) - 1) / 3);
+                return sprintf("%.1f %s", $bytes / pow(1024, $factor), $units[$factor]);
+            }
+            
+            // Funzione per ottenere l'icona in base al tipo MIME
+            function getFileIcon($mimeType) {
+                $mimeMap = [
+                    'application/pdf' => ['fas fa-file-pdf', '#dc2626', '#fee2e2'],
+                    'application/msword' => ['fas fa-file-word', '#2563eb', '#dbeafe'],
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => ['fas fa-file-word', '#2563eb', '#dbeafe'],
+                    'application/vnd.ms-excel' => ['fas fa-file-excel', '#059669', '#d1fae5'],
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => ['fas fa-file-excel', '#059669', '#d1fae5'],
+                    'application/vnd.ms-powerpoint' => ['fas fa-file-powerpoint', '#dc2626', '#fee2e2'],
+                    'application/vnd.openxmlformats-officedocument.presentationml.presentation' => ['fas fa-file-powerpoint', '#dc2626', '#fee2e2'],
+                    'text/plain' => ['fas fa-file-alt', '#6b7280', '#f3f4f6'],
+                    'text/html' => ['fas fa-file-code', '#8b5cf6', '#ede9fe'],
+                    'text/css' => ['fas fa-file-code', '#3b82f6', '#dbeafe'],
+                    'application/javascript' => ['fas fa-file-code', '#f59e0b', '#fef3c7'],
+                    'application/json' => ['fas fa-file-code', '#10b981', '#d1fae5'],
+                    'application/zip' => ['fas fa-file-archive', '#6b7280', '#f3f4f6'],
+                    'application/x-rar-compressed' => ['fas fa-file-archive', '#6b7280', '#f3f4f6'],
+                    'application/x-7z-compressed' => ['fas fa-file-archive', '#6b7280', '#f3f4f6'],
+                ];
+                
+                // Controlla per tipi di immagine
+                if (strpos($mimeType, 'image/') === 0) {
+                    return ['fas fa-file-image', '#10b981', '#d1fae5'];
+                }
+                
+                // Controlla per tipi video
+                if (strpos($mimeType, 'video/') === 0) {
+                    return ['fas fa-file-video', '#dc2626', '#fee2e2'];
+                }
+                
+                // Controlla per tipi audio
+                if (strpos($mimeType, 'audio/') === 0) {
+                    return ['fas fa-file-audio', '#8b5cf6', '#ede9fe'];
+                }
+                
+                // Default per tipo sconosciuto
+                return isset($mimeMap[$mimeType]) ? $mimeMap[$mimeType] : ['fas fa-file', '#6b7280', '#f3f4f6'];
+            }
+            ?>
+            
+            <?php foreach (array_slice($attivitaRecenti, 0, 8) as $file): ?>
+                <?php
+                $fileIcon = getFileIcon($file['tipo_mime']);
+                $fileName = basename($file['file_path'] ?? $file['titolo'] ?? 'File senza nome');
+                $fileSize = formatFileSize($file['dimensione_file']);
+                $relativeDate = formatRelativeDate($file['data_creazione']);
+                ?>
                 <div class="activity-item">
-                    <?php
-                    $iconClass = 'fas fa-info-circle';
-                    $iconBg = '#e2e8f0';
-                    $iconColor = '#718096';
-                    
-                    switch($attivita['entita_tipo']) {
-                        case 'filesystem':
-                            // Icone diverse per diverse azioni
-                            if (strpos($attivita['azione'], 'folder') !== false) {
-                                $iconClass = 'fas fa-folder';
-                                $iconBg = '#fef3c7';
-                                $iconColor = '#f59e0b';
-                            } else {
-                                $iconClass = 'fas fa-file';
-                                $iconBg = '#dbeafe';
-                                $iconColor = '#3b82f6';
-                            }
-                            break;
-                        case 'documento':
-                            $iconClass = 'fas fa-file-alt';
-                            $iconBg = '#dbeafe';
-                            $iconColor = '#3b82f6';
-                            break;
-                        case 'evento':
-                            $iconClass = 'fas fa-calendar';
-                            $iconBg = '#fef3c7';
-                            $iconColor = '#f59e0b';
-                            break;
-                        case 'utente':
-                            $iconClass = 'fas fa-user';
-                            $iconBg = '#ede9fe';
-                            $iconColor = '#8b5cf6';
-                            break;
-                        case 'ticket':
-                            $iconClass = 'fas fa-ticket-alt';
-                            $iconBg = '#fee2e2';
-                            $iconColor = '#ef4444';
-                            break;
-                    }
-                    ?>
-                    <div class="activity-icon" style="background: <?php echo $iconBg; ?>;">
-                        <i class="<?php echo $iconClass; ?>" style="color: <?php echo $iconColor; ?>;"></i>
+                    <div class="activity-icon" style="background: <?php echo $fileIcon[2]; ?>;">
+                        <i class="<?php echo $fileIcon[0]; ?>" style="color: <?php echo $fileIcon[1]; ?>;"></i>
                     </div>
                     <div class="activity-content">
                         <div class="activity-title">
-                            <?php 
-                            // Traduci azioni filesystem in italiano
-                            $azioniTradotte = [
-                                'create_folder' => 'Creata cartella',
-                                'upload_file' => 'Caricato file',
-                                'delete_file' => 'Eliminato file',
-                                'delete_folder' => 'Eliminata cartella',
-                                'move_file' => 'Spostato file',
-                                'rename_file' => 'Rinominato file',
-                                'rename_folder' => 'Rinominata cartella',
-                                'download_file' => 'Scaricato file',
-                                'view_file' => 'Visualizzato file'
-                            ];
-                            
-                            $azioneTradotta = $azioniTradotte[$attivita['azione']] ?? $attivita['azione'];
-                            
-                            // Estrai nome file/cartella dai dettagli JSON
-                            $dettagli = !empty($attivita['dettagli']) ? json_decode($attivita['dettagli'], true) : [];
-                            $nomeElemento = $dettagli['nome'] ?? $dettagli['file_name'] ?? $dettagli['folder_name'] ?? '';
-                            
-                            echo htmlspecialchars($azioneTradotta);
-                            if ($nomeElemento) {
-                                echo ': <strong>' . htmlspecialchars($nomeElemento) . '</strong>';
-                            }
-                            ?>
+                            <?php echo htmlspecialchars($fileName); ?>
+                            <?php if ($fileSize != 'N/A'): ?>
+                                <span style="font-weight: normal; color: #9ca3af; font-size: 11px; margin-left: 8px;">
+                                    (<?php echo $fileSize; ?>)
+                                </span>
+                            <?php endif; ?>
                         </div>
                         <div class="activity-meta">
-                            <?php echo htmlspecialchars($attivita['nome'] . ' ' . $attivita['cognome']); ?> • 
-                            <?php echo date('d/m H:i', strtotime($attivita['data_azione'])); ?>
-                            <?php if (!$aziendaId && isset($attivita['azienda_nome'])): ?>
-                                • <?php echo htmlspecialchars($attivita['azienda_nome']); ?>
+                            <i class="fas fa-user" style="font-size: 11px;"></i>
+                            <?php echo htmlspecialchars($file['nome'] . ' ' . $file['cognome']); ?> • 
+                            <i class="fas fa-clock" style="font-size: 11px;"></i>
+                            <?php echo $relativeDate; ?>
+                            <?php if (!$aziendaId && isset($file['azienda_nome'])): ?>
+                                • <i class="fas fa-building" style="font-size: 11px;"></i> 
+                                <?php echo htmlspecialchars($file['azienda_nome']); ?>
                             <?php endif; ?>
                         </div>
                     </div>
+                    <?php if (!empty($file['file_path'])): ?>
+                    <a href="<?php echo APP_PATH; ?>/backend/api/download-file.php?id=<?php echo $file['id']; ?>" 
+                       style="color: #667eea; text-decoration: none; font-size: 14px;" 
+                       title="Scarica file">
+                        <i class="fas fa-download"></i>
+                    </a>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
@@ -1253,7 +1373,7 @@ if ($isSuperAdmin) {
     <!-- Azioni Rapide -->
     <div class="dashboard-panel">
         <div class="panel-header">
-            <h2><i class="fas fa-rocket" style="margin-right: 10px; color: #667eea;"></i>Azioni Rapide</h2>
+            <h2><i class="fas fa-rocket"></i>Azioni Rapide</h2>
         </div>
         
         <div class="quick-actions-grid">
@@ -1262,19 +1382,9 @@ if ($isSuperAdmin) {
                 <span>File Manager</span>
             </a>
             
-            <a href="<?php echo APP_PATH; ?>/editor-tinymce-a4.php" class="quick-action">
-                <i class="fas fa-file-plus"></i>
-                <span>Nuovo Documento</span>
-            </a>
-            
             <a href="<?php echo APP_PATH; ?>/calendario-eventi.php?action=nuovo" class="quick-action">
                 <i class="fas fa-calendar-plus"></i>
                 <span>Nuovo Evento</span>
-            </a>
-            
-            <a href="<?php echo APP_PATH; ?>/tickets.php?action=nuovo" class="quick-action">
-                <i class="fas fa-headset"></i>
-                <span>Apri Ticket</span>
             </a>
             
             <?php if ($hasElevatedPrivileges): ?>
@@ -1292,90 +1402,6 @@ if ($isSuperAdmin) {
     </div>
 </div>
 
-<!-- Seconda riga: Documenti e Eventi -->
-<div class="dashboard-grid" style="margin-top: 25px;">
-    <!-- Documenti Recenti -->
-    <div class="dashboard-panel">
-        <div class="panel-header">
-            <h2><i class="fas fa-file-alt" style="margin-right: 10px; color: #667eea;"></i>Documenti Recenti</h2>
-            <a href="<?php echo APP_PATH; ?>/filesystem.php" style="color: #667eea; font-size: 14px; text-decoration: none;">
-                Vedi tutti <i class="fas fa-arrow-right"></i>
-            </a>
-        </div>
-        
-        <?php if (empty($documenti_recenti)): ?>
-            <p style="color: #718096; text-align: center; padding: 40px 20px;">
-                <i class="fas fa-file" style="font-size: 48px; color: #e2e8f0; margin-bottom: 10px; display: block;"></i>
-                Nessun documento recente
-            </p>
-        <?php else: ?>
-            <?php foreach ($documenti_recenti as $doc): ?>
-                <div class="activity-item">
-                    <div class="activity-icon" style="background: #dbeafe;">
-                        <i class="fas fa-file-alt" style="color: #3b82f6;"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">
-                            <?php echo htmlspecialchars($doc['titolo']); ?>
-                        </div>
-                        <div class="activity-meta">
-                            <?php echo htmlspecialchars($doc['codice'] ?? 'N/A'); ?> •
-                            <?php echo date('d/m/Y', strtotime($doc['data_creazione'])); ?>
-                            <?php if (!$aziendaId && isset($doc['azienda_nome'])): ?>
-                                • <?php echo htmlspecialchars($doc['azienda_nome']); ?>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <a href="<?php echo APP_PATH; ?>/documento-view.php?id=<?php echo $doc['id']; ?>" 
-                       style="color: #667eea; text-decoration: none; font-size: 14px;">
-                        <i class="fas fa-eye"></i>
-                    </a>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-    
-    <!-- Eventi Prossimi -->
-    <div class="dashboard-panel">
-        <div class="panel-header">
-            <h2><i class="fas fa-calendar" style="margin-right: 10px; color: #667eea;"></i>Prossimi Eventi</h2>
-            <a href="<?php echo APP_PATH; ?>/calendario-eventi.php" style="color: #667eea; font-size: 14px; text-decoration: none;">
-                Calendario <i class="fas fa-arrow-right"></i>
-            </a>
-        </div>
-        
-        <?php if (empty($eventi_prossimi)): ?>
-            <p style="color: #718096; text-align: center; padding: 40px 20px;">
-                <i class="fas fa-calendar-times" style="font-size: 48px; color: #e2e8f0; margin-bottom: 10px; display: block;"></i>
-                Nessun evento programmato
-            </p>
-        <?php else: ?>
-            <?php foreach ($eventi_prossimi as $evento): ?>
-                <div class="activity-item">
-                    <div class="activity-icon" style="background: #fef3c7;">
-                        <i class="fas fa-calendar-check" style="color: #f59e0b;"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">
-                            <?php echo htmlspecialchars($evento['titolo']); ?>
-                        </div>
-                        <div class="activity-meta">
-                            <?php echo date('d/m/Y H:i', strtotime($evento['data_inizio'])); ?>
-                            <?php if (!$aziendaId && isset($evento['azienda_nome'])): ?>
-                                • <?php echo htmlspecialchars($evento['azienda_nome']); ?>
-                            <?php endif; ?>
-                        </div>
-                        <?php if (!empty($evento['descrizione'])): ?>
-                            <div style="font-size: 12px; color: #a0aec0; margin-top: 3px;">
-                                <?php echo htmlspecialchars(substr($evento['descrizione'], 0, 60)); ?>...
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-</div>
 
 <?php if (false): // Disabilitato - mostra i task sbagliati dalla tabella tasks invece di task_calendario ?>
 <!-- Sezione Task Assegnati per Super User -->

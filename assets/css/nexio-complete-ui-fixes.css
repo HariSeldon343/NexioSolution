@@ -1,0 +1,739 @@
+/**
+ * Nexio Complete UI Fixes
+ * Comprehensive fixes for all UI issues
+ * Created: 2025-08-11
+ */
+
+/* =================================================================
+   1. UNIFIED BUTTON STYLING - Consistent across the platform
+   ================================================================= */
+
+/* Base button styles for all buttons */
+.btn,
+button.btn,
+a.btn,
+input[type="submit"].btn,
+input[type="button"].btn,
+.unified-btn,
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    line-height: 1.5 !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: pointer;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Primary button */
+.btn-primary,
+.unified-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3) !important;
+}
+
+.btn-primary:hover,
+.unified-btn-primary:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%) !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+/* Success button */
+.btn-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(17, 153, 142, 0.3) !important;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%) !important;
+    box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+/* Danger button */
+.btn-danger {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(235, 51, 73, 0.3) !important;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #f45c43 0%, #eb3349 100%) !important;
+    box-shadow: 0 4px 12px rgba(235, 51, 73, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+/* Secondary button */
+.btn-secondary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    opacity: 0.8;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2) !important;
+}
+
+.btn-secondary:hover {
+    opacity: 1;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+    transform: translateY(-1px);
+}
+
+/* Info button */
+.btn-info {
+    background: linear-gradient(135deg, #667eea 0%, #64b5f6 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(100, 181, 246, 0.3) !important;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #64b5f6 0%, #667eea 100%) !important;
+    box-shadow: 0 4px 12px rgba(100, 181, 246, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+/* Warning button */
+.btn-warning {
+    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%) !important;
+    color: #333333 !important;
+    box-shadow: 0 2px 8px rgba(247, 151, 30, 0.3) !important;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #ffd200 0%, #f7971e 100%) !important;
+    box-shadow: 0 4px 12px rgba(247, 151, 30, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+/* Small buttons */
+.btn-sm {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+}
+
+/* Large buttons */
+.btn-lg {
+    padding: 14px 28px !important;
+    font-size: 16px !important;
+}
+
+/* Icon only buttons */
+.btn-icon {
+    padding: 8px !important;
+    min-width: 36px;
+    min-height: 36px;
+}
+
+/* =================================================================
+   2. COMPANY CARDS - Reduce size to max-width 350px
+   ================================================================= */
+
+.azienda-card,
+.company-card,
+.card.azienda-item {
+    max-width: 350px !important;
+    width: 100%;
+    margin: 0 auto 20px;
+}
+
+.aziende-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 350px));
+    gap: 20px;
+    justify-content: center;
+}
+
+/* Company card images */
+.azienda-card img,
+.company-card img,
+.card.azienda-item img {
+    max-height: 120px !important;
+    object-fit: contain;
+}
+
+/* =================================================================
+   3. LOG ACTIVITY TEXT WRAPPING - Fix overflow issues
+   ================================================================= */
+
+.log-attivita-table td,
+.activity-log-table td,
+.log-entry,
+.log-item {
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    max-width: 400px !important;
+    white-space: normal !important;
+}
+
+.log-description,
+.log-details,
+.activity-description {
+    max-width: 500px !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Log table specific fixes */
+.table.log-table td,
+.table.activity-table td {
+    max-width: 300px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal !important;
+}
+
+/* =================================================================
+   4. USER INFO IN HEADER - Fix wrapping and styling
+   ================================================================= */
+
+.header-user-info,
+.user-info-header,
+.navbar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header-user-name,
+.user-name-header {
+    max-width: 150px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px !important;
+}
+
+/* Header dropdown user info */
+.dropdown-menu .user-info {
+    padding: 10px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-menu .user-info .user-name {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+    word-wrap: break-word;
+}
+
+.dropdown-menu .user-info .user-email {
+    font-size: 12px;
+    color: #666;
+    word-wrap: break-word;
+}
+
+/* =================================================================
+   5. SIDEBAR LOGO - Remove background
+   ================================================================= */
+
+.sidebar-header img,
+.sidebar-logo img,
+.sidebar .logo-img,
+.sidebar-brand img {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.sidebar-header,
+.sidebar-logo,
+.sidebar-brand {
+    background: transparent !important;
+}
+
+/* =================================================================
+   6. FONTAWESOME ICONS - Ensure they display properly
+   ================================================================= */
+
+.fa,
+.fas,
+.far,
+.fab,
+.fal,
+.fad {
+    display: inline-block !important;
+    font-style: normal !important;
+    font-variant: normal !important;
+    text-rendering: auto !important;
+    line-height: 1 !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Icon sizes */
+.fa-xs { font-size: 0.75em !important; }
+.fa-sm { font-size: 0.875em !important; }
+.fa-lg { font-size: 1.33333em !important; }
+.fa-2x { font-size: 2em !important; }
+.fa-3x { font-size: 3em !important; }
+
+/* =================================================================
+   7. TABLE IMPROVEMENTS - Better responsive tables
+   ================================================================= */
+
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table td,
+.table th {
+    vertical-align: middle !important;
+    padding: 12px !important;
+}
+
+/* Ensure table text wraps properly */
+.table td {
+    word-wrap: break-word !important;
+    max-width: 300px;
+}
+
+.table td.description-column,
+.table td.long-text {
+    max-width: 400px !important;
+    word-wrap: break-word !important;
+    white-space: normal !important;
+}
+
+/* =================================================================
+   8. CARD IMPROVEMENTS - Consistent card styling
+   ================================================================= */
+
+.card {
+    border: none !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s ease !important;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 15px 20px !important;
+    font-weight: 600 !important;
+}
+
+.card-body {
+    padding: 20px !important;
+}
+
+/* =================================================================
+   9. FORM IMPROVEMENTS - Better form styling
+   ================================================================= */
+
+.form-control,
+.form-select {
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 6px !important;
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+    outline: none !important;
+}
+
+.form-label {
+    font-weight: 600 !important;
+    color: #333 !important;
+    margin-bottom: 8px !important;
+    font-size: 14px !important;
+}
+
+/* =================================================================
+   10. MODAL IMPROVEMENTS - Better modal styling
+   ================================================================= */
+
+.modal-content {
+    border: none !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 20px !important;
+}
+
+.modal-title {
+    font-weight: 600 !important;
+    font-size: 18px !important;
+}
+
+.modal-body {
+    padding: 24px !important;
+}
+
+.modal-footer {
+    padding: 16px 24px !important;
+    border-top: 1px solid #e0e0e0 !important;
+}
+
+/* =================================================================
+   11. ALERT IMPROVEMENTS - Better alert styling
+   ================================================================= */
+
+.alert {
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 16px 20px !important;
+    font-size: 14px !important;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.alert i {
+    font-size: 20px;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #11998e15 0%, #38ef7d15 100%) !important;
+    color: #11998e !important;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #eb334915 0%, #f45c4315 100%) !important;
+    color: #eb3349 !important;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #f7971e15 0%, #ffd20015 100%) !important;
+    color: #f7971e !important;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #667eea15 0%, #64b5f615 100%) !important;
+    color: #667eea !important;
+}
+
+/* =================================================================
+   12. BADGE IMPROVEMENTS - Better badge styling
+   ================================================================= */
+
+.badge {
+    padding: 6px 12px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+    text-transform: uppercase !important;
+}
+
+.badge-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    color: white !important;
+}
+
+.badge-danger {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%) !important;
+    color: white !important;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%) !important;
+    color: #333 !important;
+}
+
+.badge-info {
+    background: linear-gradient(135deg, #667eea 0%, #64b5f6 100%) !important;
+    color: white !important;
+}
+
+/* =================================================================
+   13. EMPTY STATE IMPROVEMENTS
+   ================================================================= */
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-state i {
+    font-size: 64px;
+    color: #667eea;
+    margin-bottom: 20px;
+}
+
+.empty-state h3 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+/* =================================================================
+   14. RESPONSIVE IMPROVEMENTS
+   ================================================================= */
+
+@media (max-width: 768px) {
+    .btn {
+        padding: 8px 16px !important;
+        font-size: 13px !important;
+    }
+    
+    .card {
+        margin-bottom: 20px;
+    }
+    
+    .table-responsive {
+        border: none;
+    }
+    
+    .aziende-grid {
+        grid-template-columns: 1fr;
+        padding: 0 15px;
+    }
+    
+    .header-user-info,
+    .header-user-name {
+        max-width: 120px;
+    }
+}
+
+@media (max-width: 576px) {
+    .btn {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+        letter-spacing: 0.3px !important;
+    }
+    
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .card {
+        border-radius: 8px !important;
+    }
+}
+
+/* =================================================================
+   15. PRINT STYLES
+   ================================================================= */
+
+@media print {
+    .btn,
+    .sidebar,
+    .header,
+    .action-bar,
+    .no-print {
+        display: none !important;
+    }
+    
+    .content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+}
+
+/* =================================================================
+   16. ACCESSIBILITY IMPROVEMENTS
+   ================================================================= */
+
+/* Focus styles */
+*:focus {
+    outline: 2px solid #667eea !important;
+    outline-offset: 2px;
+}
+
+button:focus,
+.btn:focus,
+a:focus {
+    outline: 2px solid #667eea !important;
+    outline-offset: 2px;
+}
+
+/* Skip to content link */
+.skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #667eea;
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 100000;
+}
+
+.skip-to-content:focus {
+    top: 0;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .btn {
+        border: 2px solid currentColor !important;
+    }
+    
+    .card {
+        border: 2px solid #000 !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* =================================================================
+   17. LOADING STATES
+   ================================================================= */
+
+.spinner-border {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+}
+
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
+
+/* =================================================================
+   18. TOOLTIP IMPROVEMENTS
+   ================================================================= */
+
+.tooltip {
+    font-size: 12px !important;
+}
+
+.tooltip-inner {
+    background: #333 !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+}
+
+/* =================================================================
+   19. DROPDOWN IMPROVEMENTS
+   ================================================================= */
+
+.dropdown-menu {
+    border: none !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    padding: 8px !important;
+}
+
+.dropdown-item {
+    padding: 10px 16px !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+}
+
+.dropdown-item:hover {
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%) !important;
+    color: #667eea !important;
+}
+
+.dropdown-divider {
+    margin: 8px 0 !important;
+    border-color: #e0e0e0 !important;
+}
+
+/* =================================================================
+   20. FINAL OVERRIDES - Ensure these styles take precedence
+   ================================================================= */
+
+/* Force button text to be visible */
+.btn:not(.btn-loading) {
+    color: inherit !important;
+}
+
+/* Ensure icons are visible */
+.btn i,
+.btn .fa,
+.btn .fas,
+.btn .far {
+    display: inline-block !important;
+    margin-right: 4px;
+}
+
+/* Fix any z-index issues */
+.modal {
+    z-index: 10000 !important;
+}
+
+.modal-backdrop {
+    z-index: 9999 !important;
+}
+
+.dropdown-menu {
+    z-index: 1050 !important;
+}
+
+.tooltip {
+    z-index: 10001 !important;
+}

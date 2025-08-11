@@ -422,6 +422,15 @@ if (method_exists($auth, 'canManageEvents') && $auth->canManageEvents()) {
         'icon' => 'fas fa-plus',
         'class' => 'btn btn-primary'
     ];
+    
+    // Aggiungi bottone importa ICS
+    $headerActions[] = [
+        'text' => 'Importa ICS',
+        'href' => '#',
+        'icon' => 'fas fa-file-import',
+        'class' => 'btn btn-info',
+        'onclick' => 'openImportModal(); return false;'
+    ];
 }
 
 // Render header con component
@@ -448,16 +457,16 @@ renderPageHeader('Calendario Eventi', '', 'fas fa-calendar', $headerActions);
 <!-- Selettore vista -->
 <div class="view-selector">
     <a href="?view=cards" class="view-btn <?php echo $view == 'cards' ? 'active' : ''; ?>">
-        <i>📋</i> Cards
+        <i class="fas fa-th-large"></i> Cards
     </a>
     <a href="?view=day&date=<?php echo $date; ?>" class="view-btn <?php echo $view == 'day' ? 'active' : ''; ?>">
-        <i>📅</i> Giornaliera
+        <i class="fas fa-calendar-day"></i> Giornaliera
     </a>
     <a href="?view=week&date=<?php echo $date; ?>" class="view-btn <?php echo $view == 'week' ? 'active' : ''; ?>">
         <i>📆</i> Settimanale
     </a>
     <a href="?view=month&date=<?php echo $date; ?>" class="view-btn <?php echo $view == 'month' ? 'active' : ''; ?>">
-        <i>🗓️</i> Mensile
+        <i class="fas fa-calendar-alt"></i> Mensile
     </a>
 </div>
 
@@ -470,7 +479,7 @@ if (empty($eventi)): ?>
         <p>Non ci sono eventi futuri in calendario.</p>
         <?php if ($auth->canManageEvents()): ?>
         <a href="<?php echo APP_PATH; ?>/calendario-eventi.php?action=nuovo" class="btn btn-primary">
-            <i>➕</i> Crea il primo evento
+            <i class="fas fa-plus"></i> Crea il primo evento
         </a>
         <?php endif; ?>
     </div>
@@ -530,6 +539,302 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 5000);
     });
+});
+</script>
+
+<!-- Modal Importazione ICS -->
+<div id="importICSModal" class="modal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-import"></i> Importa Eventi da File ICS</h5>
+                <button type="button" class="btn-close" onclick="closeImportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="importICSForm" enctype="multipart/form-data">
+                    <?php if ($auth->isSuperAdmin()): ?>
+                    <div class="form-group mb-3">
+                        <label for="import_azienda_id" class="form-label">Azienda di destinazione</label>
+                        <select id="import_azienda_id" name="azienda_id" class="form-control">
+                            <?php if ($currentAzienda): ?>
+                                <option value="<?php echo $currentAzienda['id'] ?? $currentAzienda['azienda_id']; ?>" selected>
+                                    <?php echo htmlspecialchars($currentAzienda['nome'] ?? 'Azienda corrente'); ?>
+                                </option>
+                            <?php endif; ?>
+                            <option value="">-- Seleziona azienda --</option>
+                            <?php
+                            $stmt = db_query("SELECT id, nome FROM aziende WHERE stato = 'attiva' ORDER BY nome");
+                            while ($azienda = $stmt->fetch()):
+                            ?>
+                                <option value="<?php echo $azienda['id']; ?>">
+                                    <?php echo htmlspecialchars($azienda['nome']); ?>
+                                </option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <div class="form-group mb-3">
+                        <label for="ics_file" class="form-label">Seleziona file ICS</label>
+                        <input type="file" id="ics_file" name="ics_file" class="form-control" accept=".ics" required>
+                        <small class="form-text text-muted">
+                            Il file deve essere in formato ICS/iCalendar. Massimo 5MB.
+                        </small>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Nota:</strong> Gli eventi già esistenti (stesso titolo e data) verranno saltati per evitare duplicati.
+                    </div>
+                    
+                    <div id="importProgress" style="display: none;">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 100%">
+                                Importazione in corso...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="importResult" style="display: none;" class="mt-3"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeImportModal()">Annulla</button>
+                <button type="button" class="btn btn-primary" onclick="importICSFile()">
+                    <i class="fas fa-upload"></i> Importa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Modal styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    outline: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-dialog {
+    position: relative;
+    width: auto;
+    margin: 1.75rem auto;
+    max-width: 500px;
+}
+
+.modal-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, .2);
+    border-radius: .3rem;
+    outline: 0;
+    max-height: calc(100vh - 3.5rem);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-title {
+    margin-bottom: 0;
+    line-height: 1.5;
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+.btn-close {
+    padding: .25rem .25rem;
+    margin: -.25rem -.25rem -.25rem auto;
+    background: transparent;
+    border: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #000;
+    opacity: .5;
+    cursor: pointer;
+}
+
+.btn-close:hover {
+    opacity: .75;
+}
+
+.modal-body {
+    position: relative;
+    flex: 1 1 auto;
+    padding: 1rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+}
+
+.modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    padding: .75rem;
+    border-top: 1px solid #dee2e6;
+    gap: .5rem;
+}
+
+.progress {
+    display: flex;
+    height: 1rem;
+    overflow: hidden;
+    font-size: .75rem;
+    background-color: #e9ecef;
+    border-radius: .25rem;
+}
+
+.progress-bar {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    background-color: #0d6efd;
+    transition: width .6s ease;
+}
+
+.progress-bar-striped {
+    background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem;
+}
+
+.progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+    0% {
+        background-position-x: 1rem;
+    }
+}
+</style>
+
+<script>
+// Funzioni per la modal di importazione ICS
+function openImportModal() {
+    document.getElementById('importICSModal').style.display = 'block';
+    document.getElementById('importResult').style.display = 'none';
+    document.getElementById('importProgress').style.display = 'none';
+    document.getElementById('importICSForm').reset();
+}
+
+function closeImportModal() {
+    document.getElementById('importICSModal').style.display = 'none';
+}
+
+function importICSFile() {
+    const fileInput = document.getElementById('ics_file');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Seleziona un file ICS da importare');
+        return;
+    }
+    
+    if (!file.name.toLowerCase().endsWith('.ics')) {
+        alert('Il file deve avere estensione .ics');
+        return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB
+        alert('Il file è troppo grande. Massimo 5MB.');
+        return;
+    }
+    
+    // Mostra progress bar
+    document.getElementById('importProgress').style.display = 'block';
+    document.getElementById('importResult').style.display = 'none';
+    
+    // Prepara FormData
+    const formData = new FormData();
+    formData.append('ics_file', file);
+    
+    // Aggiungi azienda_id se super admin
+    const aziendaSelect = document.getElementById('import_azienda_id');
+    if (aziendaSelect) {
+        formData.append('azienda_id', aziendaSelect.value);
+    }
+    
+    // Ottieni CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
+    // Invia richiesta
+    fetch('<?php echo APP_PATH; ?>/backend/api/import-ics.php', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-Token': csrfToken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('importProgress').style.display = 'none';
+        const resultDiv = document.getElementById('importResult');
+        
+        if (data.success) {
+            resultDiv.className = 'alert alert-success';
+            resultDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                <strong>Importazione completata!</strong><br>
+                ${data.message}<br>
+                <small>Eventi importati: ${data.imported} | Saltati (già esistenti): ${data.skipped}</small>
+            `;
+            
+            // Ricarica la pagina dopo 2 secondi
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            resultDiv.className = 'alert alert-danger';
+            resultDiv.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i>
+                <strong>Errore durante l'importazione:</strong><br>
+                ${data.error}
+            `;
+        }
+        
+        resultDiv.style.display = 'block';
+    })
+    .catch(error => {
+        document.getElementById('importProgress').style.display = 'none';
+        const resultDiv = document.getElementById('importResult');
+        resultDiv.className = 'alert alert-danger';
+        resultDiv.innerHTML = `
+            <i class="fas fa-exclamation-circle"></i>
+            <strong>Errore di rete:</strong><br>
+            ${error.message}
+        `;
+        resultDiv.style.display = 'block';
+    });
+}
+
+// Chiudi modal cliccando fuori
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('importICSModal');
+    if (event.target === modal) {
+        closeImportModal();
+    }
 });
 </script>
 

@@ -1,0 +1,7 @@
+<svg width="180" height="50" viewBox="0 0 180 50" xmlns="http://www.w3.org/2000/svg">
+  <!-- Star symbol -->
+  <text x="25" y="35" font-family="Arial, sans-serif" font-size="36" text-anchor="middle" fill="#2d5a9f">✦</text>
+  
+  <!-- Nexio text -->
+  <text x="90" y="35" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="32" font-weight="600" fill="#ffffff">Nexio</text>
+</svg> 

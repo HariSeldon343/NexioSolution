@@ -8,13 +8,13 @@ $pageTitle = 'Conformità Normativa';
 include 'components/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Requisiti Autorizzazione e Accreditamento Sanitario - Regione Calabria</title>
-    <style>
+<!-- Page Header -->
+<div class="page-header">
+    <h1><i class="fas fa-shield-alt"></i> Conformità Normativa</h1>
+    <div class="page-subtitle">Dashboard Requisiti Autorizzazione e Accreditamento Sanitario - Regione Calabria</div>
+</div>
+
+<style>
         * {
             margin: 0;
             padding: 0;

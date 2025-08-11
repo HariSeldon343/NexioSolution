@@ -1,0 +1,298 @@
+/* ========================================
+   NEXIO SIDEBAR FIXES - Correzioni Sidebar
+   ======================================== */
+
+/* 1. SIDEBAR HEADER - Logo e Motto */
+.sidebar-header {
+    padding: 1.5rem 1rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    text-align: center !important;
+}
+
+.sidebar-logo {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-decoration: none !important;
+    gap: 0.5rem !important;
+}
+
+.sidebar-logo img {
+    width: 56px !important; /* slightly larger */
+    height: 56px !important;
+    background: transparent !important; /* ensure no white background */
+    padding: 0 !important;
+    filter: brightness(0) invert(1) !important; /* Rende l'icona bianca su sidebar scura */
+}
+
+.sidebar-logo span:first-of-type {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    color: white !important;
+    letter-spacing: 0.05em !important;
+}
+
+.sidebar-logo span:last-of-type {
+    font-size: 0.625rem !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    margin-top: -4px !important;
+}
+
+/* 2. USER INFO - Layout migliorato */
+.sidebar-footer {
+    position: relative !important;
+    padding: 0.75rem !important;
+    background: rgba(0, 0, 0, 0.15) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.sidebar-footer .user-info {
+    display: grid !important;
+    grid-template-columns: 40px 1fr 32px !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.75rem !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 8px !important;
+    position: relative !important;
+    min-height: 56px !important; /* ensure space when text wraps */
+}
+
+/* Avatar */
+.sidebar-footer .user-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+}
+
+/* User details */
+.sidebar-footer .user-details {
+    min-width: 0 !important; /* Permette text truncation */
+    overflow: hidden !important;
+    padding-right: 40px !important; /* avoid overlap with dropdown */
+}
+
+.sidebar-footer .user-name {
+    color: white !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    white-space: normal !important; /* allow wrap */
+    overflow: hidden !important; /* enable line clamp */
+    text-overflow: ellipsis !important;
+    line-height: 1.2 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important; /* clamp to 2 lines */
+    -webkit-box-orient: vertical !important;
+    margin-bottom: 2px !important;
+}
+
+.sidebar-footer .user-role {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 0.75rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+}
+
+.sidebar-footer .user-role i {
+    font-size: 0.625rem !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    flex-shrink: 0 !important;
+}
+
+/* Dropdown button */
+.sidebar-footer .dropdown {
+    position: static !important; /* Fix per il dropdown */
+}
+
+.sidebar-footer .btn-icon {
+    background: transparent !important;
+    border: 1px solid rgba(255,255,255,0.25) !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    padding: 0.375rem !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.sidebar-footer .btn-icon:hover,
+.sidebar-footer .btn-icon:focus {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    outline: none !important;
+}
+
+.sidebar-footer .btn-icon i {
+    font-size: 0.875rem !important;
+    pointer-events: none !important; /* Fix per il click */
+}
+
+/* Dropdown menu */
+.sidebar-footer .dropdown-menu {
+    position: absolute !important;
+    bottom: 100% !important; /* Menu si apre verso l'alto */
+    right: 0 !important;
+    left: auto !important;
+    margin-bottom: 0.5rem !important;
+    background: white !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    padding: 0.25rem !important;
+    min-width: 180px !important;
+    z-index: 1050 !important;
+}
+
+.sidebar-footer .dropdown-menu.show {
+    display: block !important;
+}
+
+.sidebar-footer .dropdown-item {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+    color: #1e293b !important;
+    border-radius: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    transition: background 0.15s ease !important;
+}
+
+.sidebar-footer .dropdown-item:hover {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+}
+
+.sidebar-footer .dropdown-item.text-danger {
+    color: #dc2626 !important;
+}
+
+.sidebar-footer .dropdown-item.text-danger:hover {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+}
+
+.sidebar-footer .dropdown-item i {
+    font-size: 0.875rem !important;
+    width: 16px !important;
+    text-align: center !important;
+}
+
+.sidebar-footer .dropdown-divider {
+    margin: 0.25rem 0 !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* 3. FIX PER BOOTSTRAP DROPDOWN */
+.sidebar-footer .dropdown-toggle::after {
+    display: none !important; /* Rimuove la freccia di default */
+}
+
+/* 4. RESPONSIVE */
+@media (max-width: 768px) {
+    .sidebar-footer .user-info {
+        grid-template-columns: 36px 1fr 28px !important;
+        gap: 0.5rem !important;
+        padding: 0.5rem !important;
+    }
+    
+    .sidebar-footer .user-avatar {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .sidebar-footer .user-name {
+        font-size: 0.8125rem !important;
+    }
+    
+    .sidebar-footer .user-role {
+        font-size: 0.6875rem !important;
+    }
+    
+    .sidebar-footer .btn-icon {
+        width: 28px !important;
+        height: 28px !important;
+    }
+}
+
+/* 5. ANIMAZIONI */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sidebar-footer .dropdown-menu.show {
+    animation: fadeInUp 0.2s ease !important;
+}
+
+/* 6. FALLBACK PER CLICK JAVASCRIPT */
+.sidebar-footer .dropdown.show .dropdown-menu {
+    display: block !important;
+}
+
+/* 7. Z-INDEX FIX */
+.sidebar {
+    z-index: 1040 !important;
+}
+
+.sidebar-footer .dropdown-menu {
+    z-index: 1060 !important;
+}
+
+/* 8. TOOLTIP PER NOMI LUNGHI */
+.sidebar-footer .user-name[title],
+.sidebar-footer .user-role[title] {
+    cursor: help !important;
+}
+
+/* 9. FOCUS VISIBLE PER ACCESSIBILITÀ */
+.sidebar-footer .btn-icon:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.5) !important;
+    outline-offset: 2px !important;
+}
+
+/* 10. SIDEBAR SCROLLBAR */
+.sidebar {
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 6px !important;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 3px !important;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+}

@@ -1,0 +1,175 @@
+/**
+ * Nexio Headings White Text Fix
+ * Forces white text color on headings and calendar titles
+ * Created: 2025-08-11
+ */
+
+/* Calendar month/year titles */
+.calendar h2,
+.calendar-header h2,
+.calendar-title h2,
+.month-title,
+.year-title,
+#calendar h2,
+#calendario h2,
+.fc-toolbar-title,
+.fc-toolbar h2,
+.calendar-month h2,
+.calendar-view h2,
+h2.month-name,
+h2.calendar-month,
+h2.date-title {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* General h2 in dark sections */
+.sidebar h2,
+.dark-section h2,
+.bg-dark h2,
+.bg-primary h2,
+.bg-secondary h2,
+.navbar h2,
+.header h2 {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Calendar specific selectors */
+.calendario-header h2,
+.calendar-container h2,
+.calendar-wrapper h2,
+.date-display h2,
+.current-month h2,
+.month-display h2 {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* FullCalendar specific */
+.fc h2,
+.fc-header h2,
+.fc-header-toolbar h2,
+.fc .fc-toolbar-title {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Card headers with dark backgrounds */
+.card-header.bg-primary h2,
+.card-header.bg-secondary h2,
+.card-header.bg-dark h2,
+.card-header.bg-info h2,
+.card-header.text-white h2 {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Specific month names in any language */
+h2:contains("January"),
+h2:contains("February"),
+h2:contains("March"),
+h2:contains("April"),
+h2:contains("May"),
+h2:contains("June"),
+h2:contains("July"),
+h2:contains("August"),
+h2:contains("September"),
+h2:contains("October"),
+h2:contains("November"),
+h2:contains("December"),
+h2:contains("Gennaio"),
+h2:contains("Febbraio"),
+h2:contains("Marzo"),
+h2:contains("Aprile"),
+h2:contains("Maggio"),
+h2:contains("Giugno"),
+h2:contains("Luglio"),
+h2:contains("Agosto"),
+h2:contains("Settembre"),
+h2:contains("Ottobre"),
+h2:contains("Novembre"),
+h2:contains("Dicembre") {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Any h2 with year patterns */
+h2[class*="month"],
+h2[class*="year"],
+h2[class*="date"],
+h2[class*="calendar"],
+h2[id*="month"],
+h2[id*="year"],
+h2[id*="date"],
+h2[id*="calendar"] {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Force white on any h2 that contains month/year text pattern */
+h2 {
+    /* Check if it looks like a date/calendar title */
+}
+
+/* Specific targeting for calendar pages */
+body[class*="calendar"] h2,
+body[class*="calendario"] h2,
+.main-content h2[class*="month"],
+.main-content h2[class*="date"],
+.main-content h2[class*="year"] {
+    color: #ffffff !important;
+}
+
+/* Dashboard and other page titles that should be white */
+.page-header h2,
+.content-header h2,
+.dashboard-header h2,
+.section-header h2 {
+    color: #ffffff !important;
+}
+
+/* Modal headers */
+.modal-header h2,
+.modal-title {
+    color: #212529 !important; /* Keep modal titles dark */
+}
+
+/* Override for specific dashboard titles */
+.dashboard h2.text-primary,
+.dashboard h2.text-secondary,
+.dashboard h2[style*="color"] {
+    color: #ffffff !important;
+}
+
+/* Target h2 by content using attribute selectors */
+h2[title*="2025"],
+h2[title*="2024"],
+h2[title*="2026"] {
+    color: #ffffff !important;
+}
+
+/* Additional specific selectors for various calendar implementations */
+.cal-month-view h2,
+.cal-year-view h2,
+.cal-week-view h2,
+.cal-day-view h2,
+.calendar-navigation h2,
+.date-navigation h2 {
+    color: #ffffff !important;
+}
+
+/* Bootstrap calendar components */
+.datepicker h2,
+.datetimepicker h2,
+.daterangepicker h2 {
+    color: #ffffff !important;
+}
+
+/* Ensure visibility with text shadow for better contrast */
+h2.text-white,
+h2[style*="color: white"],
+h2[style*="color:#fff"],
+h2[style*="color: #fff"] {
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+}

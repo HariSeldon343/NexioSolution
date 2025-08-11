@@ -124,14 +124,22 @@ foreach ($defaults as $key => $value) {
 // Conta notifiche email
 $emailCount = 0;
 try {
-    $emailCount = db_query("
-        SELECT COUNT(*) FROM email_notifications 
-        WHERE to_email = ?
-    ", [$_SESSION['user_email']])->fetchColumn();
+    $userEmail = $_SESSION['user_email'] ?? $user['email'] ?? '';
+    if ($userEmail) {
+        $stmt = db_query("
+            SELECT COUNT(*) FROM email_notifications 
+            WHERE to_email = ?
+        ", [$userEmail]);
+        if ($stmt) {
+            $emailCount = $stmt->fetchColumn();
+        }
+    }
 } catch (Exception $e) {
-    // Tabella non ancora creata
+    // Tabella non ancora creata o errore query
+    error_log("Error counting email notifications: " . $e->getMessage());
 }
 
+$bodyClass = 'configurazione-email-page';
 require_once 'components/header.php';
 ?>
 

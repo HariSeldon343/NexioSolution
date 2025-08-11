@@ -12,6 +12,14 @@ define('NEXIO_CONFIG_LOADED', true);
 // Imposta timezone
 date_default_timezone_set('Europe/Rome');
 
+// Include production config if on Cloudflare tunnel
+if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'app.nexiosolution.it') !== false) {
+    require_once __DIR__ . '/production-config.php';
+}
+
+// Include CSP configuration
+require_once __DIR__ . '/csp-config.php';
+
 // Percorsi
 if (!defined('ROOT_PATH')) {
     define('ROOT_PATH', dirname(dirname(__DIR__)));

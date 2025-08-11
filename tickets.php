@@ -42,8 +42,18 @@ if ($isSuperAdmin) {
 
 // Gestione invio nuovo ticket
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    // Debug: Log all POST data to identify if 'titolo' is being sent
+    if (isset($_POST['titolo'])) {
+        error_log("WARNING: 'titolo' field detected in POST data. This should be 'oggetto'. POST data: " . print_r($_POST, true));
+        // Auto-fix: if titolo is sent instead of oggetto, use it
+        if (!isset($_POST['oggetto']) && isset($_POST['titolo'])) {
+            $_POST['oggetto'] = $_POST['titolo'];
+            error_log("Auto-fixed: Using 'titolo' value as 'oggetto'");
+        }
+    }
+    
     if ($_POST['action'] === 'nuovo') {
-        $titolo = trim($_POST['titolo'] ?? '');
+        $oggetto = trim($_POST['oggetto'] ?? '');
         $descrizione = trim($_POST['descrizione'] ?? '');
         $categoria = $_POST['categoria'] ?? 'altro';
         $priorita = $_POST['priorita'] ?? 'media';
@@ -62,8 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $ticketAziendaId = $aziendaId;
         }
         
-        if (empty($titolo) || empty($descrizione)) {
-            $_SESSION['error'] = "Titolo e descrizione sono obbligatori";
+        if (empty($oggetto) || empty($descrizione)) {
+            $_SESSION['error'] = "Oggetto e descrizione sono obbligatori";
         } else {
             try {
                 db_connection()->beginTransaction();
@@ -84,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     'codice' => $codice,
                     'azienda_id' => $ticketAziendaId,
                     'utente_id' => $user['id'],
-                    'titolo' => $titolo,
+                    'oggetto' => $oggetto,
                     'descrizione' => $descrizione,
                     'categoria' => $categoria,
                     'priorita' => $priorita,
@@ -97,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         db_insert('ticket_destinatari', [
                             'ticket_id' => $ticketId,
                             'utente_id' => $destinatarioId,
-                            'tipo' => 'principale'
+                            'tipo_destinatario' => 'assegnato'
                         ]);
                     }
                                     } else {
@@ -117,53 +127,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                         db_insert('ticket_destinatari', [
                             'ticket_id' => $ticketId,
                             'utente_id' => $adminId,
-                            'tipo' => 'cc'
+                            'tipo_destinatario' => 'cc'
                         ]);
                     }
                 }
                 
-                // Invia email ai destinatari
-                $stmt = db_query("
-                    SELECT u.email, u.nome, u.cognome
-                    FROM ticket_destinatari td
-                    JOIN utenti u ON td.utente_id = u.id
-                    WHERE td.ticket_id = ?
-                ", [$ticketId]);
+                // Prepara i dati del ticket per l'email
+                $ticketData = [
+                    'id' => $ticketId,
+                    'codice' => $codice,
+                    'oggetto' => $oggetto,
+                    'descrizione' => $descrizione,
+                    'categoria' => $categoria,
+                    'priorita' => $priorita,
+                    'azienda_id' => $ticketAziendaId,
+                    'creato_il' => date('Y-m-d H:i:s')
+                ];
                 
-                $destinatariEmail = $stmt->fetchAll();
+                // Usa il NotificationCenter per inviare email con il template professionale
+                require_once 'backend/utils/NotificationCenter.php';
+                require_once 'backend/utils/EmailTemplateOutlook.php';
+                $notificationCenter = NotificationCenter::getInstance();
+                $notificationCenter->notifyNewTicket($ticketData, $user);
                 
-                foreach ($destinatariEmail as $dest) {
-                    $mailer->send(
-                        $dest['email'],
-                        "Nuovo Ticket: $titolo",
-                        "
-                        <h3>Nuovo ticket creato</h3>
-                        <p><strong>Codice:</strong> $codice</p>
-                        <p><strong>Titolo:</strong> $titolo</p>
-                        <p><strong>Categoria:</strong> $categoria</p>
-                        <p><strong>Priorità:</strong> $priorita</p>
-                        <p><strong>Descrizione:</strong></p>
-                        <p>$descrizione</p>
-                        <p><strong>Creato da:</strong> {$user['nome']} {$user['cognome']}</p>
-                        "
-                    );
-                }
-                
-                // Notifica super admin
+                // Notifica super admin con il template professionale
                 $notificationManager = NotificationManager::getInstance();
+                $emailContent = EmailTemplateOutlook::newTicket($ticketData, $user);
                 $notificationManager->notificaSuperAdmin(
                     'ticket_creato',
-                    "Nuovo Ticket: $titolo",
-                    "
-                    <h3>Nuovo ticket creato</h3>
-                    <p><strong>Codice:</strong> $codice</p>
-                    <p><strong>Titolo:</strong> $titolo</p>
-                    <p><strong>Categoria:</strong> $categoria</p>
-                    <p><strong>Priorità:</strong> $priorita</p>
-                    <p><strong>Descrizione:</strong></p>
-                    <p>$descrizione</p>
-                    <p><strong>Creato da:</strong> {$user['nome']} {$user['cognome']}</p>
-                    "
+                    "Nuovo Ticket: {$ticketData['codice']}",
+                    $emailContent
                 );
                 
                 db_connection()->commit();
@@ -222,9 +215,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $logger->log('ticket_chiuso', "Chiuso ticket: {$ticket['codice']}");
                 }
                 
-                // Notifica tutti i partecipanti
+                // Usa il template professionale per inviare notifiche di risposta
+                require_once 'backend/utils/EmailTemplateOutlook.php';
+                
+                // Notifica tutti i partecipanti con il template migliorato
                 $stmt = db_query("
-                    SELECT DISTINCT u.email, u.nome, u.cognome
+                    SELECT DISTINCT u.email, u.nome, u.cognome, u.id
                     FROM (
                         SELECT utente_id FROM tickets WHERE id = ?
                         UNION
@@ -238,33 +234,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 
                 $partecipanti = $stmt->fetchAll();
                 
+                // Genera il template email per la risposta
+                $emailContent = EmailTemplateOutlook::ticketReply($ticket, $messaggio, $user);
+                
                 foreach ($partecipanti as $part) {
                     $mailer->send(
                         $part['email'],
-                        "Nuova risposta al ticket: {$ticket['codice']}",
-                        "
-                        <h3>Nuova risposta al ticket</h3>
-                        <p><strong>Ticket:</strong> {$ticket['codice']} - {$ticket['oggetto']}</p>
-                        <p><strong>Risposta da:</strong> {$user['nome']} {$user['cognome']}</p>
-                        <p><strong>Messaggio:</strong></p>
-                        <p>$messaggio</p>
-                        "
+                        "Nuova Risposta - Ticket {$ticket['codice']}",
+                        $emailContent
                     );
                 }
                 
-                // Notifica super admin se stato cambiato
+                // Notifica super admin con template professionale
                 $stato_notifica = isset($_POST['chiudi_ticket']) ? 'ticket_status_changed' : 'ticket_risposta';
                 $notificationManager = NotificationManager::getInstance();
+                
+                // Se il ticket è stato chiuso, usa il template di cambio stato
+                if (isset($_POST['chiudi_ticket']) && $_POST['chiudi_ticket'] == '1') {
+                    $emailContent = EmailTemplateOutlook::ticketStatusChanged(
+                        $ticket,
+                        $ticket['stato'],
+                        'chiuso',
+                        $user
+                    );
+                    $subject = "Ticket {$ticket['codice']} - Stato: Chiuso";
+                } else {
+                    // Altrimenti usa il template di risposta
+                    $emailContent = EmailTemplateOutlook::ticketReply($ticket, $messaggio, $user);
+                    $subject = "Nuova Risposta - Ticket {$ticket['codice']}";
+                }
+                
                 $notificationManager->notificaSuperAdmin(
                     $stato_notifica,
-                    "Risposta ticket: {$ticket['codice']}",
-                    "
-                    <h3>Nuova risposta al ticket</h3>
-                    <p><strong>Ticket:</strong> {$ticket['codice']} - {$ticket['oggetto']}</p>
-                    <p><strong>Risposta da:</strong> {$user['nome']} {$user['cognome']}</p>
-                    <p><strong>Messaggio:</strong></p>
-                    <p>$messaggio</p>
-                    "
+                    $subject,
+                    $emailContent
                 );
                 
                 $_SESSION['success'] = "Risposta inviata con successo";
@@ -281,6 +284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $action = $_GET['action'] ?? 'list';
 
 $pageTitle = 'Gestione Ticket';
+$bodyClass = 'tickets-page';
 include 'components/header.php';
 ?>
 
@@ -378,7 +382,7 @@ include 'components/header.php';
                     <thead>
                         <tr>
                             <th>Codice</th>
-                            <th>Titolo</th>
+                            <th>Oggetto</th>
                             <?php if ($auth->isSuperAdmin() && !$filter_azienda_id): ?>
                                 <th>Azienda</th>
                             <?php endif; ?>
@@ -454,8 +458,7 @@ include 'components/header.php';
                                     t.creato_il DESC
                             ";
                             
-                            $stmt = db_query($sql);
-                            $stmt->execute([
+                            $stmt = db_query($sql, [
                                 ':azienda' => $aziendaId,
                                 ':user' => $user['id'],
                                 ':user_dest' => $user['id'],
@@ -473,7 +476,7 @@ include 'components/header.php';
                                     <span class="badge badge-alta"><?php echo $ticket['non_letti']; ?> nuovo</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo htmlspecialchars($ticket['titolo'] ?? ''); ?></td>
+                            <td><?php echo htmlspecialchars($ticket['oggetto'] ?? ''); ?></td>
                             <?php if ($auth->isSuperAdmin() && !$filter_azienda_id): ?>
                                 <td><?php echo htmlspecialchars($ticket['azienda_nome'] ?? 'N/A'); ?></td>
                             <?php endif; ?>
@@ -491,13 +494,25 @@ include 'components/header.php';
                             <td><?php echo htmlspecialchars($ticket['nome'] . ' ' . $ticket['cognome']); ?></td>
                             <td><?php echo date('d/m/Y H:i', strtotime($ticket['creato_il'])); ?></td>
                             <td>
-                                <a href="tickets.php?action=view&id=<?php echo $ticket['id']; ?>" 
-                                   class="btn btn-sm btn-primary">
-                                    <i class="fas fa-eye"></i> Visualizza
-                                    <?php if ($ticket['num_risposte'] > 0): ?>
-                                        (<?php echo $ticket['num_risposte']; ?>)
+                                <div class="btn-group" role="group">
+                                    <a href="tickets.php?action=view&id=<?php echo $ticket['id']; ?>" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> Visualizza
+                                        <?php if ($ticket['num_risposte'] > 0): ?>
+                                            (<?php echo $ticket['num_risposte']; ?>)
+                                        <?php endif; ?>
+                                    </a>
+                                    <?php if ($auth->isSuperAdmin() && $ticket['stato'] === 'chiuso'): ?>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-danger delete-ticket-btn"
+                                            data-ticket-id="<?php echo $ticket['id']; ?>"
+                                            data-ticket-code="<?php echo htmlspecialchars($ticket['codice']); ?>"
+                                            data-ticket-status="<?php echo $ticket['stato']; ?>"
+                                            title="Elimina ticket">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                     <?php endif; ?>
-                                </a>
+                                </div>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -550,8 +565,8 @@ include 'components/header.php';
                     <?php endif; ?>
                     
                     <div class="form-group">
-                        <label for="titolo">Titolo <span class="required">*</span></label>
-                        <input type="text" id="titolo" name="titolo" class="form-control" required>
+                        <label for="oggetto">Oggetto <span class="required">*</span></label>
+                        <input type="text" id="oggetto" name="oggetto" class="form-control" required>
                     </div>
                     
                     <div class="form-row">
@@ -706,11 +721,11 @@ include 'components/header.php';
             
             // Carica destinatari
             $stmt = db_query("
-                SELECT u.nome, u.cognome, td.tipo, td.letto, td.data_lettura
+                SELECT u.nome, u.cognome, td.tipo_destinatario, td.letto, td.data_lettura
                 FROM ticket_destinatari td
                 JOIN utenti u ON td.utente_id = u.id
                 WHERE td.ticket_id = ?
-                ORDER BY td.tipo, u.nome, u.cognome
+                ORDER BY td.tipo_destinatario, u.nome, u.cognome
             ", [$ticketId]);
             
             $destinatari = $stmt->fetchAll();
@@ -721,7 +736,7 @@ include 'components/header.php';
                 FROM ticket_risposte tr
                 JOIN utenti u ON tr.utente_id = u.id
                 WHERE tr.ticket_id = ?
-                ORDER BY tr.creato_il ASC
+                ORDER BY tr.data_creazione ASC
             ", [$ticketId]);
             
             $risposte = $stmt->fetchAll();
@@ -731,7 +746,7 @@ include 'components/header.php';
         <h1>
             <i class="fas fa-ticket-alt"></i> 
             <?php echo htmlspecialchars($ticket['codice']); ?> - 
-            <?php echo htmlspecialchars($ticket['oggetto'] ?? $ticket['titolo'] ?? ''); ?>
+            <?php echo htmlspecialchars($ticket['oggetto'] ?? ''); ?>
         </h1>
         <div class="page-subtitle">Dettagli e conversazione del ticket</div>
     </div>
@@ -780,8 +795,10 @@ include 'components/header.php';
                     <?php foreach ($destinatari as $dest): ?>
                         <span style="margin-left: 10px;">
                             <?php echo htmlspecialchars($dest['nome'] . ' ' . $dest['cognome']); ?>
-                            <?php if ($dest['tipo'] === 'principale'): ?>
-                                <span class="badge badge-alta">Principale</span>
+                            <?php if (isset($dest['tipo_destinatario']) && $dest['tipo_destinatario'] === 'assegnato'): ?>
+                                <span class="badge badge-alta">Assegnato</span>
+                            <?php elseif (isset($dest['tipo_destinatario']) && $dest['tipo_destinatario'] === 'cc'): ?>
+                                <span class="badge badge-media">CC</span>
                             <?php endif; ?>
                             <?php if ($dest['letto']): ?>
                                 <i class="fas fa-check-circle text-success" 
@@ -817,7 +834,7 @@ include 'components/header.php';
                                 <?php echo htmlspecialchars($risposta['nome'] . ' ' . $risposta['cognome']); ?>
                             </div>
                             <div>
-                                <?php echo date('d/m/Y H:i', strtotime($risposta['creato_il'])); ?>
+                                <?php echo date('d/m/Y H:i', strtotime($risposta['data_creazione'])); ?>
                             </div>
                         </div>
                         <div class="message-content">
@@ -870,6 +887,17 @@ include 'components/header.php';
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i> 
                     Questo ticket è stato chiuso. Non è più possibile rispondere.
+                    <?php if ($auth->isSuperAdmin()): ?>
+                    <div class="mt-3">
+                        <button type="button" 
+                                class="btn btn-danger delete-ticket-btn"
+                                data-ticket-id="<?php echo $ticket['id']; ?>"
+                                data-ticket-code="<?php echo htmlspecialchars($ticket['codice']); ?>"
+                                data-ticket-status="<?php echo $ticket['stato']; ?>">
+                            <i class="fas fa-trash"></i> Elimina Ticket Chiuso
+                        </button>
+                    </div>
+                    <?php endif; ?>
                 </div>
                 <?php elseif (!$canReply): ?>
                 <div class="alert alert-warning">
@@ -923,5 +951,8 @@ include 'components/header.php';
         window.location.href = url.toString();
     }
 </script>
+
+<!-- Include ticket enhancements JavaScript -->
+<script src="assets/js/tickets-enhancements.js"></script>
 
 <?php include 'components/footer.php'; ?> 

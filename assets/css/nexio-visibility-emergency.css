@@ -1,0 +1,317 @@
+/* ========================================
+   NEXIO VISIBILITY EMERGENCY - Correzioni Emergenza Visibilità
+   ======================================== */
+
+/* 1. FIX TESTI BIANCHI SU SFONDO BIANCO NELLE TABELLE */
+table td,
+table td *,
+.table td,
+.table td *,
+tbody td,
+tbody td *,
+td.user-name,
+td .user-name,
+td .user-email,
+td .badge,
+td .role-badge,
+td span,
+td div {
+    color: #1e293b !important; /* Testo scuro su sfondo bianco */
+}
+
+/* Specifico per user-name nelle tabelle */
+table .user-name,
+table td.user-name,
+.table .user-name,
+.table td.user-name {
+    color: #111827 !important;
+    font-weight: 500 !important;
+}
+
+/* Email nelle tabelle */
+table .user-email,
+table td .user-email,
+.table .user-email {
+    color: #6b7280 !important;
+    font-size: 0.875rem !important;
+}
+
+/* 2. FIX BADGE NELLE TABELLE */
+table .badge,
+table .role-badge,
+td .badge,
+td .role-badge,
+.table .badge,
+.table .role-badge {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    padding: 0.25rem 0.625rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    border-radius: 9999px !important;
+    display: inline-block !important;
+}
+
+/* Badge specifici per ruolo */
+table .role-super_admin,
+td .role-super_admin {
+    background-color: #7c3aed !important;
+    color: white !important;
+}
+
+table .role-admin,
+td .role-admin {
+    background-color: #10b981 !important;
+    color: white !important;
+}
+
+table .role-utente_speciale,
+td .role-utente_speciale {
+    background-color: #f59e0b !important;
+    color: white !important;
+}
+
+table .role-utente,
+td .role-utente {
+    background-color: #6b7280 !important;
+    color: white !important;
+}
+
+/* 3. FIX ICONE NELLE TABELLE */
+table i.fas,
+table i.far,
+table i.fa,
+td i.fas,
+td i.far,
+td i.fa,
+.table i.fas,
+.table i.far,
+.table i.fa {
+    color: #6b7280 !important;
+}
+
+/* 4. FIX BOTTONI NELLE TABELLE */
+table .btn,
+td .btn,
+.table .btn {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+table .btn-primary,
+td .btn-primary {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border: none !important;
+}
+
+table .btn-secondary,
+td .btn-secondary {
+    background-color: #6b7280 !important;
+    color: white !important;
+    border: none !important;
+}
+
+table .btn-danger,
+td .btn-danger {
+    background-color: #ef4444 !important;
+    color: white !important;
+    border: none !important;
+}
+
+table .btn-success,
+td .btn-success {
+    background-color: #10b981 !important;
+    color: white !important;
+    border: none !important;
+}
+
+table .btn-warning,
+td .btn-warning {
+    background-color: #f59e0b !important;
+    color: white !important;
+    border: none !important;
+}
+
+/* 5. FIX HEADERS TABELLE */
+table th,
+thead th,
+.table th {
+    background-color: #f9fafb !important;
+    color: #374151 !important;
+    font-weight: 600 !important;
+    border-bottom: 2px solid #e5e7eb !important;
+}
+
+/* 6. FIX RIGHE TABELLE */
+table tbody tr,
+.table tbody tr {
+    background-color: white !important;
+}
+
+table tbody tr:hover,
+.table tbody tr:hover {
+    background-color: #f9fafb !important;
+}
+
+/* Alternanza righe */
+table tbody tr:nth-child(even),
+.table tbody tr:nth-child(even) {
+    background-color: #fafafa !important;
+}
+
+/* 7. FIX LINK NELLE TABELLE */
+table a,
+td a,
+.table a {
+    color: #3b82f6 !important;
+    text-decoration: none !important;
+}
+
+table a:hover,
+td a:hover,
+.table a:hover {
+    color: #2563eb !important;
+    text-decoration: underline !important;
+}
+
+/* 8. FIX STATO ATTIVO/INATTIVO */
+.status-active,
+.stato-attivo {
+    color: #10b981 !important;
+    font-weight: 600 !important;
+}
+
+.status-inactive,
+.stato-inattivo {
+    color: #ef4444 !important;
+    font-weight: 600 !important;
+}
+
+/* 9. FIX DATE E TIMESTAMP */
+table .date,
+table .timestamp,
+td .date,
+td .timestamp {
+    color: #6b7280 !important;
+    font-size: 0.875rem !important;
+}
+
+/* 10. FIX CELLE VUOTE */
+table td:empty::before,
+.table td:empty::before {
+    content: "-";
+    color: #d1d5db !important;
+}
+
+/* 11. FORCE VISIBILITY PER ELEMENTI NASCOSTI */
+table *,
+td *,
+.table * {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* 12. FIX PER PAGINA UTENTI SPECIFICA */
+.users-table td,
+.gestione-utenti td,
+#users-table td {
+    color: #1e293b !important;
+}
+
+.users-table .user-info,
+.gestione-utenti .user-info {
+    color: #111827 !important;
+}
+
+.users-table .user-avatar,
+.gestione-utenti .user-avatar {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+/* 13. FIX PER LOG ATTIVITÀ */
+.log-table td,
+.activity-log td {
+    color: #1e293b !important;
+}
+
+.log-table .action-badge,
+.activity-log .action-badge {
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 6px !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+}
+
+/* 14. FIX PER AZIENDE */
+.aziende-table td,
+.companies-table td {
+    color: #1e293b !important;
+}
+
+/* 15. OVERRIDE FINALE - FORZA COLORI CORRETTI */
+body table td,
+body .table td {
+    color: #1e293b !important;
+}
+
+body table td span,
+body table td div,
+body .table td span,
+body .table td div {
+    color: inherit !important;
+}
+
+/* Solo per elementi nella sidebar mantieni bianco */
+.sidebar td,
+.sidebar span,
+.sidebar div {
+    color: white !important;
+}
+
+/* 16. DEBUG - Evidenzia elementi problematici */
+/* Decommentare per debug
+table td {
+    border: 1px solid red !important;
+}
+*/
+
+/* 17. FIX SPECIFICO PER CLASSI PERSONALIZZATE */
+.text-white:not(.sidebar *) {
+    color: #1e293b !important;
+}
+
+.text-light:not(.sidebar *) {
+    color: #374151 !important;
+}
+
+/* 18. IMPORTANTE - Override stili inline */
+td[style*="color: white"],
+td[style*="color:#fff"],
+td[style*="color: #ffffff"],
+span[style*="color: white"]:not(.sidebar *),
+span[style*="color:#fff"]:not(.sidebar *),
+span[style*="color: #ffffff"]:not(.sidebar *) {
+    color: #1e293b !important;
+}
+
+/* 19. FIX PER CARD E PANNELLI */
+.card:not(.sidebar *) td,
+.panel:not(.sidebar *) td {
+    color: #1e293b !important;
+}
+
+/* 20. ASSICURA CONTRASTO MINIMO */
+@media screen {
+    table,
+    .table {
+        background: white !important;
+    }
+    
+    table td,
+    .table td {
+        background-color: transparent !important;
+        color: #1e293b !important;
+    }
+}

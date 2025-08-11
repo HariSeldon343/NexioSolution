@@ -25,14 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $auth->canDeleteLogs()) {
             $deleteWhere = [];
             $deleteParams = [];
             
+            // Escludiamo sempre i log protetti e quelli di eliminazione
+            $deleteWhere[] = "(non_eliminabile = 0 OR non_eliminabile IS NULL)";
+            $deleteWhere[] = "(azione != 'eliminazione_log' OR azione IS NULL)";
+            
             if (isset($_POST['delete_all']) && $_POST['delete_all'] === '1') {
-                // Elimina tutti i log TRANNE quelli di eliminazione_log
-                $deleteWhere[] = "(azione != 'eliminazione_log' OR azione IS NULL)";
-                $dettagli = "Eliminati TUTTI i log di sistema (esclusi log di eliminazione)";
+                // Elimina tutti i log non protetti
+                $dettagli = "Eliminati TUTTI i log di sistema (esclusi log protetti e di eliminazione)";
             } else {
-                // Elimina log filtrati (sempre esclusi i log di eliminazione_log)
-                $deleteWhere[] = "(azione != 'eliminazione_log' OR azione IS NULL)";
-                
+                // Elimina log filtrati
                 if (!empty($_POST['entita_tipo'])) {
                     $deleteWhere[] = "entita_tipo = :entita_tipo";
                     $deleteParams['entita_tipo'] = $_POST['entita_tipo'];
@@ -43,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $auth->canDeleteLogs()) {
                     $deleteParams['delete_before'] = $_POST['delete_before'];
                 }
                 
-                if (count($deleteWhere) <= 1) { // Solo il filtro di esclusione eliminazione_log
+                if (count($deleteWhere) <= 2) { // Solo i filtri di esclusione base
                     throw new Exception("Nessun criterio di eliminazione specificato");
                 }
                 
@@ -55,8 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $auth->canDeleteLogs()) {
             $stmt = db_query($countSql, $deleteParams);
             $countDeleted = $stmt->fetch()['count'];
             
-            // Conta i log di eliminazione che rimarranno
-            $stmt = db_query("SELECT COUNT(*) as count FROM log_attivita WHERE azione = 'eliminazione_log'");
+            // Conta i log protetti che rimarranno (non_eliminabile = 1 o azione = 'eliminazione_log')
+            $stmt = db_query("SELECT COUNT(*) as count FROM log_attivita WHERE non_eliminabile = 1 OR azione = 'eliminazione_log'");
             $countNonEliminabili = $stmt->fetch()['count'];
             
             // Prima di eliminare, crea un log dell'eliminazione (non eliminabile)
@@ -76,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $auth->canDeleteLogs()) {
             db_connection()->commit();
             
             if ($countNonEliminabili > 0) {
-                $_SESSION['success'] = "Eliminati $countDeleted log di attività. Conservati $countNonEliminabili log di eliminazione per audit.";
+                $_SESSION['success'] = "Eliminati $countDeleted log di attività. Conservati $countNonEliminabili log protetti per audit e conformità.";
             } else {
                 $_SESSION['success'] = "Eliminati $countDeleted log di attività";
             }
@@ -184,8 +185,12 @@ $stmt = db_query("SELECT DISTINCT azione FROM log_attivita ORDER BY azione");
 $azioni = $stmt->fetchAll();
 
 $pageTitle = 'Log Attività';
+$bodyClass = 'log-attivita-page';
 require_once 'components/header.php';
 ?>
+
+<!-- Load dedicated CSS for log attivita table -->
+<link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/log-attivita.css">
 
 <style>
     .filters-form {
@@ -204,36 +209,7 @@ require_once 'components/header.php';
         margin-bottom: 20px;
     }
     
-    .log-table {
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid #c7cad1;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    .log-table table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .log-table th {
-        background: #f8f9fa;
-        padding: 12px;
-        text-align: left;
-        font-weight: 600;
-        color: #2d3748;
-        border-bottom: 1px solid #c1c7d0;
-    }
-    
-    .log-table td {
-        padding: 12px;
-        border-bottom: 1px solid #e5e7eb;
-    }
-    
-    .log-table tr:last-child td {
-        border-bottom: none;
-    }
+    /* Additional custom styles - most styles moved to log-attivita.css */
     
     .action-badge {
         display: inline-block;
@@ -291,7 +267,11 @@ require_once 'components/header.php';
     .details-cell {
         font-size: 13px;
         color: #4a5568;
-        max-width: 300px;
+        max-width: 250px !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
     }
     
     .pagination {
@@ -354,23 +334,21 @@ require_once 'components/header.php';
         color: #718096;
         font-size: 14px;
     }
+    
+    /* Button styling fix */
+    .btn {
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Column widths handled in log-attivita.css */
 </style>
 
 <div class="page-header">
     <h1><i class="fas fa-history"></i> Log Attività</h1>
     <div class="page-subtitle">Registro delle attività del sistema</div>
 </div>
-
-<?php if ($auth->canDeleteLogs()): ?>
-<div class="action-bar">
-    <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
-        <i class="fas fa-trash"></i> Elimina Log
-    </button>
-    <small style="margin-left: 10px; color: #666;">
-        <i class="fas fa-info-circle"></i> I log di eliminazione non possono essere cancellati
-    </small>
-</div>
-<?php endif; ?>
 
 <?php if (isset($_SESSION['success'])): ?>
     <div class="alert alert-success">
@@ -409,10 +387,15 @@ require_once 'components/header.php';
     </div>
     
     <?php
-    // Documenti creati questa settimana
+    // Documenti caricati questa settimana - include tutti i tipi di upload e creazione
     $settimanaFa = date('Y-m-d', strtotime('-7 days'));
     $sql = "SELECT COUNT(*) as count FROM log_attivita 
-        WHERE entita_tipo = 'documento' AND azione = 'creazione' 
+        WHERE (
+            (entita_tipo = 'documento' AND azione IN ('creazione', 'upload', 'caricamento')) 
+            OR (entita_tipo = 'file' AND azione IN ('upload', 'caricamento', 'creazione'))
+            OR (azione = 'upload_file')
+            OR (azione = 'upload_multiple')
+        )
         AND DATE(data_azione) >= ?";
     $params = [$settimanaFa];
     if ($aziendaId) {
@@ -424,14 +407,15 @@ require_once 'components/header.php';
     ?>
     <div class="stat-box">
         <div class="stat-value"><?php echo number_format($doc_settimana); ?></div>
-        <div class="stat-label">Documenti Creati (7gg)</div>
+        <div class="stat-label">Documenti Caricati (7gg)</div>
     </div>
     
     <?php
-    // Utenti attivi questa settimana
-    $sql = "SELECT COUNT(DISTINCT COALESCE(utente_id, 0)) as count 
+    // Utenti attivi questa settimana - conta solo utenti con ID valido (esclude NULL)
+    $sql = "SELECT COUNT(DISTINCT utente_id) as count 
         FROM log_attivita 
-        WHERE DATE(data_azione) >= ?";
+        WHERE utente_id IS NOT NULL 
+        AND DATE(data_azione) >= ?";
     $params = [$settimanaFa];
     if ($aziendaId) {
         $sql .= " AND azienda_id = ?";
@@ -487,13 +471,21 @@ require_once 'components/header.php';
             </div>
         </div>
         
-        <div class="form-actions">
+        <div class="form-actions" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <button type="submit" class="btn btn-primary">
-                <i>🔍</i> Filtra
+                <i class="fas fa-search"></i> Filtra
             </button>
             <a href="<?php echo APP_PATH; ?>/log-attivita.php" class="btn btn-secondary">
-                <i>🔄</i> Reset
+                <i class="fas fa-redo"></i> Reset
             </a>
+            <?php if ($auth->canDeleteLogs()): ?>
+            <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
+                <i class="fas fa-trash"></i> Elimina Log
+            </button>
+            <small style="margin-left: 10px; color: #666; display: inline-block;">
+                <i class="fas fa-info-circle"></i> I log di eliminazione non possono essere cancellati
+            </small>
+            <?php endif; ?>
         </div>
     </form>
 </div>
@@ -501,31 +493,32 @@ require_once 'components/header.php';
 <!-- Tabella log -->
 <?php if (empty($logs)): ?>
     <div class="empty-state">
-        <i>📋</i>
+        <i class="fas fa-clipboard-list"></i>
         <h2>Nessuna attività trovata</h2>
         <p>Non ci sono attività che corrispondono ai criteri di ricerca.</p>
     </div>
 <?php else: ?>
-    <div class="log-table">
-        <table>
+    <div class="log-table-container">
+        <table class="log-table">
             <thead>
                 <tr>
-                    <th style="width: 150px;">Data/Ora</th>
+                    <th>Data/Ora</th>
                     <th>Utente</th>
                     <th>Tipo</th>
                     <th>Azione</th>
-                    <th>Dettagli</th>
+                    <th style="max-width: 300px;">Dettagli</th>
                     <?php if ($auth->isSuperAdmin() && !$currentAzienda): ?>
-                        <th>Azienda</th>
+                        <th style="min-width: 120px;">Azienda</th>
                     <?php endif; ?>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($logs as $log): ?>
-                    <tr>
-                        <td>
-                            <div><?php echo date('d/m/Y', strtotime($log['data_azione'])); ?></div>
-                            <div style="font-size: 12px; color: #718096;">
+                    <tr 
+>
+                        <td class="log-date-cell">
+                            <div class="log-date"><?php echo date('d/m/Y', strtotime($log['data_azione'])); ?></div>
+                            <div class="log-time">
                                 <?php echo date('H:i:s', strtotime($log['data_azione'])); ?>
                             </div>
                         </td>
@@ -536,7 +529,7 @@ require_once 'components/header.php';
                             </div>
                         </td>
                         <td>
-                            <span class="entity-type"><?php echo htmlspecialchars($log['entita_tipo']); ?></span>
+                            <span class="entity-type <?php echo htmlspecialchars($log['entita_tipo']); ?>"><?php echo htmlspecialchars($log['entita_tipo']); ?></span>
                         </td>
                         <td>
                             <span class="action-badge <?php echo $log['azione']; ?>">
@@ -551,16 +544,14 @@ require_once 'components/header.php';
                                 $dettagliDecoded = json_decode($dettagli, true);
                                 if (json_last_error() === JSON_ERROR_NONE && is_array($dettagliDecoded)) {
                                     // Mostra dettagli JSON in modo leggibile
-                                    echo '<div style="font-size: 13px;">';
                                     foreach ($dettagliDecoded as $key => $value) {
                                         if ($key === 'ip' || $key === 'user_agent') continue; // Salta questi
                                         $label = ucfirst(str_replace('_', ' ', $key));
                                         if (is_array($value)) {
                                             $value = implode(', ', $value);
                                         }
-                                        echo '<div><strong>' . htmlspecialchars($label) . ':</strong> ' . htmlspecialchars($value) . '</div>';
+                                        echo '<div class="detail-row"><strong>' . htmlspecialchars($label) . ':</strong> ' . htmlspecialchars($value) . '</div>';
                                     }
-                                    echo '</div>';
                                 } else {
                                     // Non è JSON, mostra come testo normale
                                     echo htmlspecialchars($dettagli);
@@ -570,16 +561,14 @@ require_once 'components/header.php';
                             }
                             ?>
                             <?php if ($log['ip_address']): ?>
-                                <div style="font-size: 11px; color: #a0aec0; margin-top: 4px;">
-                                    IP: <?php echo htmlspecialchars($log['ip_address']); ?>
+                                <div class="ip-info">
+                                    <i class="fas fa-globe"></i> IP: <?php echo htmlspecialchars($log['ip_address']); ?>
                                 </div>
                             <?php endif; ?>
                         </td>
                         <?php if ($auth->isSuperAdmin() && !$currentAzienda): ?>
-                            <td>
-                                <div style="font-size: 13px;">
-                                    <?php echo htmlspecialchars($log['azienda_nome'] ?? '-'); ?>
-                                </div>
+                            <td class="company-cell">
+                                <?php echo htmlspecialchars($log['azienda_nome'] ?? '-'); ?>
                             </td>
                         <?php endif; ?>
                     </tr>
@@ -652,7 +641,7 @@ require_once 'components/header.php';
                 
                 <div style="background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; padding: 12px; margin-top: 10px; color: #1565c0;">
                     <i class="fas fa-info-circle"></i>
-                    <strong>Nota:</strong> I log delle eliminazioni precedenti vengono sempre conservati per motivi di sicurezza e audit.
+                    <strong>Nota:</strong> I log protetti (marcati come non eliminabili) e i log delle eliminazioni precedenti vengono sempre conservati per motivi di sicurezza e audit.
                 </div>
                 
                 <div class="delete-options">
@@ -662,7 +651,7 @@ require_once 'components/header.php';
                         <input type="radio" name="delete_type" value="all" onchange="toggleDeleteOptions()">
                         <span class="option-text">
                             <strong>Elimina TUTTI i log</strong>
-                            <small>Rimuove tutti i log di sistema, eccetto i log delle eliminazioni precedenti</small>
+                            <small>Rimuove tutti i log di sistema, eccetto i log protetti e quelli delle eliminazioni precedenti</small>
                         </span>
                     </label>
                     
@@ -916,5 +905,8 @@ window.onclick = function(event) {
 }
 </script>
 <?php endif; ?>
+
+<!-- Load dedicated JavaScript for log-attivita page -->
+<script src="<?php echo APP_PATH; ?>/assets/js/log-attivita.js"></script>
 
 <?php require_once 'components/footer.php'; ?> 

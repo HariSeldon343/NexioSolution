@@ -10,11 +10,20 @@
     <link rel="icon" type="image/png" sizes="32x32" href="<?php echo APP_PATH; ?>/assets/images/nexio-icon.svg">
     <link rel="apple-touch-icon" href="<?php echo APP_PATH; ?>/assets/images/nexio-icon.svg">
     
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- FontAwesome 6 - Official CDN Only (NO KITS - they cause CORS issues) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- FontAwesome 5 Fallback (for compatibility) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
     <!-- Nexio Light CSS -->
     <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/nexio-light.css?v=<?php echo time(); ?>">
+    
+    <!-- Fix colori e UI - Risolve problemi di contrasto e bottoni -->
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/nexio-color-fixes.css?v=<?php echo time(); ?>">
+    
+    <!-- BUTTON WHITE TEXT FIX - Forces white text on all primary buttons - Added 2025-08-11 -->
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/nexio-button-white-text.css?v=<?php echo time(); ?>">
     
     <!-- Script per mobile menu -->
     <script>

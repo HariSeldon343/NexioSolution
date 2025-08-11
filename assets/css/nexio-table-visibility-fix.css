@@ -1,0 +1,373 @@
+/**
+ * Nexio Table Visibility Fix
+ * Improves visibility, contrast, and text wrapping in log activity tables
+ * Created: 2025-08-11
+ */
+
+/* Base table improvements */
+.table,
+table.table,
+.log-table,
+.activity-table,
+table[class*="log"],
+table[class*="activity"] {
+    width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    background-color: #ffffff !important;
+}
+
+/* Table header improvements */
+.table thead th,
+table thead th,
+.table-header th {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    padding: 0.75rem !important;
+    white-space: nowrap !important;
+    border-bottom: 2px solid #dee2e6 !important;
+    text-align: left !important;
+}
+
+/* Table cell improvements */
+.table td,
+table.table td,
+.table tbody td {
+    padding: 0.75rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+/* Text wrapping and overflow handling */
+.table td {
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: auto !important;
+    max-width: 0 !important; /* Forces table-layout: fixed to work */
+}
+
+/* Column width optimization for log tables */
+/* Date/Time column */
+.table td:first-child,
+.table th:first-child {
+    width: 15% !important;
+    min-width: 120px !important;
+}
+
+/* User column */
+.table td:nth-child(2),
+.table th:nth-child(2) {
+    width: 15% !important;
+    min-width: 100px !important;
+}
+
+/* Type column */
+.table td:nth-child(3),
+.table th:nth-child(3) {
+    width: 12% !important;
+    min-width: 80px !important;
+}
+
+/* Action column */
+.table td:nth-child(4),
+.table th:nth-child(4) {
+    width: 20% !important;
+    min-width: 150px !important;
+}
+
+/* Details column - gets remaining space */
+.table td:nth-child(5),
+.table th:nth-child(5) {
+    width: 28% !important;
+    min-width: 200px !important;
+}
+
+/* Company column */
+.table td:nth-child(6),
+.table th:nth-child(6) {
+    width: 10% !important;
+    min-width: 80px !important;
+}
+
+/* Details cell specific improvements */
+.details-cell,
+td.details-cell,
+.table td.details-cell,
+td[class*="detail"] {
+    max-width: none !important;
+    width: auto !important;
+    word-wrap: break-word !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+}
+
+/* Remove max-width constraints that hide content */
+.table td[style*="max-width"] {
+    max-width: none !important;
+}
+
+/* Improve contrast for different cell types */
+/* Success messages - green */
+.table td[style*="color: green"],
+.table td[style*="color: #28a745"],
+.table td[style*="color: rgb(40, 167, 69)"],
+.text-success {
+    color: #155724 !important; /* Darker green for better contrast */
+    background-color: #d4edda !important;
+    font-weight: 500 !important;
+}
+
+/* Error messages - red */
+.table td[style*="color: red"],
+.table td[style*="color: #dc3545"],
+.table td[style*="color: rgb(220, 53, 69)"],
+.text-danger {
+    color: #721c24 !important; /* Darker red for better contrast */
+    background-color: #f8d7da !important;
+    font-weight: 500 !important;
+}
+
+/* Warning messages - yellow/orange */
+.table td[style*="color: orange"],
+.table td[style*="color: #ffc107"],
+.table td[style*="color: rgb(255, 193, 7)"],
+.text-warning {
+    color: #856404 !important; /* Darker yellow for better contrast */
+    background-color: #fff3cd !important;
+    font-weight: 500 !important;
+}
+
+/* Info messages - blue */
+.table td[style*="color: blue"],
+.table td[style*="color: #007bff"],
+.table td[style*="color: rgb(0, 123, 255)"],
+.text-info {
+    color: #004085 !important; /* Darker blue for better contrast */
+    background-color: #d1ecf1 !important;
+    font-weight: 500 !important;
+}
+
+/* Improve readability with zebra striping */
+.table tbody tr:nth-of-type(odd) {
+    background-color: #f8f9fa !important;
+}
+
+.table tbody tr:nth-of-type(even) {
+    background-color: #ffffff !important;
+}
+
+/* Hover effect for better row tracking */
+.table tbody tr:hover {
+    background-color: #e9ecef !important;
+    cursor: pointer;
+}
+
+/* Fix truncated text with ellipsis */
+.table td.truncate,
+.truncate-text {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 200px !important;
+}
+
+/* But for details, we want full text */
+.table td:not(.truncate) {
+    white-space: normal !important;
+    overflow: visible !important;
+}
+
+/* Badges in tables */
+.table .badge {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+    font-weight: 500 !important;
+    display: inline-block !important;
+}
+
+/* Type badges with better colors */
+.badge-success,
+.table .badge-success {
+    background-color: #28a745 !important;
+    color: #ffffff !important;
+}
+
+.badge-danger,
+.table .badge-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+.badge-warning,
+.table .badge-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.badge-info,
+.table .badge-info {
+    background-color: #17a2b8 !important;
+    color: #ffffff !important;
+}
+
+/* Fix inline styles that reduce visibility */
+.table td[style*="font-size: 0.8rem"] {
+    font-size: 0.875rem !important; /* Slightly larger for readability */
+}
+
+/* Ensure all text is visible */
+.table * {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Remove any height constraints that might hide content */
+.table tr,
+.table td {
+    height: auto !important;
+    min-height: 40px !important;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .table {
+        font-size: 0.8rem !important;
+    }
+    
+    .table td,
+    .table th {
+        padding: 0.5rem !important;
+    }
+    
+    /* Stack cells on mobile */
+    .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+}
+
+/* Fix specific log activity table issues */
+.log-attivita table,
+#log-table,
+.activity-log-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+}
+
+/* Ensure JSON content is readable */
+.table td pre,
+.table td code {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 0.8rem !important;
+    background-color: #f8f9fa !important;
+    padding: 0.25rem !important;
+    border-radius: 0.25rem !important;
+}
+
+/* Fix for very long URLs or paths */
+.table td a,
+.table td [href] {
+    word-break: break-all !important;
+    color: #007bff !important;
+    text-decoration: none !important;
+}
+
+.table td a:hover {
+    text-decoration: underline !important;
+}
+
+/* Improve spacing between elements in cells */
+.table td > * + * {
+    margin-top: 0.25rem !important;
+}
+
+/* Fix overflow in parent containers */
+.table-wrapper,
+.table-container,
+.card-body:has(.table) {
+    overflow: visible !important;
+}
+
+/* Ensure table is not cut off */
+.main-content .table,
+.content .table {
+    margin-bottom: 1rem !important;
+}
+
+/* Fix specific inline color styles with poor contrast */
+[style*="color: rgb(108, 117, 125)"] {
+    color: #495057 !important; /* Darker gray */
+}
+
+[style*="color: rgb(23, 162, 184)"] {
+    color: #0c5460 !important; /* Darker cyan */
+}
+
+/* Improve font weight for better readability */
+.table td {
+    font-weight: 400 !important;
+}
+
+.table td strong,
+.table td b {
+    font-weight: 600 !important;
+}
+
+/* Fix table in cards */
+.card .table {
+    margin-bottom: 0 !important;
+}
+
+.card .table td:last-child,
+.card .table th:last-child {
+    border-right: none !important;
+}
+
+/* Pagination controls visibility */
+.pagination {
+    margin-top: 1rem !important;
+}
+
+.pagination .page-link {
+    color: #007bff !important;
+    background-color: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #007bff !important;
+    color: #ffffff !important;
+}
+
+/* Emergency visibility overrides */
+.table,
+.table * {
+    display: revert !important;
+}
+
+.table tr {
+    display: table-row !important;
+}
+
+.table td,
+.table th {
+    display: table-cell !important;
+}
+
+/* Final overrides for maximum visibility */
+html body .table td,
+html body table td {
+    color: #212529 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}

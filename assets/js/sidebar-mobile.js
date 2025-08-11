@@ -1,202 +1,214 @@
 /**
- * Nexio Sidebar Mobile Enhancement
- * JavaScript per la gestione responsive della sidebar
+ * Sidebar Mobile JavaScript
+ * Handles mobile-specific sidebar functionality
  */
 
 (function() {
     'use strict';
-    
-    let sidebarMobileInit = false;
-    
+
+    // Wait for DOM to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+        initSidebarMobile();
+    });
+
     function initSidebarMobile() {
-        if (sidebarMobileInit) return;
-        sidebarMobileInit = true;
-        
-        // Create mobile toggle button
-        const toggleButton = document.createElement('button');
-        toggleButton.className = 'sidebar-mobile-toggle';
-        toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
-        toggleButton.setAttribute('aria-label', 'Toggle Navigation Menu');
-        toggleButton.setAttribute('aria-expanded', 'false');
-        
-        // Create overlay for mobile
-        const overlay = document.createElement('div');
-        overlay.className = 'sidebar-overlay';
-        
-        // Insert elements into DOM
-        document.body.insertBefore(toggleButton, document.body.firstChild);
-        document.body.appendChild(overlay);
-        
-        // Get sidebar element
         const sidebar = document.querySelector('.sidebar');
-        if (!sidebar) {
-            console.warn('Nexio Sidebar: sidebar element not found');
-            return;
-        }
-        
-        // Toggle function
-        function toggleSidebar() {
-            const isOpen = sidebar.classList.contains('sidebar-open');
+        const sidebarToggle = document.querySelector('.sidebar-toggle');
+        const sidebarOverlay = document.querySelector('.sidebar-overlay');
+        const body = document.body;
+
+        // Check if we're on mobile
+        const isMobile = window.innerWidth <= 768;
+
+        if (!sidebar) return;
+
+        // Create overlay if it doesn't exist
+        if (!sidebarOverlay && isMobile) {
+            const overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
             
-            if (isOpen) {
-                closeSidebar();
-            } else {
-                openSidebar();
-            }
+            // Close sidebar when clicking overlay
+            overlay.addEventListener('click', closeSidebar);
         }
-        
-        function openSidebar() {
-            sidebar.classList.add('sidebar-open');
-            overlay.classList.add('show');
-            toggleButton.setAttribute('aria-expanded', 'true');
-            toggleButton.innerHTML = '<i class="fas fa-times"></i>';
-            
-            // Prevent body scroll when sidebar is open on mobile
-            if (window.innerWidth <= 768) {
-                document.body.style.overflow = 'hidden';
-            }
-        }
-        
-        function closeSidebar() {
-            sidebar.classList.remove('sidebar-open');
-            overlay.classList.remove('show');
-            toggleButton.setAttribute('aria-expanded', 'false');
-            toggleButton.innerHTML = '<i class="fas fa-bars"></i>';
-            
-            // Restore body scroll
-            document.body.style.overflow = '';
-        }
-        
-        // Event listeners
-        toggleButton.addEventListener('click', toggleSidebar);
-        overlay.addEventListener('click', closeSidebar);
-        
-        // Close sidebar when clicking on menu items on mobile
-        const menuItems = sidebar.querySelectorAll('.menu-item a');
-        menuItems.forEach(item => {
-            item.addEventListener('click', () => {
-                if (window.innerWidth <= 768) {
-                    closeSidebar();
-                }
-            });
-        });
-        
-        // Handle keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            // Close sidebar with Escape key
-            if (e.key === 'Escape' && sidebar.classList.contains('sidebar-open')) {
-                closeSidebar();
-            }
-            
-            // Toggle sidebar with Ctrl+M
-            if (e.ctrlKey && e.key === 'm') {
+
+        // Toggle sidebar on mobile
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 toggleSidebar();
-            }
-        });
-        
-        // Handle window resize
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            // Rimozione timeout per risposta immediata
-            // Close sidebar on desktop
-            if (window.innerWidth > 768) {
-                closeSidebar();
-                document.body.style.overflow = '';
-            }
-            
-            // Update toggle button visibility
-            updateToggleVisibility();
-        });
-        
-        function updateToggleVisibility() {
-            if (window.innerWidth <= 768) {
-                toggleButton.style.display = 'block';
-            } else {
-                toggleButton.style.display = 'none';
-            }
+            });
         }
-        
-        // Initial setup
-        updateToggleVisibility();
-        
-        // Focus management
-        let lastFocusedElement = null;
-        
-        function trapFocus(element) {
-            const focusableElements = element.querySelectorAll(
-                'a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select'
-            );
-            const firstFocusableElement = focusableElements[0];
-            const lastFocusableElement = focusableElements[focusableElements.length - 1];
-            
-            element.addEventListener('keydown', (e) => {
-                if (e.key === 'Tab') {
-                    if (e.shiftKey) {
-                        if (document.activeElement === firstFocusableElement) {
-                            lastFocusableElement.focus();
-                            e.preventDefault();
-                        }
+
+        // Handle menu item clicks on mobile
+        if (isMobile) {
+            const menuItems = sidebar.querySelectorAll('.menu-item a');
+            menuItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Close sidebar after clicking a menu item on mobile
+                    if (!this.querySelector('.submenu-toggle')) {
+                        closeSidebar();
+                    }
+                });
+            });
+        }
+
+        // Handle submenu toggles
+        const submenuToggles = sidebar.querySelectorAll('.submenu-toggle');
+        submenuToggles.forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const parentItem = this.closest('.menu-item');
+                const submenu = parentItem.querySelector('.submenu');
+                
+                if (submenu) {
+                    parentItem.classList.toggle('expanded');
+                    
+                    if (parentItem.classList.contains('expanded')) {
+                        submenu.style.maxHeight = submenu.scrollHeight + 'px';
                     } else {
-                        if (document.activeElement === lastFocusableElement) {
-                            firstFocusableElement.focus();
-                            e.preventDefault();
-                        }
+                        submenu.style.maxHeight = '0';
                     }
                 }
             });
-        }
-        
-        // Apply focus trap when sidebar is open on mobile
-        toggleButton.addEventListener('click', () => {
-            if (window.innerWidth <= 768 && sidebar.classList.contains('sidebar-open')) {
-                lastFocusedElement = document.activeElement;
+        });
+
+        // Handle window resize
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                handleResize();
+            }, 250);
+        });
+
+        // Functions
+        function toggleSidebar() {
+            body.classList.toggle('sidebar-open');
+            
+            if (body.classList.contains('sidebar-open')) {
+                // Trap focus in sidebar
                 trapFocus(sidebar);
-                
-                // Focus first menu item - timeout rimosso
-                const firstMenuItem = sidebar.querySelector('.menu-item a');
-                if (firstMenuItem) {
-                    firstMenuItem.focus();
-                }
-            } else if (lastFocusedElement) {
-                lastFocusedElement.focus();
-                lastFocusedElement = null;
+            } else {
+                // Release focus trap
+                releaseFocus();
             }
-        });
-        
-        // Smooth scroll for anchor links within sidebar
-        sidebar.addEventListener('click', (e) => {
-            const link = e.target.closest('a[href^="#"]');
-            if (link) {
-                e.preventDefault();
-                const targetId = link.getAttribute('href').substring(1);
-                const targetElement = document.getElementById(targetId);
-                
-                if (targetElement) {
-                    closeSidebar();
-                    // Rimozione smooth scroll e timeout
-                    targetElement.scrollIntoView({
-                        block: 'start'
-                    });
+        }
+
+        function closeSidebar() {
+            body.classList.remove('sidebar-open');
+            releaseFocus();
+        }
+
+        function openSidebar() {
+            body.classList.add('sidebar-open');
+            trapFocus(sidebar);
+        }
+
+        function handleResize() {
+            const newIsMobile = window.innerWidth <= 768;
+            
+            if (!newIsMobile) {
+                // Desktop view - remove mobile-specific classes
+                body.classList.remove('sidebar-open');
+                releaseFocus();
+            }
+        }
+
+        // Focus trap for accessibility
+        let focusableElements = [];
+        let firstFocusableElement = null;
+        let lastFocusableElement = null;
+
+        function trapFocus(element) {
+            const focusableSelectors = 'a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select';
+            focusableElements = element.querySelectorAll(focusableSelectors);
+            focusableElements = Array.prototype.slice.call(focusableElements);
+
+            firstFocusableElement = focusableElements[0];
+            lastFocusableElement = focusableElements[focusableElements.length - 1];
+
+            element.addEventListener('keydown', trapFocusHandler);
+            
+            // Focus first element
+            if (firstFocusableElement) {
+                firstFocusableElement.focus();
+            }
+        }
+
+        function releaseFocus() {
+            if (sidebar) {
+                sidebar.removeEventListener('keydown', trapFocusHandler);
+            }
+        }
+
+        function trapFocusHandler(e) {
+            if (e.key === 'Tab') {
+                if (e.shiftKey) {
+                    // Shift + Tab
+                    if (document.activeElement === firstFocusableElement) {
+                        lastFocusableElement.focus();
+                        e.preventDefault();
+                    }
+                } else {
+                    // Tab
+                    if (document.activeElement === lastFocusableElement) {
+                        firstFocusableElement.focus();
+                        e.preventDefault();
+                    }
                 }
             }
-        });
-        
-        console.log('Nexio Sidebar: Mobile enhancement initialized');
+
+            // Close on Escape
+            if (e.key === 'Escape') {
+                closeSidebar();
+            }
+        }
+
+        // Swipe gestures for mobile
+        if (isMobile && 'ontouchstart' in window) {
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            document.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+            }, false);
+
+            document.addEventListener('touchend', function(e) {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }, false);
+
+            function handleSwipe() {
+                const swipeThreshold = 50;
+                const swipeDistance = touchEndX - touchStartX;
+
+                if (Math.abs(swipeDistance) > swipeThreshold) {
+                    if (swipeDistance > 0 && touchStartX < 20) {
+                        // Swipe right from left edge - open sidebar
+                        openSidebar();
+                    } else if (swipeDistance < 0 && body.classList.contains('sidebar-open')) {
+                        // Swipe left - close sidebar
+                        closeSidebar();
+                    }
+                }
+            }
+        }
     }
-    
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initSidebarMobile);
-    } else {
-        initSidebarMobile();
-    }
-    
-    // Export for manual initialization if needed
-    window.NexioSidebar = {
-        init: initSidebarMobile,
-        initialized: () => sidebarMobileInit
+
+    // Export for use in other scripts if needed
+    window.SidebarMobile = {
+        toggle: function() {
+            document.body.classList.toggle('sidebar-open');
+        },
+        close: function() {
+            document.body.classList.remove('sidebar-open');
+        },
+        open: function() {
+            document.body.classList.add('sidebar-open');
+        }
     };
-    
+
 })();

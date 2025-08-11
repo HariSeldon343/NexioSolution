@@ -77,10 +77,22 @@ try {
     ]);
     
     // Prepara headers per download
-    $fileName = $document['titolo'];
-    $ext = pathinfo($document['file_path'], PATHINFO_EXTENSION);
-    if ($ext) {
-        $fileName .= '.' . $ext;
+    // Usa il nome del file originale se presente nel path, altrimenti usa il titolo
+    $originalFileName = basename($document['file_path']);
+    // Se il nome del file inizia con un hash (es: 6896de9806735_), rimuovilo
+    if (preg_match('/^[a-f0-9]+_(.+)$/', $originalFileName, $matches)) {
+        $fileName = $matches[1];
+    } else {
+        // Fallback: usa il nome del file così com'è o costruiscilo dal titolo
+        if (pathinfo($originalFileName, PATHINFO_EXTENSION)) {
+            $fileName = $originalFileName;
+        } else {
+            $fileName = $document['titolo'];
+            $ext = pathinfo($document['file_path'], PATHINFO_EXTENSION);
+            if ($ext) {
+                $fileName .= '.' . $ext;
+            }
+        }
     }
     
     $fileSize = filesize($filePath);

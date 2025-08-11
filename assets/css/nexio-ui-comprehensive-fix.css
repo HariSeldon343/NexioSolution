@@ -1,0 +1,427 @@
+/**
+ * Nexio Platform Comprehensive UI Fixes
+ * Addresses all critical UI issues identified
+ * Date: 2025-08-11
+ */
+
+/* ========================================
+   1. SIDEBAR FIXES
+   ======================================== */
+
+/* Fix sidebar header background and text colors */
+.sidebar-header {
+    background: #162d4f !important;
+    padding: 1.5rem !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+/* Make logo larger with transparent background */
+.sidebar-logo img,
+.logo-wrapper img {
+    width: 48px !important;  /* Increased from 32px */
+    height: 48px !important; /* Increased from 32px */
+    border-radius: 8px !important;
+    background: transparent !important; /* Transparent background */
+    padding: 0 !important; /* Remove padding to show full logo */
+    filter: brightness(0) invert(1); /* Make SVG white */
+}
+
+/* Ensure sidebar header text is white */
+.sidebar-logo-text {
+    color: white !important;
+}
+
+.logo-title {
+    color: white !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+}
+
+.logo-motto {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 0.7rem !important;
+    display: block;
+    margin-top: 2px;
+}
+
+/* Remove all menu separators */
+.menu-separator {
+    display: none !important;
+}
+
+/* ========================================
+   2. USER NAME DISPLAY FIX
+   ======================================== */
+
+.user-name {
+    font-weight: 500 !important;
+    font-size: 0.95rem !important;
+    color: white !important;
+    margin-bottom: 0.25rem !important;
+    line-height: 1.3 !important;
+    max-width: 140px !important; /* Ensure text doesn't overflow */
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.user-details {
+    flex: 1 !important;
+    min-width: 0 !important; /* Allow flex item to shrink */
+    padding-right: 8px !important;
+}
+
+.user-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    color: white !important;
+    padding: 0.75rem 0 !important;
+    position: relative !important;
+}
+
+/* ========================================
+   3. CALENDAR UI FIXES
+   ======================================== */
+
+/* Fix badge text colors to white */
+.badge,
+.calendar-badge,
+.event-badge,
+.task-badge {
+    color: white !important;
+}
+
+.badge-primary,
+.badge-info,
+.badge-success,
+.badge-warning,
+.badge-danger {
+    color: white !important;
+}
+
+/* Fix calendar month header text color */
+.calendar-header,
+.calendar-month-header,
+.month-header,
+.fc-toolbar-title {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+}
+
+/* Fix calendar day headers */
+.calendar-day-header,
+.fc-col-header-cell {
+    color: #475569 !important;
+    font-weight: 500 !important;
+}
+
+/* Change "Assegna Task" button color */
+.btn-assign-task,
+button:contains("Assegna Task"),
+.calendar-actions .btn-success {
+    background-color: #3b82f6 !important; /* Blue instead of green */
+    border-color: #3b82f6 !important;
+    color: white !important;
+}
+
+.btn-assign-task:hover,
+button:contains("Assegna Task"):hover,
+.calendar-actions .btn-success:hover {
+    background-color: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+/* Calendar event colors with white text */
+.calendar-event,
+.fc-event {
+    color: white !important;
+}
+
+.calendar-event-title,
+.fc-event-title {
+    color: white !important;
+}
+
+/* ========================================
+   4. TICKET & LOG ENHANCEMENTS
+   ======================================== */
+
+/* Style for expandable log details */
+.log-item {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.log-item:hover {
+    background-color: #f8f9fa;
+}
+
+.log-details {
+    display: none;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-left: 3px solid #0d6efd;
+    margin-top: 10px;
+    border-radius: 4px;
+}
+
+.log-details.expanded {
+    display: block;
+}
+
+.log-details-content {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.log-download-btn {
+    margin-top: 10px;
+}
+
+/* Delete button for closed tickets (super admin only) */
+.ticket-delete-btn {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+    padding: 5px 10px;
+    font-size: 0.875rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ticket-delete-btn:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+}
+
+body.super-admin .ticket-closed .ticket-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* ========================================
+   5. GENERAL UI IMPROVEMENTS
+   ======================================== */
+
+/* Ensure all icons are visible */
+.fas, .far, .fab {
+    display: inline-block !important;
+    font-style: normal !important;
+    font-variant: normal !important;
+    text-rendering: auto !important;
+    -webkit-font-smoothing: antialiased !important;
+}
+
+/* Fix dropdown menus in sidebar */
+.sidebar .dropdown-menu {
+    background-color: #1e293b !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+.sidebar .dropdown-item {
+    color: rgba(255,255,255,0.8) !important;
+}
+
+.sidebar .dropdown-item:hover {
+    background-color: rgba(255,255,255,0.1) !important;
+    color: white !important;
+}
+
+/* Fix button group styling */
+.btn-group .btn {
+    border-radius: 0 !important;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 4px !important;
+    border-bottom-left-radius: 4px !important;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 4px !important;
+    border-bottom-right-radius: 4px !important;
+}
+
+/* ========================================
+   6. TABLE IMPROVEMENTS
+   ======================================== */
+
+/* Ensure table text is readable */
+.table th {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+    background-color: #f8fafc !important;
+}
+
+.table td {
+    color: #475569 !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f1f5f9 !important;
+}
+
+/* ========================================
+   7. FORM IMPROVEMENTS
+   ======================================== */
+
+/* Ensure form labels are visible */
+.form-label {
+    color: #1e293b !important;
+    font-weight: 500 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.form-control,
+.form-select {
+    border-color: #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
+}
+
+/* ========================================
+   8. CARD IMPROVEMENTS
+   ======================================== */
+
+.card-header {
+    background-color: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #1e293b !important;
+    font-weight: 600 !important;
+}
+
+.card-body {
+    color: #475569 !important;
+}
+
+/* ========================================
+   9. RESPONSIVE FIXES
+   ======================================== */
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    .mobile-menu-toggle {
+        display: block !important;
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1001;
+        background: #162d4f;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-menu-toggle {
+        display: none !important;
+    }
+}
+
+/* ========================================
+   10. ANIMATION IMPROVEMENTS
+   ======================================== */
+
+/* Smooth transitions for interactive elements */
+.btn,
+.menu-item,
+.dropdown-item,
+.form-control,
+.card {
+    transition: all 0.2s ease !important;
+}
+
+/* Loading spinner */
+.spinner-border {
+    color: #3b82f6 !important;
+}
+
+/* ========================================
+   11. ACCESSIBILITY IMPROVEMENTS
+   ======================================== */
+
+/* Focus styles */
+*:focus {
+    outline: 2px solid #3b82f6 !important;
+    outline-offset: 2px !important;
+}
+
+button:focus,
+a:focus {
+    outline: 2px solid #3b82f6 !important;
+    outline-offset: 2px !important;
+}
+
+/* Skip to content link */
+.skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #162d4f;
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 100;
+}
+
+.skip-to-content:focus {
+    top: 0;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .sidebar {
+        border-right: 2px solid white !important;
+    }
+    
+    .card {
+        border: 2px solid #1e293b !important;
+    }
+}
+
+/* ========================================
+   12. PRINT STYLES
+   ======================================== */
+
+@media print {
+    .sidebar,
+    .mobile-menu-toggle,
+    .btn-group,
+    .dropdown {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    .card {
+        break-inside: avoid;
+    }
+}

@@ -1,0 +1,395 @@
+/* ========================================
+   NEXIO URGENT FIXES - Correzioni Critiche
+   ======================================== */
+
+/* 1. FIX USER INFO SIDEBAR - Testo bianco su sfondo scuro */
+.sidebar-footer .user-info {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    padding: 1rem !important;
+    margin: 0.75rem !important;
+}
+
+.sidebar-footer .user-avatar {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+}
+
+.sidebar-footer .user-name {
+    color: white !important;
+    font-size: 0.875rem !important;
+}
+
+.sidebar-footer .user-role {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 0.75rem !important;
+}
+
+.sidebar-footer .btn-icon {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.sidebar-footer .btn-icon:hover {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 2. FIX SELECT DROPDOWN - Opzioni visibili */
+select.form-control {
+    border: 1.5px solid #94a3b8 !important;
+    background-color: white !important;
+    color: #1e293b !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+}
+
+select.form-control:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+select.form-control option {
+    background-color: white !important;
+    color: #1e293b !important;
+    padding: 0.5rem !important;
+}
+
+select.form-control option:hover {
+    background-color: #f1f5f9 !important;
+}
+
+/* Fix per il select azienda_filter specifico */
+select[name="azienda_filter"] {
+    border: 2px solid #94a3b8 !important;
+    background-color: white !important;
+    color: #1e293b !important;
+}
+
+select[name="azienda_filter"] option {
+    background-color: white !important;
+    color: #1e293b !important;
+    padding: 8px !important;
+    line-height: 1.5 !important;
+}
+
+/* 3. AZIENDA CARDS - Dimensioni ridotte */
+.azienda-card {
+    padding: 1.25rem !important;
+    margin-bottom: 1rem !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    background: white !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.azienda-card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Logo azienda più piccolo */
+.azienda-card > div:first-child > div:first-child > div[style*="width: 50px"] {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 1rem !important;
+}
+
+/* Titolo azienda più piccolo */
+.azienda-title {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+}
+
+/* Stats più compatte */
+.azienda-stats {
+    padding-top: 0.75rem !important;
+    margin-top: 0.75rem !important;
+    border-top: 1px solid #f1f5f9 !important;
+}
+
+.azienda-stat-value {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+}
+
+.azienda-stat-label {
+    font-size: 0.75rem !important;
+}
+
+/* Bottoni azienda più piccoli e flat */
+.azienda-card .btn {
+    padding: 0.5rem 1rem !important;
+    border-radius: 6px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    background-image: none !important;
+}
+
+.azienda-card a[href*="view"] {
+    background: #2563eb !important;
+    color: white !important;
+    box-shadow: none !important;
+}
+
+.azienda-card a[href*="edit"] {
+    background: white !important;
+    color: #2563eb !important;
+    border: 1px solid #2563eb !important;
+    box-shadow: none !important;
+}
+
+.azienda-card button[onclick*="Delete"] {
+    background: #dc2626 !important;
+    color: white !important;
+    box-shadow: none !important;
+}
+
+/* 4. USER ACTIONS RESPONSIVE */
+.user-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.25rem !important;
+    justify-content: flex-end !important;
+}
+
+.user-actions .btn {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    border-radius: 4px !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .user-actions {
+        justify-content: center !important;
+        margin-top: 0.5rem !important;
+    }
+    
+    .user-actions .btn {
+        flex: 1 !important;
+        min-width: 40px !important;
+        max-width: 60px !important;
+    }
+}
+
+/* Tablet responsive */
+@media (max-width: 1024px) {
+    .user-actions {
+        gap: 0.5rem !important;
+    }
+}
+
+/* 5. RESPONSIVE TABLES */
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    table {
+        min-width: 600px !important;
+    }
+    
+    /* Stack user info vertically on mobile */
+    td.user-name {
+        display: block !important;
+        margin-bottom: 0.25rem !important;
+    }
+    
+    td .user-email {
+        display: block !important;
+        font-size: 0.75rem !important;
+    }
+}
+
+/* 6. GLOBAL RESPONSIVE TYPOGRAPHY */
+html {
+    font-size: 16px;
+}
+
+@media (max-width: 768px) {
+    html {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    html {
+        font-size: 13px;
+    }
+}
+
+/* Responsive font sizes using rem */
+h1 { font-size: clamp(1.5rem, 4vw, 2.25rem) !important; }
+h2 { font-size: clamp(1.25rem, 3.5vw, 1.875rem) !important; }
+h3 { font-size: clamp(1.125rem, 3vw, 1.5rem) !important; }
+p { font-size: clamp(0.875rem, 2vw, 1rem) !important; }
+
+/* 7. RESPONSIVE CONTAINERS */
+.container, .container-fluid {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+@media (min-width: 768px) {
+    .container, .container-fluid {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .container, .container-fluid {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+}
+
+/* 8. RESPONSIVE CARDS GRID */
+.aziende-grid, .cards-grid {
+    display: grid !important;
+    gap: 1rem !important;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+}
+
+@media (max-width: 640px) {
+    .aziende-grid, .cards-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* 9. RESPONSIVE BUTTONS */
+.btn {
+    font-size: clamp(0.75rem, 2vw, 0.875rem) !important;
+    padding: clamp(0.375rem, 1vw, 0.5rem) clamp(0.75rem, 2vw, 1rem) !important;
+}
+
+@media (max-width: 480px) {
+    .btn-group {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+    
+    .btn-group .btn {
+        width: 100% !important;
+    }
+}
+
+/* 10. RESPONSIVE MODALS */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0 !important;
+        max-width: 100% !important;
+        height: 100% !important;
+    }
+    
+    .modal-content {
+        height: 100% !important;
+        border-radius: 0 !important;
+    }
+}
+
+/* 11. RESPONSIVE IMAGES */
+img {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+/* 12. RESPONSIVE SIDEBAR */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed !important;
+        left: -280px !important;
+        transition: left 0.3s ease !important;
+        z-index: 9999 !important;
+    }
+    
+    .sidebar.active {
+        left: 0 !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        padding: 1rem !important;
+    }
+    
+    /* Show mobile menu toggle */
+    .mobile-menu-toggle {
+        display: block !important;
+        position: fixed !important;
+        top: 1rem !important;
+        left: 1rem !important;
+        z-index: 10000 !important;
+        background: #2563eb !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.5rem !important;
+        border-radius: 4px !important;
+    }
+}
+
+@media (min-width: 769px) {
+    .mobile-menu-toggle {
+        display: none !important;
+    }
+}
+
+/* 13. TOUCH FRIENDLY */
+@media (hover: none) and (pointer: coarse) {
+    .btn, a, button {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+    
+    input, select, textarea {
+        min-height: 44px !important;
+        font-size: 16px !important; /* Previene zoom su iOS */
+    }
+}
+
+/* 14. LANDSCAPE MOBILE */
+@media (max-width: 812px) and (orientation: landscape) {
+    .sidebar {
+        overflow-y: auto !important;
+    }
+    
+    .page-header {
+        padding: 0.5rem 1rem !important;
+    }
+    
+    .stat-card {
+        padding: 0.75rem !important;
+    }
+}
+
+/* 15. HIGH DPI DISPLAYS */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* Bordi più sottili su schermi retina */
+    * {
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
+    }
+    
+    .btn, .card, input, select {
+        border-width: 0.5px !important;
+    }
+}
+
+/* 16. PRINT STYLES */
+@media print {
+    .sidebar, .mobile-menu-toggle, .btn-group, .user-actions {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+}

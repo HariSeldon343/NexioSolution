@@ -3,6 +3,9 @@
  * Vista calendario settimanale
  */
 
+// Include calendar helper
+require_once 'backend/utils/CalendarHelper.php';
+
 // Calcola date della settimana
 $currentDate = strtotime($date);
 $startWeek = strtotime('monday this week', $currentDate);

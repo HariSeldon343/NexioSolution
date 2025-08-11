@@ -415,6 +415,7 @@ include 'components/header.php';
                 <label for="ruolo">Ruolo Sistema <span class="required">*</span></label>
                 <select name="ruolo" id="ruolo" class="form-control" required>
                     <option value="utente" <?php echo $utente['ruolo'] == 'utente' ? 'selected' : ''; ?>>Utente</option>
+                    <option value="utente_speciale" <?php echo $utente['ruolo'] == 'utente_speciale' ? 'selected' : ''; ?>>Utente Speciale</option>
                     <option value="super_admin" <?php echo $utente['ruolo'] == 'super_admin' ? 'selected' : ''; ?>>Super Admin</option>
                 </select>
             </div>
@@ -478,8 +479,8 @@ include 'components/header.php';
                         <label>Ruolo nell'azienda</label>
                         <select name="ruolo_azienda[<?php echo $azienda['id']; ?>]" class="form-control">
                             <option value="utente" <?php echo ($ua_data['ruolo_azienda'] ?? '') == 'utente' ? 'selected' : ''; ?>>Utente</option>
-                            <option value="admin" <?php echo ($ua_data['ruolo_azienda'] ?? '') == 'admin' ? 'selected' : ''; ?>>Amministratore</option>
-                            <option value="proprietario" <?php echo ($ua_data['ruolo_azienda'] ?? '') == 'proprietario' ? 'selected' : ''; ?>>Proprietario</option>
+                            <option value="referente" <?php echo ($ua_data['ruolo_azienda'] ?? '') == 'referente' ? 'selected' : ''; ?>>Referente</option>
+                            <option value="responsabile_aziendale" <?php echo ($ua_data['ruolo_azienda'] ?? '') == 'responsabile_aziendale' ? 'selected' : ''; ?>>Responsabile Aziendale</option>
                         </select>
                     </div>
                     

@@ -1,0 +1,272 @@
+/**
+ * Log Details Expandable Panel Fix
+ * Fixes readability and layout issues for log details
+ * Created: 2025-08-11
+ */
+
+/* Main details container - override narrow width */
+.log-details {
+    display: none;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 20px !important;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border-left: 4px solid #3b82f6 !important;
+    margin-top: 15px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.log-details.expanded {
+    display: block !important;
+}
+
+/* Grid layout for details - make it spacious and responsive */
+.log-details-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 16px !important;
+    padding: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+
+/* Each detail item */
+.log-details-item {
+    display: flex !important;
+    flex-direction: column !important;
+    background: white !important;
+    padding: 15px !important;
+    border-radius: 6px !important;
+    border: 1px solid #e2e8f0 !important;
+    transition: all 0.2s ease !important;
+}
+
+.log-details-item:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Labels */
+.log-details-label {
+    font-weight: 600 !important;
+    color: #475569 !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+}
+
+/* Values */
+.log-details-value {
+    color: #1e293b !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    word-wrap: break-word !important;
+    display: block !important;
+}
+
+/* Special styling for different types of content */
+
+/* Date and time display */
+.log-details-value .log-date {
+    font-weight: 500 !important;
+    color: #1e293b !important;
+    font-size: 14px !important;
+}
+
+.log-details-value .log-time {
+    color: #64748b !important;
+    font-size: 13px !important;
+    margin-top: 4px !important;
+}
+
+/* User info */
+.log-details-value .user-info-cell {
+    background: #f8fafc !important;
+    padding: 10px !important;
+    border-radius: 4px !important;
+    border-left: 3px solid #3b82f6 !important;
+}
+
+.log-details-value .user-name {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    margin-bottom: 4px !important;
+    word-wrap: break-word !important;
+    max-width: none !important;
+}
+
+.log-details-value .user-email {
+    color: #64748b !important;
+    font-size: 13px !important;
+}
+
+/* Entity type badges */
+.log-details-value .entity-type {
+    display: inline-block !important;
+    padding: 6px 12px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.log-details-value .entity-type.accesso {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+}
+
+.log-details-value .entity-type.utente {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+    color: white !important;
+}
+
+.log-details-value .entity-type.documento {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+    color: white !important;
+}
+
+.log-details-value .entity-type.sistema {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+    color: white !important;
+}
+
+/* Action badges */
+.log-details-value .action-badge {
+    display: inline-block !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.log-details-value .action-badge.login {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+}
+
+.log-details-value .action-badge.logout {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%) !important;
+    color: #7c2d12 !important;
+}
+
+.log-details-value .action-badge.create {
+    background: linear-gradient(135deg, #81fbb8 0%, #28c76f 100%) !important;
+    color: white !important;
+}
+
+.log-details-value .action-badge.update {
+    background: linear-gradient(135deg, #5ee7df 0%, #66a6ff 100%) !important;
+    color: white !important;
+}
+
+.log-details-value .action-badge.delete {
+    background: linear-gradient(135deg, #f77062 0%, #fe5196 100%) !important;
+    color: white !important;
+}
+
+/* Details content */
+.log-details-value .detail-row {
+    padding: 8px 12px !important;
+    background: #f8fafc !important;
+    border-radius: 4px !important;
+    margin-bottom: 6px !important;
+    border-left: 2px solid #cbd5e1 !important;
+}
+
+.log-details-value .detail-row strong {
+    color: #475569 !important;
+    font-weight: 600 !important;
+    margin-right: 8px !important;
+}
+
+/* IP info */
+.log-details-value .ip-info {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 12px !important;
+    background: #fef3c7 !important;
+    border-radius: 4px !important;
+    margin-top: 8px !important;
+    font-size: 13px !important;
+    color: #92400e !important;
+}
+
+.log-details-value .ip-info i {
+    color: #f59e0b !important;
+}
+
+/* Make specific items full width for better readability on wide screens */
+@media (min-width: 1400px) {
+    .log-details-item:has(.details-cell),
+    .log-details-item:nth-child(5) {
+        grid-column: span 2 !important;
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .log-details-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .log-details-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Animation for expanding */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.log-details.expanded {
+    animation: slideDown 0.3s ease !important;
+}
+
+/* Close button styling if exists */
+.log-details .close-details {
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    background: white !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+}
+
+.log-details .close-details:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* Override any conflicting styles */
+.log-details * {
+    max-width: none !important;
+}
+
+/* Ensure proper spacing between sections */
+.log-details-grid > .log-details-item:last-child {
+    margin-bottom: 0 !important;
+}

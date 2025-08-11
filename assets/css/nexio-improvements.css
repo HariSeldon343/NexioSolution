@@ -1,0 +1,420 @@
+/* ========================================
+   NEXIO - MIGLIORAMENTI INCREMENTALI
+   Aggiunti sopra al design esistente
+   NON sostituisce nulla, solo migliora
+   ======================================== */
+
+/* ========================================
+   MIGLIORAMENTI TIPOGRAFIA
+   ======================================== */
+
+/* Migliora leggibilità generale */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Migliora spacing dei titoli nelle card */
+.card h3,
+.card h4,
+.card h5 {
+    margin-top: 0;
+    line-height: 1.3;
+}
+
+/* ========================================
+   MIGLIORAMENTI CARDS (conservativi)
+   ======================================== */
+
+/* Migliora le card esistenti con transizioni più smooth */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Hover più delicato per le card */
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Migliora stat cards con bordi più sottili */
+.stat-card {
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    transition: all 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+    border-color: rgba(37, 99, 235, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Icone stat card più pulite */
+.stat-card .stat-icon {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.05);
+}
+
+/* ========================================
+   MIGLIORAMENTI SIDEBAR (minimali)
+   ======================================== */
+
+/* Transizioni più smooth per menu items */
+.sidebar .menu-item {
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
+/* Indicatore attivo più sottile */
+.sidebar .menu-item.active::before {
+    width: 3px;
+    box-shadow: none;
+}
+
+/* User info migliorata */
+.sidebar .user-info {
+    transition: background 0.2s ease;
+}
+
+.sidebar .user-info:hover {
+    background: rgba(255,255,255,0.08);
+    cursor: pointer;
+}
+
+/* ========================================
+   MIGLIORAMENTI BOTTONI
+   ======================================== */
+
+/* Rimuovi gradienti dai bottoni per un look più moderno */
+.btn-primary {
+    background: #2563eb !important;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2) !important;
+}
+
+.btn-primary:hover {
+    background: #1e40af !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+}
+
+.btn-success {
+    background: #10b981 !important;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.2) !important;
+}
+
+.btn-success:hover {
+    background: #059669 !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+.btn-danger {
+    background: #ef4444 !important;
+    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+.btn-danger:hover {
+    background: #dc2626 !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+.btn-warning {
+    background: #f59e0b !important;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2) !important;
+}
+
+.btn-warning:hover {
+    background: #d97706 !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Bottoni con transizioni più smooth */
+.btn {
+    transition: all 0.15s ease-in-out !important;
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+/* ========================================
+   MIGLIORAMENTI TABELLE
+   ======================================== */
+
+/* Header tabella più pulito */
+.table thead th {
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* Righe tabella con hover più sottile */
+.table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* Celle con padding migliore */
+.table td,
+.table th {
+    padding: 0.875rem 1rem;
+}
+
+/* ========================================
+   MIGLIORAMENTI FORM
+   ======================================== */
+
+/* Input focus più moderno */
+.form-control:focus,
+.form-select:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Labels più leggibili */
+.form-label {
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 0.375rem;
+}
+
+/* Placeholder più sottili */
+.form-control::placeholder {
+    color: #94a3b8;
+    opacity: 0.7;
+}
+
+/* ========================================
+   MIGLIORAMENTI BADGES
+   ======================================== */
+
+/* Badges più moderni */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.025em;
+    padding: 0.25rem 0.625rem;
+}
+
+/* ========================================
+   MIGLIORAMENTI ALERTS
+   ======================================== */
+
+/* Alerts con bordi più sottili */
+.alert {
+    border-left: 4px solid currentColor;
+    background-color: rgba(255,255,255,0.9);
+}
+
+.alert-success {
+    border-left-color: #10b981;
+    background: #f0fdf4;
+    color: #065f46;
+}
+
+.alert-danger {
+    border-left-color: #ef4444;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.alert-warning {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.alert-info {
+    border-left-color: #3b82f6;
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+/* ========================================
+   MIGLIORAMENTI PAGE HEADER
+   ======================================== */
+
+/* Page header senza gradiente eccessivo */
+.page-header {
+    background: #2563eb !important;
+    position: relative;
+}
+
+/* Overlay pattern sottile */
+.page-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+}
+
+.page-header h1,
+.page-header .page-subtitle {
+    position: relative;
+    z-index: 1;
+}
+
+/* ========================================
+   MIGLIORAMENTI MODALI
+   ======================================== */
+
+/* Modal con animazione più smooth */
+.modal.fade .modal-dialog {
+    transition: transform 0.2s ease-out;
+}
+
+.modal-content {
+    border: 1px solid #e2e8f0;
+}
+
+.modal-header {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-footer {
+    border-top: 1px solid #e2e8f0;
+}
+
+/* ========================================
+   MIGLIORAMENTI SCROLLBAR
+   ======================================== */
+
+/* Scrollbar più sottile e moderna */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ========================================
+   UTILITIES AGGIUNTIVE
+   ======================================== */
+
+/* Ombre più sottili */
+.shadow-subtle {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.shadow-soft {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+/* Bordi più puliti */
+.border-subtle {
+    border: 1px solid #e2e8f0;
+}
+
+/* Animazioni più smooth */
+.transition-fast {
+    transition: all 0.15s ease-in-out;
+}
+
+.transition-medium {
+    transition: all 0.2s ease-in-out;
+}
+
+.transition-slow {
+    transition: all 0.3s ease-in-out;
+}
+
+/* ========================================
+   FIXES PER PROBLEMI COMUNI
+   ======================================== */
+
+/* Assicura che il contenuto principale sia visibile */
+.main-content {
+    background: #f8fafc;
+    min-height: 100vh;
+}
+
+/* Fix per cards che potrebbero essere troppo trasparenti */
+.card {
+    background: white;
+}
+
+/* Fix per testi che potrebbero essere poco leggibili */
+.card-title,
+.card-text,
+.card-body {
+    color: #1e293b;
+}
+
+/* Assicura visibilità delle tabelle */
+.table {
+    background: white;
+}
+
+/* ========================================
+   RESPONSIVE IMPROVEMENTS
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Padding ridotto su mobile */
+    .card {
+        padding: 1.25rem !important;
+    }
+    
+    .page-header {
+        padding: 1.5rem !important;
+    }
+    
+    /* Bottoni full width su mobile */
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Stat cards in colonna su mobile */
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* ========================================
+   DARK MODE PREPARATION (futuro)
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+    /* Preparazione per future implementazioni dark mode */
+    /* Non attivo per evitare conflitti */
+}
+
+/* ========================================
+   PRINT IMPROVEMENTS
+   ======================================== */
+
+@media print {
+    /* Rimuovi ombre e bordi non necessari */
+    .card,
+    .btn,
+    .badge {
+        box-shadow: none !important;
+    }
+    
+    /* Assicura che i colori siano stampabili */
+    .bg-primary,
+    .bg-success,
+    .bg-danger,
+    .bg-warning {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

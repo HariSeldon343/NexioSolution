@@ -7,6 +7,7 @@
 require_once '../config/config.php';
 require_once '../config/database.php';
 require_once '../middleware/Auth.php';
+require_once '../utils/ActivityLogger.php';
 
 // Set JSON header
 header('Content-Type: application/json; charset=utf-8');
@@ -69,6 +70,10 @@ function handleGet($action) {
             getFolderTree();
             break;
             
+        case 'download_folder':
+            downloadFolderAsZip();
+            break;
+            
         default:
             throw new Exception('Azione non valida');
     }
@@ -110,6 +115,14 @@ function handlePost($action) {
             renameItem($data);
             break;
             
+        case 'download_multiple':
+            downloadMultipleAsZip();
+            break;
+            
+        case 'delete_multiple':
+            deleteMultipleItems($data);
+            break;
+            
         default:
             throw new Exception('Azione non valida');
     }
@@ -135,34 +148,42 @@ function listFiles() {
             if ($folderId) {
                 $folders = db_query("
                     SELECT c.*, 
+                           a.nome as azienda_nome,
                            (SELECT COUNT(*) FROM cartelle c2 WHERE c2.parent_id = c.id) +
                            (SELECT COUNT(*) FROM documenti d WHERE d.cartella_id = c.id) as count
                     FROM cartelle c 
+                    LEFT JOIN aziende a ON c.azienda_id = a.id
                     WHERE c.parent_id = ?
                     ORDER BY c.nome", [$folderId])->fetchAll();
                 
                 $files = db_query("
-                    SELECT id, titolo as nome, mime_type, tipo_documento, 
-                           COALESCE(dimensione_file, file_size, 0) as dimensione_file
-                    FROM documenti 
-                    WHERE cartella_id = ?
-                    ORDER BY titolo", [$folderId])->fetchAll();
+                    SELECT d.id, d.titolo as nome, d.mime_type, d.tipo_documento, 
+                           COALESCE(d.dimensione_file, d.file_size, 0) as dimensione_file,
+                           d.azienda_id, a.nome as azienda_nome
+                    FROM documenti d
+                    LEFT JOIN aziende a ON d.azienda_id = a.id
+                    WHERE d.cartella_id = ?
+                    ORDER BY d.titolo", [$folderId])->fetchAll();
             } else {
                 // Root folders
                 $folders = db_query("
                     SELECT c.*, 
+                           a.nome as azienda_nome,
                            (SELECT COUNT(*) FROM cartelle c2 WHERE c2.parent_id = c.id) +
                            (SELECT COUNT(*) FROM documenti d WHERE d.cartella_id = c.id) as count
                     FROM cartelle c 
+                    LEFT JOIN aziende a ON c.azienda_id = a.id
                     WHERE c.parent_id IS NULL
                     ORDER BY c.nome")->fetchAll();
                 
                 $files = db_query("
-                    SELECT id, titolo as nome, mime_type, tipo_documento,
-                           COALESCE(dimensione_file, file_size, 0) as dimensione_file
-                    FROM documenti 
-                    WHERE cartella_id IS NULL
-                    ORDER BY titolo")->fetchAll();
+                    SELECT d.id, d.titolo as nome, d.mime_type, d.tipo_documento,
+                           COALESCE(d.dimensione_file, d.file_size, 0) as dimensione_file,
+                           d.azienda_id, a.nome as azienda_nome
+                    FROM documenti d
+                    LEFT JOIN aziende a ON d.azienda_id = a.id
+                    WHERE d.cartella_id IS NULL
+                    ORDER BY d.titolo")->fetchAll();
             }
         } else {
             // Normal users - see only their company files
@@ -173,34 +194,42 @@ function listFiles() {
             if ($folderId) {
                 $folders = db_query("
                     SELECT c.*,
+                           a.nome as azienda_nome,
                            (SELECT COUNT(*) FROM cartelle c2 WHERE c2.parent_id = c.id AND c2.azienda_id = ?) +
                            (SELECT COUNT(*) FROM documenti d WHERE d.cartella_id = c.id AND d.azienda_id = ?) as count
                     FROM cartelle c 
+                    LEFT JOIN aziende a ON c.azienda_id = a.id
                     WHERE c.parent_id = ? AND c.azienda_id = ?
                     ORDER BY c.nome", [$defaultCompanyId, $defaultCompanyId, $folderId, $defaultCompanyId])->fetchAll();
                 
                 $files = db_query("
-                    SELECT id, titolo as nome, mime_type, tipo_documento,
-                           COALESCE(dimensione_file, file_size, 0) as dimensione_file
-                    FROM documenti 
-                    WHERE cartella_id = ? AND azienda_id = ?
-                    ORDER BY titolo", [$folderId, $defaultCompanyId])->fetchAll();
+                    SELECT d.id, d.titolo as nome, d.mime_type, d.tipo_documento,
+                           COALESCE(d.dimensione_file, d.file_size, 0) as dimensione_file,
+                           d.azienda_id, a.nome as azienda_nome
+                    FROM documenti d
+                    LEFT JOIN aziende a ON d.azienda_id = a.id
+                    WHERE d.cartella_id = ? AND d.azienda_id = ?
+                    ORDER BY d.titolo", [$folderId, $defaultCompanyId])->fetchAll();
             } else {
                 // Root folders for company
                 $folders = db_query("
                     SELECT c.*,
+                           a.nome as azienda_nome,
                            (SELECT COUNT(*) FROM cartelle c2 WHERE c2.parent_id = c.id AND c2.azienda_id = ?) +
                            (SELECT COUNT(*) FROM documenti d WHERE d.cartella_id = c.id AND d.azienda_id = ?) as count
                     FROM cartelle c 
+                    LEFT JOIN aziende a ON c.azienda_id = a.id
                     WHERE c.parent_id IS NULL AND c.azienda_id = ?
                     ORDER BY c.nome", [$defaultCompanyId, $defaultCompanyId, $defaultCompanyId])->fetchAll();
                 
                 $files = db_query("
-                    SELECT id, titolo as nome, mime_type, tipo_documento,
-                           COALESCE(dimensione_file, file_size, 0) as dimensione_file
-                    FROM documenti 
-                    WHERE cartella_id IS NULL AND azienda_id = ?
-                    ORDER BY titolo", [$defaultCompanyId])->fetchAll();
+                    SELECT d.id, d.titolo as nome, d.mime_type, d.tipo_documento,
+                           COALESCE(d.dimensione_file, d.file_size, 0) as dimensione_file,
+                           d.azienda_id, a.nome as azienda_nome
+                    FROM documenti d
+                    LEFT JOIN aziende a ON d.azienda_id = a.id
+                    WHERE d.cartella_id IS NULL AND d.azienda_id = ?
+                    ORDER BY d.titolo", [$defaultCompanyId])->fetchAll();
             }
         }
         
@@ -329,6 +358,12 @@ function uploadFiles() {
                     'data_modifica' => date('Y-m-d H:i:s')
                 ]);
                 $uploaded++;
+                
+                // Log activity
+                $logger = ActivityLogger::getInstance();
+                $logger->log('documento', 'upload', db_connection()->lastInsertId(), 
+                    json_encode(['file' => $fileName, 'size' => $fileSize, 'folder_id' => $folderId]));
+                
             } catch (Exception $e) {
                 unlink($targetPath); // Remove file if DB insert fails
                 $errors[] = $fileName . ': Errore database';
@@ -396,6 +431,12 @@ function createFolder($data) {
         'data_modifica' => date('Y-m-d H:i:s')
     ]);
     
+    // Log activity
+    $logger = ActivityLogger::getInstance();
+    $folderId = db_connection()->lastInsertId();
+    $logger->log('cartella', 'creazione', $folderId, 
+        json_encode(['nome' => $name, 'parent_id' => $parentId, 'azienda_id' => $companyId]));
+    
     echo json_encode(['success' => true]);
 }
 
@@ -442,6 +483,11 @@ function deleteItem($data) {
         // Delete folder
         db_delete('cartelle', 'id = ?', [$id]);
         
+        // Log activity
+        $logger = ActivityLogger::getInstance();
+        $logger->log('cartella', 'eliminazione', $id, 
+            json_encode(['nome' => $folder['nome']]));
+        
     } else if ($type === 'file') {
         // Check if file exists and user has access
         if ($isSuperAdmin || $isUtenteSpeciale) {
@@ -465,6 +511,11 @@ function deleteItem($data) {
         
         // Delete from database
         db_delete('documenti', 'id = ?', [$id]);
+        
+        // Log activity
+        $logger = ActivityLogger::getInstance();
+        $logger->log('documento', 'eliminazione', $id, 
+            json_encode(['nome' => $file['titolo']]));
         
     } else {
         throw new Exception('Tipo non valido');
@@ -518,6 +569,11 @@ function renameItem($data) {
         // Update folder name
         db_update('cartelle', ['nome' => $newName, 'data_modifica' => date('Y-m-d H:i:s')], 
             'id = ?', [$id]);
+            
+        // Log activity
+        $logger = ActivityLogger::getInstance();
+        $logger->log('cartella', 'rinomina', $id, 
+            json_encode(['vecchio_nome' => $folder['nome'], 'nuovo_nome' => $newName]));
         
     } else if ($type === 'file') {
         // Check if file exists and user has access
@@ -550,6 +606,11 @@ function renameItem($data) {
         // Update file name
         db_update('documenti', ['titolo' => $newName, 'data_modifica' => date('Y-m-d H:i:s')], 
             'id = ?', [$id]);
+            
+        // Log activity
+        $logger = ActivityLogger::getInstance();
+        $logger->log('documento', 'rinomina', $id, 
+            json_encode(['vecchio_nome' => $file['titolo'], 'nuovo_nome' => $newName]));
         
     } else {
         throw new Exception('Tipo non valido');
@@ -589,9 +650,32 @@ function downloadFile() {
         exit('File fisico non trovato');
     }
     
+    // Log activity
+    $logger = ActivityLogger::getInstance();
+    $logger->log('documento', 'download', $id, 
+        json_encode(['nome' => $file['titolo'], 'size' => filesize($filePath)]));
+    
+    // Prepara il nome del file con estensione corretta
+    $originalFileName = basename($file['file_path']);
+    // Se il nome del file inizia con un hash (es: 6896de9806735_), rimuovilo
+    if (preg_match('/^[a-f0-9]+_(.+)$/', $originalFileName, $matches)) {
+        $fileName = $matches[1];
+    } else {
+        // Usa il nome del file così com'è o costruiscilo dal titolo
+        if (pathinfo($originalFileName, PATHINFO_EXTENSION)) {
+            $fileName = $originalFileName;
+        } else {
+            $fileName = $file['titolo'];
+            $ext = pathinfo($file['file_path'], PATHINFO_EXTENSION);
+            if ($ext) {
+                $fileName .= '.' . $ext;
+            }
+        }
+    }
+    
     // Send file
     header('Content-Type: ' . ($file['mime_type'] ?: 'application/octet-stream'));
-    header('Content-Disposition: attachment; filename="' . $file['titolo'] . '"');
+    header('Content-Disposition: attachment; filename="' . $fileName . '"');
     header('Content-Length: ' . filesize($filePath));
     readfile($filePath);
     exit;
@@ -715,4 +799,318 @@ function buildFolderTree($folders, $parentId) {
     }
     
     return $tree;
+}
+
+/**
+ * Download folder as ZIP
+ */
+function downloadFolderAsZip() {
+    global $isSuperAdmin, $isUtenteSpeciale, $defaultCompanyId;
+    
+    // Check if ZipArchive is available
+    if (!class_exists('ZipArchive')) {
+        http_response_code(503);
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <title>Estensione ZIP non disponibile</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 5px; }
+        .btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="error">
+        <h2>❌ Estensione ZIP non abilitata</h2>
+        <p>La funzionalità di download ZIP richiede l\'estensione PHP Zip che non è attualmente abilitata.</p>
+        <p>Per abilitarla in XAMPP:</p>
+        <ol>
+            <li>Apri C:\\xampp\\php\\php.ini</li>
+            <li>Cerca ";extension=zip"</li>
+            <li>Rimuovi il ";" iniziale</li>
+            <li>Salva e riavvia Apache</li>
+        </ol>
+        <a href="../../enable-zip-extension.php" class="btn">📋 Guida Completa</a>
+        <a href="../../filesystem.php" class="btn">🔙 Torna Indietro</a>
+    </div>
+</body>
+</html>';
+        exit;
+    }
+    
+    $folderId = intval($_GET['id'] ?? 0);
+    if (!$folderId) {
+        http_response_code(404);
+        exit('Cartella non trovata');
+    }
+    
+    // Check folder access
+    if ($isSuperAdmin || $isUtenteSpeciale) {
+        $folder = db_query("SELECT * FROM cartelle WHERE id = ?", [$folderId])->fetch();
+    } else {
+        $folder = db_query("SELECT * FROM cartelle WHERE id = ? AND azienda_id = ?", 
+            [$folderId, $defaultCompanyId])->fetch();
+    }
+    
+    if (!$folder) {
+        http_response_code(404);
+        exit('Cartella non trovata o non accessibile');
+    }
+    
+    // Create temporary ZIP file
+    $zipPath = sys_get_temp_dir() . '/folder_' . $folderId . '_' . time() . '.zip';
+    $zip = new ZipArchive();
+    
+    if ($zip->open($zipPath, ZipArchive::CREATE) !== TRUE) {
+        http_response_code(500);
+        exit('Errore creazione ZIP');
+    }
+    
+    // Add folder contents recursively
+    addFolderToZip($zip, $folderId, $folder['nome']);
+    
+    $zip->close();
+    
+    // Log activity
+    $logger = ActivityLogger::getInstance();
+    $logger->log('cartella', 'download_zip', $folderId, 
+        json_encode(['nome' => $folder['nome'], 'size' => filesize($zipPath)]));
+    
+    // Send ZIP file
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename="' . $folder['nome'] . '.zip"');
+    header('Content-Length: ' . filesize($zipPath));
+    readfile($zipPath);
+    
+    // Clean up
+    unlink($zipPath);
+    exit;
+}
+
+/**
+ * Add folder contents to ZIP recursively
+ */
+function addFolderToZip($zip, $folderId, $folderPath = '') {
+    global $isSuperAdmin, $isUtenteSpeciale, $defaultCompanyId;
+    
+    // Get files in folder
+    if ($isSuperAdmin || $isUtenteSpeciale) {
+        $files = db_query("SELECT * FROM documenti WHERE cartella_id = ?", [$folderId])->fetchAll();
+        $subfolders = db_query("SELECT * FROM cartelle WHERE parent_id = ?", [$folderId])->fetchAll();
+    } else {
+        $files = db_query("SELECT * FROM documenti WHERE cartella_id = ? AND azienda_id = ?", 
+            [$folderId, $defaultCompanyId])->fetchAll();
+        $subfolders = db_query("SELECT * FROM cartelle WHERE parent_id = ? AND azienda_id = ?", 
+            [$folderId, $defaultCompanyId])->fetchAll();
+    }
+    
+    // Add files
+    foreach ($files as $file) {
+        $filePath = UPLOAD_PATH . '/documenti/' . $file['file_path'];
+        if (file_exists($filePath)) {
+            $zipPath = $folderPath . '/' . $file['titolo'];
+            // Add file extension if missing
+            $ext = pathinfo($file['file_path'], PATHINFO_EXTENSION);
+            if ($ext && !preg_match('/\.' . preg_quote($ext, '/') . '$/i', $zipPath)) {
+                $zipPath .= '.' . $ext;
+            }
+            $zip->addFile($filePath, $zipPath);
+        }
+    }
+    
+    // Recursively add subfolders
+    foreach ($subfolders as $subfolder) {
+        $subPath = $folderPath . '/' . $subfolder['nome'];
+        $zip->addEmptyDir($subPath);
+        addFolderToZip($zip, $subfolder['id'], $subPath);
+    }
+}
+
+/**
+ * Download multiple items as ZIP
+ */
+function downloadMultipleAsZip() {
+    global $isSuperAdmin, $isUtenteSpeciale, $defaultCompanyId;
+    
+    // Check if ZipArchive is available
+    if (!class_exists('ZipArchive')) {
+        http_response_code(503);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Estensione ZIP non abilitata. Apri enable-zip-extension.php per le istruzioni.'
+        ]);
+        exit;
+    }
+    
+    // Get selected items from POST
+    $items = json_decode($_POST['items'] ?? '[]', true);
+    
+    if (empty($items)) {
+        http_response_code(400);
+        exit('Nessun elemento selezionato');
+    }
+    
+    // Create temporary ZIP file
+    $zipPath = sys_get_temp_dir() . '/download_' . time() . '_' . uniqid() . '.zip';
+    $zip = new ZipArchive();
+    
+    if ($zip->open($zipPath, ZipArchive::CREATE) !== TRUE) {
+        http_response_code(500);
+        exit('Errore creazione ZIP');
+    }
+    
+    $addedItems = 0;
+    
+    foreach ($items as $item) {
+        $type = $item['type'] ?? '';
+        $id = intval($item['id'] ?? 0);
+        
+        if (!$id) continue;
+        
+        if ($type === 'file') {
+            // Get file
+            if ($isSuperAdmin || $isUtenteSpeciale) {
+                $file = db_query("SELECT * FROM documenti WHERE id = ?", [$id])->fetch();
+            } else {
+                $file = db_query("SELECT * FROM documenti WHERE id = ? AND azienda_id = ?", 
+                    [$id, $defaultCompanyId])->fetch();
+            }
+            
+            if ($file) {
+                $filePath = UPLOAD_PATH . '/documenti/' . $file['file_path'];
+                if (file_exists($filePath)) {
+                    $zipName = $file['titolo'];
+                    // Add file extension if missing
+                    $ext = pathinfo($file['file_path'], PATHINFO_EXTENSION);
+                    if ($ext && !preg_match('/\.' . preg_quote($ext, '/') . '$/i', $zipName)) {
+                        $zipName .= '.' . $ext;
+                    }
+                    $zip->addFile($filePath, $zipName);
+                    $addedItems++;
+                }
+            }
+        } else if ($type === 'folder') {
+            // Get folder
+            if ($isSuperAdmin || $isUtenteSpeciale) {
+                $folder = db_query("SELECT * FROM cartelle WHERE id = ?", [$id])->fetch();
+            } else {
+                $folder = db_query("SELECT * FROM cartelle WHERE id = ? AND azienda_id = ?", 
+                    [$id, $defaultCompanyId])->fetch();
+            }
+            
+            if ($folder) {
+                $zip->addEmptyDir($folder['nome']);
+                addFolderToZip($zip, $id, $folder['nome']);
+                $addedItems++;
+            }
+        }
+    }
+    
+    $zip->close();
+    
+    if ($addedItems === 0) {
+        unlink($zipPath);
+        http_response_code(404);
+        exit('Nessun file trovato');
+    }
+    
+    // Log activity
+    $logger = ActivityLogger::getInstance();
+    $logger->log('sistema', 'download_multiplo', null, 
+        json_encode(['items' => count($items), 'size' => filesize($zipPath)]));
+    
+    // Send ZIP file
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename="download_' . date('Y-m-d_H-i-s') . '.zip"');
+    header('Content-Length: ' . filesize($zipPath));
+    readfile($zipPath);
+    
+    // Clean up
+    unlink($zipPath);
+    exit;
+}
+
+/**
+ * Delete multiple items
+ */
+function deleteMultipleItems($data) {
+    global $userId, $isSuperAdmin, $isUtenteSpeciale, $defaultCompanyId;
+    
+    $items = $data['items'] ?? [];
+    $deleted = 0;
+    $errors = [];
+    
+    $logger = ActivityLogger::getInstance();
+    
+    foreach ($items as $item) {
+        $type = $item['type'] ?? '';
+        $id = intval($item['id'] ?? 0);
+        
+        if (!$id) continue;
+        
+        try {
+            if ($type === 'folder') {
+                // Check folder
+                if ($isSuperAdmin || $isUtenteSpeciale) {
+                    $folder = db_query("SELECT * FROM cartelle WHERE id = ?", [$id])->fetch();
+                } else {
+                    $folder = db_query("SELECT * FROM cartelle WHERE id = ? AND azienda_id = ?", 
+                        [$id, $defaultCompanyId])->fetch();
+                }
+                
+                if ($folder) {
+                    // Check if empty
+                    $hasSubfolders = db_query("SELECT COUNT(*) as cnt FROM cartelle WHERE parent_id = ?", 
+                        [$id])->fetch()['cnt'] > 0;
+                    $hasFiles = db_query("SELECT COUNT(*) as cnt FROM documenti WHERE cartella_id = ?", 
+                        [$id])->fetch()['cnt'] > 0;
+                    
+                    if ($hasSubfolders || $hasFiles) {
+                        $errors[] = "Cartella '{$folder['nome']}' non vuota";
+                        continue;
+                    }
+                    
+                    // Delete folder
+                    db_delete('cartelle', 'id = ?', [$id]);
+                    $logger->log('cartella', 'eliminazione_multipla', $id, 
+                        json_encode(['nome' => $folder['nome']]));
+                    $deleted++;
+                }
+            } else if ($type === 'file') {
+                // Check file
+                if ($isSuperAdmin || $isUtenteSpeciale) {
+                    $file = db_query("SELECT * FROM documenti WHERE id = ?", [$id])->fetch();
+                } else {
+                    $file = db_query("SELECT * FROM documenti WHERE id = ? AND azienda_id = ?", 
+                        [$id, $defaultCompanyId])->fetch();
+                }
+                
+                if ($file) {
+                    // Delete physical file
+                    if ($file['file_path']) {
+                        $filePath = UPLOAD_PATH . '/documenti/' . $file['file_path'];
+                        if (file_exists($filePath)) {
+                            unlink($filePath);
+                        }
+                    }
+                    
+                    // Delete from database
+                    db_delete('documenti', 'id = ?', [$id]);
+                    $logger->log('documento', 'eliminazione_multipla', $id, 
+                        json_encode(['nome' => $file['titolo']]));
+                    $deleted++;
+                }
+            }
+        } catch (Exception $e) {
+            $errors[] = "Errore eliminazione ID $id: " . $e->getMessage();
+        }
+    }
+    
+    echo json_encode([
+        'success' => $deleted > 0,
+        'deleted' => $deleted,
+        'errors' => $errors
+    ]);
 }

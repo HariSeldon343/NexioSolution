@@ -272,7 +272,7 @@ class NexioAdvancedSearch {
                 this.displaySuggestions(data.data);
             }
         } catch (error) {
-            console.error('Errore caricamento suggestions:', error);
+            // Error loading suggestions
         }
     }
 
@@ -429,7 +429,7 @@ class NexioAdvancedSearch {
 
         } catch (error) {
             if (error.name !== 'AbortError') {
-                console.error('Errore ricerca:', error);
+                // Search error
                 this.showError('Errore di connessione');
             }
         } finally {
@@ -695,7 +695,7 @@ class NexioAdvancedSearch {
             window.open(url, '_blank');
             
         } catch (error) {
-            console.error('Errore export:', error);
+            // Export error
             this.showError('Errore durante l\'export');
         }
     }
@@ -771,7 +771,7 @@ class NexioAdvancedSearch {
             const saved = localStorage.getItem('nexio_search_history');
             this.searchHistory = saved ? JSON.parse(saved) : [];
         } catch (error) {
-            console.error('Errore caricamento search history:', error);
+            // Error loading search history
             this.searchHistory = [];
         }
     }
@@ -780,7 +780,7 @@ class NexioAdvancedSearch {
         try {
             localStorage.setItem('nexio_search_history', JSON.stringify(this.searchHistory));
         } catch (error) {
-            console.error('Errore salvataggio search history:', error);
+            // Error saving search history
         }
     }
 

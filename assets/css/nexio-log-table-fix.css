@@ -1,0 +1,327 @@
+/**
+ * Nexio Log Table Fix - DEFINITIVE SOLUTION
+ * Fixes column alignment and visibility issues in log-attivita.php
+ * Created: 2025-08-11
+ */
+
+/* RESET ALL TABLE STYLES FIRST */
+.log-table,
+.log-table table,
+table.log-table {
+    all: revert !important;
+    table-layout: fixed !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* REMOVE ANY TRANSFORMS OR POSITIONING */
+.log-table *,
+.log-table table *,
+table.log-table * {
+    transform: none !important;
+    position: static !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+}
+
+/* RESET ALL CELLS */
+.log-table td,
+.log-table th,
+table.log-table td,
+table.log-table th {
+    box-sizing: border-box !important;
+    text-align: left !important;
+    vertical-align: middle !important;
+    padding: 12px !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+/* COLUMN WIDTHS - EXACT SPECIFICATION */
+/* Column 1: Data/Ora */
+.log-table thead tr th:nth-child(1),
+.log-table tbody tr td:nth-child(1) {
+    width: 140px !important;
+    min-width: 140px !important;
+    max-width: 140px !important;
+}
+
+/* Column 2: Utente */
+.log-table thead tr th:nth-child(2),
+.log-table tbody tr td:nth-child(2) {
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+}
+
+/* Column 3: Tipo */
+.log-table thead tr th:nth-child(3),
+.log-table tbody tr td:nth-child(3) {
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+}
+
+/* Column 4: Azione */
+.log-table thead tr th:nth-child(4),
+.log-table tbody tr td:nth-child(4) {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+}
+
+/* Column 5: Dettagli - Flexible */
+.log-table thead tr th:nth-child(5),
+.log-table tbody tr td:nth-child(5) {
+    width: auto !important;
+    min-width: 300px !important;
+    max-width: none !important;
+}
+
+/* Column 6: Azienda (if present) */
+.log-table thead tr th:nth-child(6),
+.log-table tbody tr td:nth-child(6) {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+}
+
+/* ENSURE NO HIDDEN COLUMNS */
+.log-table thead tr th,
+.log-table tbody tr td {
+    display: table-cell !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* FIX HEADERS */
+.log-table thead th,
+table.log-table thead th {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 14px 12px !important;
+    white-space: nowrap !important;
+}
+
+/* FIX DATA CELLS */
+.log-table tbody td,
+table.log-table tbody td {
+    background-color: #ffffff !important;
+    color: #495057 !important;
+    font-size: 14px !important;
+    padding: 12px !important;
+}
+
+/* TEXT WRAPPING IN CELLS */
+.log-table td {
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* DETAILS CELL SPECIAL HANDLING */
+.log-table .details-cell,
+.log-table td.details-cell,
+td.details-cell {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    max-width: none !important;
+}
+
+/* DATE/TIME CELL */
+.log-table tbody td:first-child {
+    white-space: nowrap !important;
+}
+
+/* USER INFO CELL */
+.log-table .user-info-cell {
+    line-height: 1.4 !important;
+}
+
+.log-table .user-name {
+    font-weight: 500 !important;
+    color: #2d3748 !important;
+}
+
+.log-table .user-email {
+    font-size: 12px !important;
+    color: #718096 !important;
+}
+
+/* ENTITY TYPE */
+.log-table .entity-type {
+    display: inline-block !important;
+    padding: 4px 8px !important;
+    background-color: #e9ecef !important;
+    color: #495057 !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+}
+
+/* ACTION BADGES */
+.log-table .action-badge {
+    display: inline-block !important;
+    padding: 4px 10px !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.log-table .action-badge.CREATE,
+.log-table .action-badge.create {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+}
+
+.log-table .action-badge.UPDATE,
+.log-table .action-badge.update {
+    background-color: #cff4fc !important;
+    color: #055160 !important;
+}
+
+.log-table .action-badge.DELETE,
+.log-table .action-badge.delete {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+}
+
+.log-table .action-badge.LOGIN,
+.log-table .action-badge.login {
+    background-color: #d1ecf1 !important;
+    color: #004085 !important;
+}
+
+.log-table .action-badge.LOGOUT,
+.log-table .action-badge.logout {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+}
+
+/* ZEBRA STRIPING */
+.log-table tbody tr:nth-child(odd) {
+    background-color: #ffffff !important;
+}
+
+.log-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa !important;
+}
+
+/* HOVER EFFECT */
+.log-table tbody tr:hover {
+    background-color: #e9ecef !important;
+    transition: background-color 0.2s ease !important;
+}
+
+/* RESPONSIVE WRAPPER */
+.log-table {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.log-table table {
+    min-width: 900px !important;
+}
+
+/* OVERRIDE INLINE STYLES */
+.log-table th[style*="max-width"],
+.log-table td[style*="max-width"] {
+    max-width: none !important;
+}
+
+/* FIX ALIGNMENT ISSUES */
+.log-table table {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.log-table thead tr,
+.log-table tbody tr {
+    display: table-row !important;
+}
+
+.log-table thead tr th,
+.log-table tbody tr td {
+    display: table-cell !important;
+}
+
+/* ENSURE NO EXTRA SPACING */
+.log-table tbody tr td:first-child {
+    padding-left: 12px !important;
+}
+
+.log-table tbody tr td:last-child {
+    padding-right: 12px !important;
+}
+
+/* FIX FOR POTENTIAL CHECKBOX COLUMN */
+.log-table input[type="checkbox"] {
+    display: none !important;
+}
+
+.log-table td:has(input[type="checkbox"]) {
+    display: none !important;
+}
+
+.log-table th:has(input[type="checkbox"]) {
+    display: none !important;
+}
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 768px) {
+    .log-table {
+        font-size: 12px !important;
+    }
+    
+    .log-table th,
+    .log-table td {
+        padding: 8px !important;
+    }
+    
+    .log-table table {
+        min-width: 700px !important;
+    }
+}
+
+/* PRINT STYLES */
+@media print {
+    .log-table {
+        overflow: visible !important;
+    }
+    
+    .log-table table {
+        width: 100% !important;
+        page-break-inside: auto !important;
+    }
+    
+    .log-table tr {
+        page-break-inside: avoid !important;
+        page-break-after: auto !important;
+    }
+}
+
+/* FINAL OVERRIDES WITH MAX SPECIFICITY */
+html body .log-table table thead tr th,
+html body .log-table table tbody tr td {
+    position: static !important;
+    transform: none !important;
+    margin: 0 !important;
+}
+
+/* Ensure first column is aligned correctly */
+html body .log-table table thead tr th:first-child,
+html body .log-table table tbody tr td:first-child {
+    text-align: left !important;
+    padding-left: 12px !important;
+}

@@ -19,6 +19,7 @@ class EmailTemplateOutlook {
     public static function generate($title, $message, $buttonText = null, $buttonUrl = null, $details = []) {
         $appUrl = defined('APP_URL') ? APP_URL : 'https://app.nexiosolution.it/piattaforma-collaborativa';
         $appName = defined('APP_NAME') ? APP_NAME : 'Nexio Solution';
+        $logoUrl = $appUrl . '/assets/images/nexio-logo.svg';
         
         $html = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -36,38 +37,66 @@ class EmailTemplateOutlook {
         </xml>
     </noscript>
     <![endif]-->
+    <style type="text/css">
+        @media screen and (max-width: 600px) {
+            .responsive-table {
+                width: 100% !important;
+            }
+            .responsive-td {
+                display: block !important;
+                width: 100% !important;
+                padding: 10px 0 !important;
+            }
+            .button-td {
+                padding: 20px 0 !important;
+            }
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; min-width: 100%; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5; background-color: #f4f4f4; color: #333333;">
-    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
+<body style="margin: 0; padding: 0; min-width: 100%; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif; font-size: 16px; line-height: 1.5; background-color: #f7fafc; color: #2d3748;">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7fafc;">
         <tr>
-            <td align="center" style="padding: 40px 0;">
+            <td align="center" style="padding: 40px 20px;">
                 <!-- Container principale -->
-                <table border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border: 1px solid #dddddd;">
+                <table class="responsive-table" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden;">
                     
-                    <!-- Header -->
+                    <!-- Header con gradiente -->
                     <tr>
-                        <td align="center" bgcolor="#2d5a9f" style="padding: 40px 20px;">
+                        <td align="center" style="background: linear-gradient(135deg, #2d5a9f 0%, #1e3a6f 100%); padding: 40px 20px;">
                             <table border="0" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td align="center" style="padding-bottom: 20px;">
-                                        <!-- Logo Nexio in formato testo -->
+                                        <!-- Logo Nexio con design migliorato -->
                                         <table border="0" cellpadding="0" cellspacing="0">
                                             <tr>
-                                                <td style="font-size: 36px; color: #ffffff; font-weight: bold; letter-spacing: 2px;">
-                                                    NEXIO
+                                                <td align="center">
+                                                    <!-- Usa immagine logo se disponibile, altrimenti testo stilizzato -->
+                                                    <div style="background-color: #ffffff; border-radius: 12px; padding: 15px 25px; display: inline-block;">
+                                                        <span style="font-size: 32px; color: #2d5a9f; font-weight: bold; letter-spacing: 1px;">
+                                                            NEXIO
+                                                        </span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </table>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td align="center" style="color: #ffffff; font-size: 14px; padding-bottom: 10px;">
+                                    <td align="center" style="color: #e2e8f0; font-size: 14px; padding-bottom: 10px; letter-spacing: 0.5px;">
                                         Semplifica, Connetti, Cresci Insieme
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td align="center" style="color: #ffffff; font-size: 24px; font-weight: bold; padding-top: 10px;">
-                                        ' . htmlspecialchars($title) . '
+                                    <td align="center" style="padding-top: 10px;">
+                                        <table border="0" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="background-color: rgba(255,255,255,0.2); border-radius: 6px; padding: 10px 20px;">
+                                                    <span style="color: #ffffff; font-size: 20px; font-weight: 600;">
+                                                        ' . htmlspecialchars($title) . '
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </td>
                                 </tr>
                             </table>
@@ -79,7 +108,7 @@ class EmailTemplateOutlook {
                         <td style="padding: 40px 30px;">
                             <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <td style="color: #333333; font-size: 16px; line-height: 24px; padding-bottom: 20px;">
+                                    <td style="color: #2d3748; font-size: 16px; line-height: 26px; padding-bottom: 25px;">
                                         ' . nl2br(htmlspecialchars($message)) . '
                                     </td>
                                 </tr>';
@@ -89,19 +118,22 @@ class EmailTemplateOutlook {
             $html .= '
                                 <tr>
                                     <td style="padding: 20px 0;">
-                                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8f8f8; border: 1px solid #e0e0e0;">
+                                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
                                             <tr>
-                                                <td style="padding: 20px;">';
+                                                <td style="padding: 25px;">';
             
             foreach ($details as $label => $value) {
+                // Se il valore contiene HTML (per priorità colorate, etc.), non fare htmlspecialchars
+                $displayValue = (strpos($value, '<') !== false) ? $value : htmlspecialchars($value);
+                
                 $html .= '
-                                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 10px;">
+                                                    <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 12px;">
                                                         <tr>
-                                                            <td width="30%" style="color: #666666; font-weight: bold; font-size: 14px; padding-right: 10px; vertical-align: top;">
+                                                            <td width="35%" style="color: #718096; font-weight: 600; font-size: 14px; padding-right: 15px; vertical-align: top;">
                                                                 ' . htmlspecialchars($label) . ':
                                                             </td>
-                                                            <td width="70%" style="color: #333333; font-size: 14px;">
-                                                                ' . htmlspecialchars($value) . '
+                                                            <td width="65%" style="color: #2d3748; font-size: 14px; line-height: 20px;">
+                                                                ' . $displayValue . '
                                                             </td>
                                                         </tr>
                                                     </table>';
@@ -119,11 +151,11 @@ class EmailTemplateOutlook {
         if ($buttonText && $buttonUrl) {
             $html .= '
                                 <tr>
-                                    <td align="center" style="padding: 30px 0;">
+                                    <td align="center" class="button-td" style="padding: 35px 0;">
                                         <table border="0" cellspacing="0" cellpadding="0">
                                             <tr>
-                                                <td align="center" style="border-radius: 4px;" bgcolor="#4299e1">
-                                                    <a href="' . htmlspecialchars($buttonUrl) . '" target="_blank" style="font-size: 16px; font-family: Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 12px 30px; border: 1px solid #4299e1; display: inline-block; font-weight: bold;">
+                                                <td align="center" style="border-radius: 6px; background: linear-gradient(135deg, #2d5a9f 0%, #1e3a6f 100%);">
+                                                    <a href="' . htmlspecialchars($buttonUrl) . '" target="_blank" style="font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, \'Helvetica Neue\', Arial, sans-serif; color: #ffffff; text-decoration: none; padding: 14px 35px; border-radius: 6px; display: inline-block; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">
                                                         ' . htmlspecialchars($buttonText) . '
                                                     </a>
                                                 </td>
@@ -131,9 +163,9 @@ class EmailTemplateOutlook {
                                         </table>
                                         <!-- Fallback per Outlook -->
                                         <!--[if mso]>
-                                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="' . htmlspecialchars($buttonUrl) . '" style="height:40px;v-text-anchor:middle;width:200px;" arcsize="10%" stroke="f" fillcolor="#4299e1">
+                                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="' . htmlspecialchars($buttonUrl) . '" style="height:48px;v-text-anchor:middle;width:240px;" arcsize="10%" stroke="f" fillcolor="#2d5a9f">
                                             <w:anchorlock/>
-                                            <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">
+                                            <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;text-transform:uppercase;">
                                                 ' . htmlspecialchars($buttonText) . '
                                             </center>
                                         </v:roundrect>
@@ -144,9 +176,9 @@ class EmailTemplateOutlook {
         
         $html .= '
                                 <tr>
-                                    <td style="color: #333333; font-size: 16px; line-height: 24px; padding-top: 20px;">
-                                        Cordiali saluti,<br>
-                                        <strong>Il team di ' . htmlspecialchars($appName) . '</strong>
+                                    <td style="color: #2d3748; font-size: 16px; line-height: 26px; padding-top: 25px; border-top: 1px solid #e2e8f0;">
+                                        <p style="margin: 0 0 10px 0;">Cordiali saluti,</p>
+                                        <p style="margin: 0; font-weight: 600; color: #2d5a9f;">Il team di ' . htmlspecialchars($appName) . '</p>
                                     </td>
                                 </tr>
                             </table>
@@ -155,12 +187,34 @@ class EmailTemplateOutlook {
                     
                     <!-- Footer -->
                     <tr>
-                        <td align="center" bgcolor="#f8f8f8" style="padding: 30px 20px; border-top: 1px solid #e0e0e0;">
-                            <table border="0" cellpadding="0" cellspacing="0">
+                        <td align="center" style="background-color: #f7fafc; padding: 30px 20px; border-top: 2px solid #e2e8f0;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%">
                                 <tr>
-                                    <td align="center" style="color: #666666; font-size: 12px; line-height: 18px;">
-                                        Questa email è stata inviata automaticamente dalla piattaforma <strong>' . htmlspecialchars($appName) . '</strong>.<br>
-                                        Per modificare le preferenze di notifica, accedi al tuo profilo.
+                                    <td align="center" style="padding-bottom: 15px;">
+                                        <table border="0" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="font-size: 18px; color: #2d5a9f; font-weight: bold; letter-spacing: 1px;">
+                                                    NEXIO
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="color: #718096; font-size: 13px; line-height: 20px; padding: 0 40px;">
+                                        Questa email è stata inviata automaticamente dalla piattaforma <strong style="color: #2d3748;">' . htmlspecialchars($appName) . '</strong>.<br>
+                                        Per assistenza, contatta il supporto tecnico o accedi al tuo <a href="' . htmlspecialchars($appUrl) . '/profilo.php" style="color: #2d5a9f; text-decoration: none; font-weight: 600;">profilo</a> per gestire le notifiche.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding-top: 20px;">
+                                        <table border="0" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="color: #a0aec0; font-size: 11px;">
+                                                    &copy; ' . date('Y') . ' ' . htmlspecialchars($appName) . '. Tutti i diritti riservati.
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </td>
                                 </tr>
                             </table>
@@ -185,18 +239,37 @@ class EmailTemplateOutlook {
     public static function newTicket($ticket, $creator) {
         $appUrl = defined('APP_URL') ? APP_URL : 'https://app.nexiosolution.it/piattaforma-collaborativa';
         
-        $details = [
-            'Ticket ID' => "#{$ticket['id']}",
-            'Oggetto' => $ticket['oggetto'] ?? $ticket['titolo'],
-            'Priorità' => ucfirst($ticket['priorita']),
-            'Creato da' => $creator['nome'] . ' ' . $creator['cognome']
+        // Mappa colori priorità
+        $priorityColors = [
+            'alta' => '#dc2626',    // Rosso
+            'media' => '#f59e0b',   // Arancione
+            'bassa' => '#10b981'    // Verde
         ];
         
+        $priorityColor = $priorityColors[$ticket['priorita']] ?? '#6b7280';
+        
+        $details = [
+            'Codice Ticket' => $ticket['codice'],
+            'Oggetto' => $ticket['oggetto'] ?? $ticket['titolo'],
+            'Categoria' => ucfirst($ticket['categoria']),
+            'Priorità' => '<span style="color: ' . $priorityColor . '; font-weight: bold;">' . ucfirst($ticket['priorita']) . '</span>',
+            'Creato da' => $creator['nome'] . ' ' . $creator['cognome'],
+            'Data Creazione' => date('d/m/Y H:i', strtotime($ticket['creato_il']))
+        ];
+        
+        if (!empty($ticket['descrizione'])) {
+            $details['Descrizione'] = nl2br(htmlspecialchars($ticket['descrizione']));
+        }
+        
+        $message = "È stato creato un nuovo ticket che richiede la tua attenzione.\n\n";
+        $message .= "Il ticket #{$ticket['codice']} è stato aperto da {$creator['nome']} {$creator['cognome']} ";
+        $message .= "con priorità " . strtoupper($ticket['priorita']) . ".";
+        
         return self::generate(
-            'Nuovo Ticket Creato',
-            "È stato creato un nuovo ticket che richiede la tua attenzione.",
-            'Visualizza Tickets',
-            "{$appUrl}/tickets.php",
+            'Nuovo Ticket: ' . $ticket['codice'],
+            $message,
+            'Visualizza e Rispondi al Ticket',
+            "{$appUrl}/tickets.php?action=view&id={$ticket['id']}",
             $details
         );
     }
@@ -205,19 +278,79 @@ class EmailTemplateOutlook {
     public static function ticketStatusChanged($ticket, $oldStatus, $newStatus, $updatedBy) {
         $appUrl = defined('APP_URL') ? APP_URL : 'https://app.nexiosolution.it/piattaforma-collaborativa';
         
-        $details = [
-            'Ticket ID' => "#{$ticket['id']}",
-            'Oggetto' => $ticket['oggetto'] ?? $ticket['titolo'],
-            'Stato precedente' => ucfirst($oldStatus),
-            'Nuovo stato' => ucfirst($newStatus),
-            'Modificato da' => $updatedBy['nome'] . ' ' . $updatedBy['cognome']
+        // Mappa colori stati
+        $statusColors = [
+            'aperto' => '#10b981',          // Verde
+            'in-lavorazione' => '#f59e0b',  // Arancione
+            'chiuso' => '#dc2626'            // Rosso
         ];
         
+        $oldColor = $statusColors[$oldStatus] ?? '#6b7280';
+        $newColor = $statusColors[$newStatus] ?? '#6b7280';
+        
+        $details = [
+            'Codice Ticket' => $ticket['codice'],
+            'Oggetto' => $ticket['oggetto'] ?? $ticket['titolo'],
+            'Stato precedente' => '<span style="color: ' . $oldColor . ';">' . ucfirst(str_replace('-', ' ', $oldStatus)) . '</span>',
+            'Nuovo stato' => '<span style="color: ' . $newColor . '; font-weight: bold;">' . ucfirst(str_replace('-', ' ', $newStatus)) . '</span>',
+            'Modificato da' => $updatedBy['nome'] . ' ' . $updatedBy['cognome'],
+            'Data modifica' => date('d/m/Y H:i')
+        ];
+        
+        $message = "Lo stato del ticket #{$ticket['codice']} è stato aggiornato.\n\n";
+        
+        if ($newStatus === 'chiuso') {
+            $message .= "Il ticket è stato CHIUSO da {$updatedBy['nome']} {$updatedBy['cognome']}.";
+        } elseif ($newStatus === 'in-lavorazione') {
+            $message .= "Il ticket è ora IN LAVORAZIONE. {$updatedBy['nome']} {$updatedBy['cognome']} sta gestendo la richiesta.";
+        } else {
+            $message .= "Il ticket è stato RIAPERTO da {$updatedBy['nome']} {$updatedBy['cognome']}.";
+        }
+        
         return self::generate(
-            'Aggiornamento Stato Ticket',
-            "Lo stato del ticket #{$ticket['id']} è stato aggiornato.",
-            'Visualizza Tickets',
-            "{$appUrl}/tickets.php",
+            'Ticket ' . $ticket['codice'] . ' - Stato: ' . ucfirst(str_replace('-', ' ', $newStatus)),
+            $message,
+            'Visualizza Ticket',
+            "{$appUrl}/tickets.php?action=view&id={$ticket['id']}",
+            $details
+        );
+    }
+    
+    // Nuova risposta al ticket
+    public static function ticketReply($ticket, $reply, $author) {
+        $appUrl = defined('APP_URL') ? APP_URL : 'https://app.nexiosolution.it/piattaforma-collaborativa';
+        
+        // Mappa colori priorità
+        $priorityColors = [
+            'alta' => '#dc2626',    // Rosso
+            'media' => '#f59e0b',   // Arancione
+            'bassa' => '#10b981'    // Verde
+        ];
+        
+        $priorityColor = $priorityColors[$ticket['priorita']] ?? '#6b7280';
+        
+        $details = [
+            'Codice Ticket' => $ticket['codice'],
+            'Oggetto' => $ticket['oggetto'] ?? $ticket['titolo'],
+            'Priorità' => '<span style="color: ' . $priorityColor . ';">' . ucfirst($ticket['priorita']) . '</span>',
+            'Risposta da' => $author['nome'] . ' ' . $author['cognome'],
+            'Data risposta' => date('d/m/Y H:i')
+        ];
+        
+        // Aggiungi il messaggio di risposta nei dettagli
+        if (!empty($reply)) {
+            $details['Messaggio'] = '<div style="background-color: #f9fafb; padding: 15px; border-left: 3px solid #2d5a9f; margin-top: 10px;">' . 
+                                   nl2br(htmlspecialchars($reply)) . '</div>';
+        }
+        
+        $message = "È stata aggiunta una nuova risposta al ticket #{$ticket['codice']}.\n\n";
+        $message .= "{$author['nome']} {$author['cognome']} ha risposto al ticket.";
+        
+        return self::generate(
+            'Nuova Risposta - Ticket ' . $ticket['codice'],
+            $message,
+            'Visualizza Conversazione Completa',
+            "{$appUrl}/tickets.php?action=view&id={$ticket['id']}",
             $details
         );
     }

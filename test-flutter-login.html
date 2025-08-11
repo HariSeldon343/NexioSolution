@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flutter Login API Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #1b3f76;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #0f2847;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #1b3f76;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #f5fff5;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-size: 12px;
+        }
+        .endpoint-info {
+            background: #e8f4ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.success {
+            background: #28a745;
+            color: white;
+        }
+        .status.error {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Flutter Login API Test</h1>
+        
+        <div class="endpoint-info">
+            <strong>API Endpoints:</strong><br>
+            • Login: <code>/backend/api/login.php</code> (POST)<br>
+            • Validate: <code>/backend/api/validate-session.php</code> (GET)<br>
+            • Logout: <code>/backend/api/logout.php</code> (POST)
+        </div>
+        
+        <div class="form-group">
+            <label for="baseUrl">Base URL:</label>
+            <input type="text" id="baseUrl" value="http://localhost/piattaforma-collaborativa" />
+        </div>
+        
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" value="test_api_user" />
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="Test123!@#" />
+        </div>
+        
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="validateSession()" id="validateBtn" disabled>Validate Session</button>
+        <button onclick="testLogout()" id="logoutBtn" disabled>Test Logout</button>
+        <button onclick="clearResults()">Clear Results</button>
+        
+        <div id="results"></div>
+    </div>
+    
+    <script>
+        let sessionCookie = null;
+        let sessionId = null;
+        
+        function getBaseUrl() {
+            return document.getElementById('baseUrl').value;
+        }
+        
+        function addResult(title, content, isError = false) {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${isError ? 'error' : 'success'}`;
+            
+            const statusClass = isError ? 'error' : 'success';
+            const statusText = isError ? 'ERROR' : 'SUCCESS';
+            
+            resultDiv.innerHTML = `
+                <strong>${title}</strong>
+                <span class="status ${statusClass}">${statusText}</span>
+                <pre>${JSON.stringify(content, null, 2)}</pre>
+            `;
+            resultsDiv.appendChild(resultDiv);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('validateBtn').disabled = true;
+            document.getElementById('logoutBtn').disabled = true;
+            sessionCookie = null;
+            sessionId = null;
+        }
+        
+        async function testLogin() {
+            clearResults();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const baseUrl = getBaseUrl();
+            
+            try {
+                const response = await fetch(`${baseUrl}/backend/api/login.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    }),
+                    credentials: 'include' // Important for cookies
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    sessionId = data.session_id;
+                    addResult('Login Response', data, false);
+                    document.getElementById('validateBtn').disabled = false;
+                    document.getElementById('logoutBtn').disabled = false;
+                    
+                    // Show how Flutter should store this data
+                    addResult('Flutter Storage Example', {
+                        'SharedPreferences_keys': {
+                            'session_id': data.session_id,
+                            'user_id': data.user.id,
+                            'username': data.user.username,
+                            'user_name': data.user.full_name,
+                            'user_email': data.user.email,
+                            'user_role': data.user.ruolo
+                        }
+                    }, false);
+                } else {
+                    addResult('Login Failed', data, true);
+                }
+            } catch (error) {
+                addResult('Network Error', {error: error.message}, true);
+            }
+        }
+        
+        async function validateSession() {
+            if (!sessionId) {
+                addResult('Error', {error: 'No session ID available'}, true);
+                return;
+            }
+            
+            const baseUrl = getBaseUrl();
+            
+            try {
+                const response = await fetch(`${baseUrl}/backend/api/validate-session.php`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Cookie': `PHPSESSID=${sessionId}`
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.authenticated) {
+                    addResult('Session Valid', data, false);
+                } else {
+                    addResult('Session Invalid', data, true);
+                }
+            } catch (error) {
+                addResult('Validation Error', {error: error.message}, true);
+            }
+        }
+        
+        async function testLogout() {
+            if (!sessionId) {
+                addResult('Error', {error: 'No session ID available'}, true);
+                return;
+            }
+            
+            const baseUrl = getBaseUrl();
+            
+            try {
+                const response = await fetch(`${baseUrl}/backend/api/logout.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Cookie': `PHPSESSID=${sessionId}`
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    addResult('Logout Successful', data, false);
+                    document.getElementById('validateBtn').disabled = true;
+                    document.getElementById('logoutBtn').disabled = true;
+                    sessionId = null;
+                } else {
+                    addResult('Logout Failed', data, true);
+                }
+            } catch (error) {
+                addResult('Logout Error', {error: error.message}, true);
+            }
+        }
+        
+        // Test on page load
+        window.addEventListener('load', () => {
+            console.log('Flutter Login API Test Page Loaded');
+            console.log('Use the form above to test the API endpoints');
+        });
+    </script>
+</body>
+</html>

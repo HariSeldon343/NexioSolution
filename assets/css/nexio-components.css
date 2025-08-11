@@ -1,0 +1,767 @@
+/**
+ * Nexio Components
+ * Componenti atomici minimali e riutilizzabili
+ * Flat design senza elementi decorativi superflui
+ */
+
+/* =================================================================
+   1. BOTTONI
+   ================================================================= */
+
+/* Base button reset */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--nexio-space-2) var(--nexio-space-4);
+  font-family: var(--nexio-font-family);
+  font-size: var(--nexio-text-base);
+  font-weight: var(--nexio-font-medium);
+  line-height: var(--nexio-leading-tight);
+  border: 1px solid transparent;
+  border-radius: var(--nexio-radius-md);
+  cursor: pointer;
+  transition: all var(--nexio-transition-fast);
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+  vertical-align: middle;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Primary button */
+.btn-primary {
+  background-color: var(--nexio-primary);
+  color: var(--nexio-text-inverse);
+  border-color: var(--nexio-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--nexio-primary-dark);
+  border-color: var(--nexio-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--nexio-shadow-md);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: var(--nexio-shadow-sm);
+}
+
+/* Secondary button */
+.btn-secondary {
+  background-color: var(--nexio-surface);
+  color: var(--nexio-text);
+  border-color: var(--nexio-border);
+}
+
+.btn-secondary:hover {
+  background-color: var(--nexio-surface-hover);
+  border-color: var(--nexio-text-muted);
+}
+
+/* Ghost button */
+.btn-ghost {
+  background-color: transparent;
+  color: var(--nexio-primary);
+  border-color: transparent;
+}
+
+.btn-ghost:hover {
+  background-color: var(--nexio-surface);
+  color: var(--nexio-primary-dark);
+}
+
+/* Danger button */
+.btn-danger {
+  background-color: var(--nexio-error);
+  color: var(--nexio-text-inverse);
+  border-color: var(--nexio-error);
+}
+
+.btn-danger:hover {
+  background-color: var(--nexio-error-light);
+  border-color: var(--nexio-error-light);
+}
+
+/* Success button */
+.btn-success {
+  background-color: var(--nexio-success);
+  color: var(--nexio-text-inverse);
+  border-color: var(--nexio-success);
+}
+
+.btn-success:hover {
+  background-color: var(--nexio-success-light);
+  border-color: var(--nexio-success-light);
+}
+
+/* Button sizes */
+.btn-sm {
+  padding: var(--nexio-space-1) var(--nexio-space-3);
+  font-size: var(--nexio-text-sm);
+}
+
+.btn-lg {
+  padding: var(--nexio-space-3) var(--nexio-space-6);
+  font-size: var(--nexio-text-lg);
+}
+
+/* Button states */
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Button with icon */
+.btn-icon {
+  display: inline-flex;
+  gap: var(--nexio-space-2);
+}
+
+.btn-icon-only {
+  padding: var(--nexio-space-2);
+  aspect-ratio: 1;
+}
+
+/* Button group */
+.btn-group {
+  display: inline-flex;
+  gap: 0;
+}
+
+.btn-group .btn {
+  border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+  border-radius: var(--nexio-radius-md) 0 0 var(--nexio-radius-md);
+}
+
+.btn-group .btn:last-child {
+  border-radius: 0 var(--nexio-radius-md) var(--nexio-radius-md) 0;
+}
+
+/* =================================================================
+   2. CARDS
+   ================================================================= */
+
+.card {
+  background-color: var(--nexio-background);
+  border: 1px solid var(--nexio-border);
+  border-radius: var(--nexio-radius-lg);
+  padding: var(--nexio-space-6);
+  margin-bottom: var(--nexio-space-4);
+  transition: all var(--nexio-transition-fast);
+}
+
+.card:hover {
+  box-shadow: var(--nexio-shadow-md);
+}
+
+.card-header {
+  margin-bottom: var(--nexio-space-4);
+  padding-bottom: var(--nexio-space-4);
+  border-bottom: 1px solid var(--nexio-border-light);
+}
+
+.card-title {
+  font-size: var(--nexio-text-xl);
+  font-weight: var(--nexio-font-semibold);
+  color: var(--nexio-text);
+  margin: 0;
+}
+
+.card-subtitle {
+  font-size: var(--nexio-text-sm);
+  color: var(--nexio-text-secondary);
+  margin-top: var(--nexio-space-1);
+}
+
+.card-body {
+  color: var(--nexio-text);
+}
+
+.card-footer {
+  margin-top: var(--nexio-space-4);
+  padding-top: var(--nexio-space-4);
+  border-top: 1px solid var(--nexio-border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Card variations */
+.card-elevated {
+  box-shadow: var(--nexio-shadow-base);
+  border: none;
+}
+
+.card-flat {
+  background-color: var(--nexio-surface);
+  border: none;
+}
+
+.card-outlined {
+  background-color: transparent;
+  border: 2px solid var(--nexio-border);
+}
+
+/* =================================================================
+   3. FORMS
+   ================================================================= */
+
+/* Form group */
+.form-group {
+  margin-bottom: var(--nexio-space-4);
+}
+
+/* Labels */
+.form-label {
+  display: block;
+  font-size: var(--nexio-text-sm);
+  font-weight: var(--nexio-font-medium);
+  color: var(--nexio-text);
+  margin-bottom: var(--nexio-space-2);
+}
+
+/* Input base */
+.form-control,
+.form-input,
+.form-select,
+.form-textarea {
+  display: block;
+  width: 100%;
+  padding: var(--nexio-space-2) var(--nexio-space-3);
+  font-family: var(--nexio-font-family);
+  font-size: var(--nexio-text-base);
+  line-height: var(--nexio-leading-normal);
+  color: var(--nexio-text);
+  background-color: var(--nexio-background);
+  border: 1px solid var(--nexio-border);
+  border-radius: var(--nexio-radius-md);
+  transition: all var(--nexio-transition-fast);
+}
+
+.form-control:focus,
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--nexio-primary);
+  box-shadow: var(--nexio-shadow-focus);
+}
+
+.form-control:disabled,
+.form-input:disabled,
+.form-select:disabled,
+.form-textarea:disabled {
+  background-color: var(--nexio-surface);
+  color: var(--nexio-text-muted);
+  cursor: not-allowed;
+}
+
+/* Textarea specific */
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Select specific */
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right var(--nexio-space-3) center;
+  background-size: 16px 12px;
+  padding-right: var(--nexio-space-10);
+}
+
+/* Checkbox and Radio */
+.form-check {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--nexio-space-2);
+}
+
+.form-check-input {
+  width: 18px;
+  height: 18px;
+  margin-right: var(--nexio-space-2);
+  border: 1px solid var(--nexio-border);
+  border-radius: var(--nexio-radius-base);
+  cursor: pointer;
+}
+
+.form-check-input[type="radio"] {
+  border-radius: var(--nexio-radius-full);
+}
+
+.form-check-input:checked {
+  background-color: var(--nexio-primary);
+  border-color: var(--nexio-primary);
+}
+
+.form-check-label {
+  font-size: var(--nexio-text-base);
+  color: var(--nexio-text);
+  cursor: pointer;
+}
+
+/* Form helper text */
+.form-text {
+  font-size: var(--nexio-text-sm);
+  color: var(--nexio-text-secondary);
+  margin-top: var(--nexio-space-1);
+}
+
+/* Form validation */
+.form-control.is-invalid,
+.form-input.is-invalid {
+  border-color: var(--nexio-error);
+}
+
+.form-control.is-valid,
+.form-input.is-valid {
+  border-color: var(--nexio-success);
+}
+
+.invalid-feedback {
+  font-size: var(--nexio-text-sm);
+  color: var(--nexio-error);
+  margin-top: var(--nexio-space-1);
+}
+
+.valid-feedback {
+  font-size: var(--nexio-text-sm);
+  color: var(--nexio-success);
+  margin-top: var(--nexio-space-1);
+}
+
+/* =================================================================
+   4. TABLES
+   ================================================================= */
+
+.table {
+  width: 100%;
+  background-color: var(--nexio-background);
+  border-collapse: collapse;
+  font-size: var(--nexio-text-base);
+}
+
+.table thead {
+  background-color: var(--nexio-surface);
+}
+
+.table th {
+  padding: var(--nexio-space-3) var(--nexio-space-4);
+  text-align: left;
+  font-weight: var(--nexio-font-semibold);
+  color: var(--nexio-text);
+  border-bottom: 2px solid var(--nexio-border);
+}
+
+.table td {
+  padding: var(--nexio-space-3) var(--nexio-space-4);
+  color: var(--nexio-text);
+  border-bottom: 1px solid var(--nexio-border-light);
+}
+
+.table tbody tr:hover {
+  background-color: var(--nexio-surface);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Table variations */
+.table-striped tbody tr:nth-child(even) {
+  background-color: var(--nexio-surface);
+}
+
+.table-borderless th,
+.table-borderless td {
+  border: none;
+}
+
+.table-compact th,
+.table-compact td {
+  padding: var(--nexio-space-2) var(--nexio-space-3);
+}
+
+/* Responsive table */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* =================================================================
+   5. BADGES
+   ================================================================= */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--nexio-space-1) var(--nexio-space-2);
+  font-size: var(--nexio-text-xs);
+  font-weight: var(--nexio-font-medium);
+  line-height: 1;
+  border-radius: var(--nexio-radius-full);
+  white-space: nowrap;
+}
+
+.badge-primary {
+  background-color: var(--nexio-primary);
+  color: var(--nexio-text-inverse);
+}
+
+.badge-secondary {
+  background-color: var(--nexio-surface);
+  color: var(--nexio-text);
+  border: 1px solid var(--nexio-border);
+}
+
+.badge-success {
+  background-color: var(--nexio-success);
+  color: var(--nexio-text-inverse);
+}
+
+.badge-warning {
+  background-color: var(--nexio-warning);
+  color: var(--nexio-text-inverse);
+}
+
+.badge-danger {
+  background-color: var(--nexio-error);
+  color: var(--nexio-text-inverse);
+}
+
+.badge-info {
+  background-color: var(--nexio-info);
+  color: var(--nexio-text-inverse);
+}
+
+/* Badge sizes */
+.badge-sm {
+  padding: 0 var(--nexio-space-1);
+  font-size: 0.625rem;
+}
+
+.badge-lg {
+  padding: var(--nexio-space-2) var(--nexio-space-3);
+  font-size: var(--nexio-text-sm);
+}
+
+/* =================================================================
+   6. ALERTS
+   ================================================================= */
+
+.alert {
+  padding: var(--nexio-space-4);
+  margin-bottom: var(--nexio-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--nexio-radius-md);
+  font-size: var(--nexio-text-base);
+  line-height: var(--nexio-leading-normal);
+}
+
+.alert-primary {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: var(--nexio-primary);
+  color: var(--nexio-primary-dark);
+}
+
+.alert-success {
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: var(--nexio-success);
+  color: var(--nexio-success);
+}
+
+.alert-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: var(--nexio-warning);
+  color: var(--nexio-warning);
+}
+
+.alert-danger {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: var(--nexio-error);
+  color: var(--nexio-error);
+}
+
+.alert-info {
+  background-color: rgba(6, 182, 212, 0.1);
+  border-color: var(--nexio-info);
+  color: var(--nexio-info);
+}
+
+/* Alert with close button */
+.alert-dismissible {
+  padding-right: var(--nexio-space-10);
+  position: relative;
+}
+
+.alert-close {
+  position: absolute;
+  top: var(--nexio-space-4);
+  right: var(--nexio-space-4);
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-size: var(--nexio-text-xl);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity var(--nexio-transition-fast);
+}
+
+.alert-close:hover {
+  opacity: 1;
+}
+
+/* =================================================================
+   7. MODALS
+   ================================================================= */
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: var(--nexio-z-backdrop);
+  animation: nexio-fade-in var(--nexio-transition-fast);
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--nexio-background);
+  border-radius: var(--nexio-radius-lg);
+  box-shadow: var(--nexio-shadow-lg);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: auto;
+  z-index: var(--nexio-z-modal);
+  animation: nexio-slide-up var(--nexio-transition-base);
+}
+
+.modal-header {
+  padding: var(--nexio-space-6);
+  border-bottom: 1px solid var(--nexio-border-light);
+}
+
+.modal-title {
+  font-size: var(--nexio-text-xl);
+  font-weight: var(--nexio-font-semibold);
+  color: var(--nexio-text);
+  margin: 0;
+}
+
+.modal-body {
+  padding: var(--nexio-space-6);
+}
+
+.modal-footer {
+  padding: var(--nexio-space-6);
+  border-top: 1px solid var(--nexio-border-light);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--nexio-space-2);
+}
+
+/* =================================================================
+   8. DROPDOWN
+   ================================================================= */
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: var(--nexio-z-dropdown);
+  min-width: 200px;
+  background-color: var(--nexio-background);
+  border: 1px solid var(--nexio-border);
+  border-radius: var(--nexio-radius-md);
+  box-shadow: var(--nexio-shadow-lg);
+  margin-top: var(--nexio-space-1);
+  padding: var(--nexio-space-2) 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all var(--nexio-transition-fast);
+}
+
+.dropdown.open .dropdown-menu,
+.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: block;
+  padding: var(--nexio-space-2) var(--nexio-space-4);
+  color: var(--nexio-text);
+  text-decoration: none;
+  transition: background-color var(--nexio-transition-fast);
+}
+
+.dropdown-item:hover {
+  background-color: var(--nexio-surface);
+}
+
+.dropdown-divider {
+  height: 1px;
+  margin: var(--nexio-space-2) 0;
+  background-color: var(--nexio-border-light);
+}
+
+/* =================================================================
+   9. TOOLTIPS
+   ================================================================= */
+
+.tooltip {
+  position: absolute;
+  z-index: var(--nexio-z-tooltip);
+  padding: var(--nexio-space-2) var(--nexio-space-3);
+  font-size: var(--nexio-text-sm);
+  color: var(--nexio-text-inverse);
+  background-color: var(--nexio-text);
+  border-radius: var(--nexio-radius-md);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--nexio-transition-fast);
+}
+
+.tooltip.show {
+  opacity: 0.9;
+}
+
+/* =================================================================
+   10. PROGRESS
+   ================================================================= */
+
+.progress {
+  height: 8px;
+  background-color: var(--nexio-surface);
+  border-radius: var(--nexio-radius-full);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: var(--nexio-primary);
+  transition: width var(--nexio-transition-slow) ease-in-out;
+}
+
+/* Progress variations */
+.progress-sm {
+  height: 4px;
+}
+
+.progress-lg {
+  height: 16px;
+}
+
+.progress-bar-success {
+  background-color: var(--nexio-success);
+}
+
+.progress-bar-warning {
+  background-color: var(--nexio-warning);
+}
+
+.progress-bar-danger {
+  background-color: var(--nexio-error);
+}
+
+/* =================================================================
+   11. SPINNERS
+   ================================================================= */
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--nexio-border);
+  border-top-color: var(--nexio-primary);
+  border-radius: var(--nexio-radius-full);
+  animation: spin 0.6s linear infinite;
+}
+
+.spinner-sm {
+  width: 14px;
+  height: 14px;
+  border-width: 1px;
+}
+
+.spinner-lg {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =================================================================
+   12. PAGINATION
+   ================================================================= */
+
+.pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: var(--nexio-space-1);
+}
+
+.page-item {
+  display: inline-block;
+}
+
+.page-link {
+  display: block;
+  padding: var(--nexio-space-2) var(--nexio-space-3);
+  color: var(--nexio-text);
+  background-color: var(--nexio-background);
+  border: 1px solid var(--nexio-border);
+  border-radius: var(--nexio-radius-md);
+  text-decoration: none;
+  transition: all var(--nexio-transition-fast);
+}
+
+.page-link:hover {
+  background-color: var(--nexio-surface);
+  border-color: var(--nexio-primary);
+}
+
+.page-item.active .page-link {
+  background-color: var(--nexio-primary);
+  color: var(--nexio-text-inverse);
+  border-color: var(--nexio-primary);
+}
+
+.page-item.disabled .page-link {
+  color: var(--nexio-text-muted);
+  pointer-events: none;
+  background-color: var(--nexio-surface);
+}

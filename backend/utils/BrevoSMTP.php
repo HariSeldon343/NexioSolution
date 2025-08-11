@@ -215,6 +215,10 @@ class BrevoSMTP {
         $message .= "Reply-To: {$this->config['from_email']}\r\n";
         $message .= "Return-Path: {$this->config['from_email']}\r\n";
         
+        // Headers per disabilitare il tracking di Brevo
+        $message .= "X-Mailin-track-links: 0\r\n";
+        $message .= "X-Mailin-track-opens: 0\r\n";
+        
         // Linea vuota tra headers e body
         $message .= "\r\n";
         

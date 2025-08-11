@@ -63,11 +63,11 @@ if ($action === 'attiva' && $referente_id && $_SERVER['REQUEST_METHOD'] === 'GET
         if ($attivi >= $max_referenti) {
             $_SESSION['error'] = "Non puoi attivare questo referente. Limite massimo di $max_referenti referenti attivi raggiunto.";
         } else {
-            db_update('referenti_aziende', ['attivo' => 1], 'id = :id', ['id' => $referente_id]);
+            db_update('referenti_aziende', ['attivo' => 1], 'id = ?', [$referente_id]);
             
             // Riattiva anche l'utente associato
             if ($referente['utente_id']) {
-                db_update('utenti', ['attivo' => 1], 'id = :id', ['id' => $referente['utente_id']]);
+                db_update('utenti', ['attivo' => 1], 'id = ?', [$referente['utente_id']]);
             }
             
             $logger->log('referente', 'riattivazione', $referente_id, 
@@ -217,11 +217,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = db_query("SELECT * FROM referenti_aziende WHERE id = :id", ['id' => $referente_id]);
                     $dati_precedenti = $stmt->fetch();
                     
-                    db_update('referenti_aziende', $data, 'id = :id', ['id' => $referente_id]);
+                    db_update('referenti_aziende', $data, 'id = ?', [$referente_id]);
                     
                     // Se cambia lo stato attivo/inattivo, aggiorna anche l'utente
                     if (isset($dati_precedenti['utente_id']) && $dati_precedenti['utente_id']) {
-                        db_update('utenti', ['attivo' => $data['attivo']], 'id = :id', ['id' => $dati_precedenti['utente_id']]);
+                        db_update('utenti', ['attivo' => $data['attivo']], 'id = ?', [$dati_precedenti['utente_id']]);
                     }
                     
                     $logger->log('referente', 'modifica', $referente_id,
@@ -247,11 +247,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = db_query("SELECT * FROM referenti_aziende WHERE id = :id", ['id' => $referente_id]);
                 $referente = $stmt->fetch();
                 
-                db_update('referenti_aziende', ['attivo' => 0], 'id = :id', ['id' => $referente_id]);
+                db_update('referenti_aziende', ['attivo' => 0], 'id = ?', [$referente_id]);
                 
                 // Disattiva anche l'utente associato
                 if ($referente['utente_id']) {
-                    db_update('utenti', ['attivo' => 0], 'id = :id', ['id' => $referente['utente_id']]);
+                    db_update('utenti', ['attivo' => 0], 'id = ?', [$referente['utente_id']]);
                 }
                 
                 $logger->log('referente', 'disattivazione', $referente_id, 

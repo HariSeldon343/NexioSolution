@@ -1,0 +1,248 @@
+/**
+ * Nexio Button Size Fix
+ * Normalizes button and icon sizes to prevent oversized elements
+ * Created: 2025-08-11
+ */
+
+/* Standard button sizes - Override any inline styles */
+.btn,
+button.btn,
+a.btn,
+input[type="button"].btn,
+input[type="submit"].btn,
+input[type="reset"].btn,
+[class*="btn-"] {
+    /* Standard sizing */
+    padding: 0.375rem 0.75rem !important; /* 6px 12px */
+    font-size: 0.875rem !important; /* 14px */
+    line-height: 1.5 !important;
+    min-height: unset !important;
+    max-height: 38px !important;
+    height: auto !important;
+}
+
+/* Small buttons */
+.btn-sm {
+    padding: 0.25rem 0.5rem !important; /* 4px 8px */
+    font-size: 0.75rem !important; /* 12px */
+    max-height: 30px !important;
+}
+
+/* Large buttons - still controlled */
+.btn-lg {
+    padding: 0.5rem 1rem !important; /* 8px 16px */
+    font-size: 1rem !important; /* 16px */
+    max-height: 48px !important;
+}
+
+/* Icon size inside buttons - CRITICAL FIX */
+.btn i,
+.btn .fa,
+.btn .fas,
+.btn .far,
+.btn .fab,
+.btn .fal,
+.btn .fad,
+.btn svg,
+button i,
+button .fa,
+button .fas,
+button .far,
+button .fab,
+a.btn i,
+a.btn .fa,
+a.btn .fas,
+a.btn .far,
+a.btn .fab {
+    font-size: 0.875rem !important; /* 14px - same as button text */
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    margin-right: 0.25rem !important; /* 4px spacing */
+    display: inline-block !important;
+    width: auto !important;
+    height: auto !important;
+}
+
+/* Remove extra margin if icon is last child */
+.btn i:last-child,
+.btn .fa:last-child,
+.btn .fas:last-child,
+.btn .far:last-child {
+    margin-right: 0 !important;
+}
+
+/* Icon-only buttons */
+.btn-icon {
+    padding: 0.375rem !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.btn-icon i,
+.btn-icon .fa,
+.btn-icon .fas {
+    margin: 0 !important;
+    font-size: 1rem !important; /* Slightly larger for icon-only */
+}
+
+/* Fix for buttons with uppercase and letter-spacing */
+.btn[style*="text-transform: uppercase"],
+.btn[style*="text-transform:uppercase"] {
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important; /* Reduced from 0.05em */
+    font-size: 0.75rem !important; /* 12px for uppercase text */
+}
+
+/* Specific fix for "Create first ticket" type buttons */
+a.btn[href*="action=nuovo"],
+a.btn[href*="action=new"],
+.btn:contains("primo"),
+.btn:contains("first") {
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.875rem !important;
+}
+
+/* Fix oversized buttons in empty states */
+.empty-state .btn,
+.no-data .btn,
+.no-results .btn,
+.text-center .btn-primary,
+.text-center .btn-secondary {
+    padding: 0.375rem 1rem !important; /* Slightly wider but not taller */
+    font-size: 0.875rem !important;
+    max-width: 200px !important; /* Prevent super wide buttons */
+}
+
+/* Card footer buttons */
+.card-footer .btn,
+.modal-footer .btn {
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.875rem !important;
+}
+
+/* Table action buttons */
+.table .btn,
+td .btn,
+.actions .btn,
+.btn-group .btn {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+}
+
+/* Fix for inline styles that set specific heights */
+.btn[style*="height: 36px"],
+.btn[style*="height:36px"] {
+    height: 34px !important; /* Slightly reduce */
+    padding: 0.375rem 0.75rem !important;
+}
+
+.btn[style*="height: 40px"],
+.btn[style*="height:40px"],
+.btn[style*="height: 44px"],
+.btn[style*="height:44px"] {
+    height: 36px !important; /* Normalize to standard */
+    padding: 0.375rem 0.75rem !important;
+}
+
+/* Fix padding inline styles */
+.btn[style*="padding: 0px 16px"],
+.btn[style*="padding:0px 16px"] {
+    padding: 0.375rem 0.75rem !important;
+}
+
+/* Override transform translateY */
+.btn[style*="transform: translateY"],
+.btn[style*="transform:translateY"] {
+    transform: translateY(0) !important;
+}
+
+/* Ensure consistent font weight */
+.btn[style*="font-weight: 500"],
+.btn[style*="font-weight:500"],
+.btn[style*="font-weight: 600"],
+.btn[style*="font-weight:600"],
+.btn[style*="font-weight: bold"],
+.btn[style*="font-weight:bold"] {
+    font-weight: 500 !important; /* Medium weight, not too bold */
+}
+
+/* Fix oversized icons specifically */
+.fas.fa-plus:before,
+.fa.fa-plus:before {
+    font-size: inherit !important; /* Inherit from parent */
+}
+
+/* Global icon size control */
+i[class*="fa-"] {
+    font-size: 1rem !important; /* 16px default */
+}
+
+/* Icons in buttons should be smaller */
+.btn i[class*="fa-"],
+button i[class*="fa-"],
+a.btn i[class*="fa-"] {
+    font-size: 0.875rem !important; /* Match button text size */
+}
+
+/* Fix specific ticket button if needed */
+a[href*="tickets.php?action=nuovo"] {
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.875rem !important;
+    height: auto !important;
+    max-height: 36px !important;
+}
+
+a[href*="tickets.php?action=nuovo"] i {
+    font-size: 0.875rem !important;
+    margin-right: 0.25rem !important;
+}
+
+/* Prevent button text wrapping */
+.btn {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Fix button alignment in flex containers */
+.d-flex .btn,
+.flex .btn {
+    align-self: center !important;
+}
+
+/* Mobile responsive buttons */
+@media (max-width: 768px) {
+    .btn {
+        padding: 0.375rem 0.5rem !important;
+        font-size: 0.8125rem !important; /* Slightly smaller on mobile */
+    }
+    
+    .btn i {
+        font-size: 0.8125rem !important;
+    }
+}
+
+/* Fix button hover states not to change size */
+.btn:hover,
+.btn:focus,
+.btn:active {
+    padding: 0.375rem 0.75rem !important;
+    transform: translateY(0) !important;
+}
+
+/* Ensure consistent line height */
+.btn,
+.btn * {
+    line-height: 1.5 !important;
+}
+
+/* Fix button in dropdown menus */
+.dropdown-menu .btn {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+    width: 100% !important;
+    text-align: left !important;
+}

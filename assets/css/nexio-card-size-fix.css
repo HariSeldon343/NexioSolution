@@ -1,0 +1,164 @@
+/**
+ * Nexio Card Size Fix
+ * Reduces company card sizes to max-width 350px
+ * Created: 2025-08-11
+ */
+
+/* Company cards size constraint */
+.company-card,
+.card.company-card,
+.azienda-card,
+.card.azienda-card,
+.aziende-grid .card,
+.companies-grid .card,
+[class*="company"] .card,
+[class*="azienda"] .card,
+[class*="aziende"] .card {
+    max-width: 350px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+}
+
+/* Grid layout for company cards */
+.aziende-grid,
+.companies-grid,
+.company-cards-container,
+.row:has(.company-card),
+.row:has(.azienda-card) {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 350px)) !important;
+    gap: 1.5rem !important;
+    justify-content: center !important;
+}
+
+/* Individual card in grid */
+.aziende-grid > div,
+.companies-grid > div,
+.company-cards-container > div {
+    max-width: 350px !important;
+    width: 100% !important;
+}
+
+/* Card body adjustments */
+.company-card .card-body,
+.azienda-card .card-body {
+    padding: 1.25rem !important;
+}
+
+/* Card image constraints */
+.company-card .card-img-top,
+.azienda-card .card-img-top,
+.company-card img,
+.azienda-card img {
+    max-height: 200px !important;
+    object-fit: contain !important;
+    width: 100% !important;
+}
+
+/* Card title */
+.company-card .card-title,
+.azienda-card .card-title {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.75rem !important;
+}
+
+/* Card text */
+.company-card .card-text,
+.azienda-card .card-text {
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+}
+
+/* Card footer */
+.company-card .card-footer,
+.azienda-card .card-footer {
+    padding: 0.75rem 1.25rem !important;
+    background-color: #f8f9fa !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .aziende-grid,
+    .companies-grid {
+        grid-template-columns: 1fr !important;
+        padding: 0 1rem !important;
+    }
+    
+    .company-card,
+    .azienda-card {
+        max-width: 100% !important;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+    .aziende-grid,
+    .companies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 350px)) !important;
+    }
+}
+
+/* Fix Bootstrap row/col conflicts */
+.row .col-md-4:has(.company-card),
+.row .col-md-4:has(.azienda-card),
+.row .col-lg-4:has(.company-card),
+.row .col-lg-4:has(.azienda-card),
+.row .col-md-6:has(.company-card),
+.row .col-md-6:has(.azienda-card) {
+    max-width: 380px !important; /* Slightly larger to account for padding */
+    flex: 0 1 350px !important;
+}
+
+/* Override inline styles that make cards too large */
+.card[style*="width: 100%"].company-card,
+.card[style*="width: 100%"].azienda-card {
+    max-width: 350px !important;
+}
+
+/* Ensure consistent card heights */
+.company-card,
+.azienda-card {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+
+.company-card .card-body,
+.azienda-card .card-body {
+    flex: 1 1 auto !important;
+}
+
+/* Fix for cards in dashboard */
+.dashboard .company-card,
+.dashboard .azienda-card,
+#dashboard .company-card,
+#dashboard .azienda-card {
+    max-width: 350px !important;
+}
+
+/* Cards in main content area */
+.main-content .company-card,
+.main-content .azienda-card,
+.content .company-card,
+.content .azienda-card {
+    max-width: 350px !important;
+}
+
+/* Fix spacing between cards */
+.company-card + .company-card,
+.azienda-card + .azienda-card {
+    margin-top: 1.5rem !important;
+}
+
+/* When cards are in a flex container */
+.d-flex:has(.company-card),
+.d-flex:has(.azienda-card) {
+    flex-wrap: wrap !important;
+    gap: 1.5rem !important;
+    justify-content: center !important;
+}
+
+.d-flex .company-card,
+.d-flex .azienda-card {
+    flex: 0 1 350px !important;
+}

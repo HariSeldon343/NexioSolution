@@ -1,0 +1,433 @@
+/* ========================================
+   NEXIO CRITICAL FIXES - Correzioni Critiche Finali
+   ======================================== */
+
+/* 1. BADGE UNIFORMI E LEGGIBILI */
+.badge,
+.badge-info,
+.badge-success,
+.badge-warning,
+.badge-danger,
+.badge-primary,
+.badge-secondary,
+.role-badge,
+.role-super_admin,
+.role-admin,
+.role-utente_speciale,
+.role-utente,
+span[class*="badge"] {
+    display: inline-block !important;
+    padding: 0.375rem 0.875rem !important; /* Padding aumentato per leggibilità */
+    font-size: 0.8125rem !important;
+    font-weight: 600 !important;
+    border-radius: 12px !important;
+    text-transform: none !important; /* Rimuovo uppercase per leggibilità */
+    letter-spacing: normal !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+/* Colori badge con contrasto ottimale */
+.badge-info,
+.role-super_admin,
+.role-badge.role-super_admin {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+.badge-success,
+.role-admin,
+.role-badge.role-admin {
+    background-color: #10b981 !important;
+    color: white !important;
+}
+
+.badge-warning,
+.role-utente_speciale,
+.role-badge.role-utente_speciale {
+    background-color: #f59e0b !important;
+    color: white !important;
+}
+
+.badge-secondary,
+.role-utente,
+.role-badge.role-utente {
+    background-color: #6b7280 !important;
+    color: white !important;
+}
+
+.badge-danger {
+    background-color: #ef4444 !important;
+    color: white !important;
+}
+
+.badge-primary {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+/* 2. USER INFO SIDEBAR - LAYOUT OTTIMIZZATO */
+.sidebar-footer {
+    padding: 1rem !important;
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.sidebar-footer .user-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.875rem !important;
+    padding: 0.875rem !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+    position: relative !important;
+    min-height: 60px !important;
+}
+
+/* Avatar ottimizzato */
+.sidebar-footer .user-avatar {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+}
+
+/* User details con spazio per testo completo */
+.sidebar-footer .user-details {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.125rem !important;
+}
+
+.sidebar-footer .user-name {
+    color: white !important;
+    font-size: 0.9375rem !important; /* Più grande per leggibilità */
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+    margin: 0 !important;
+    /* Permette wrap su 2 righe se necessario */
+    white-space: normal !important;
+    word-break: break-word !important;
+    max-width: calc(100% - 40px) !important;
+}
+
+.sidebar-footer .user-role {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-size: 0.8125rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+}
+
+.sidebar-footer .user-role i {
+    font-size: 0.75rem !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    flex-shrink: 0 !important;
+}
+
+/* Dropdown button posizionato meglio */
+.sidebar-footer .dropdown {
+    margin-left: auto !important;
+}
+
+.sidebar-footer .btn-icon {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    padding: 0.5rem !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.sidebar-footer .btn-icon:hover,
+.sidebar-footer .btn-icon:focus,
+.sidebar-footer .btn-icon.show {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+}
+
+.sidebar-footer .btn-icon i {
+    font-size: 1rem !important;
+}
+
+/* 3. DROPDOWN MENU LEGGIBILE */
+.sidebar-footer .dropdown-menu {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+    padding: 0.5rem !important;
+    min-width: 200px !important;
+    margin-top: 0.5rem !important;
+}
+
+.sidebar-footer .dropdown-menu.show {
+    display: block !important;
+}
+
+.sidebar-footer .dropdown-item {
+    padding: 0.625rem 0.875rem !important;
+    font-size: 0.9375rem !important;
+    color: #1f2937 !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.625rem !important;
+    transition: all 0.15s ease !important;
+    font-weight: 500 !important;
+}
+
+.sidebar-footer .dropdown-item:hover {
+    background: #f3f4f6 !important;
+    color: #111827 !important;
+    transform: translateX(2px) !important;
+}
+
+.sidebar-footer .dropdown-item.text-danger {
+    color: #dc2626 !important;
+}
+
+.sidebar-footer .dropdown-item.text-danger:hover {
+    background: #fee2e2 !important;
+    color: #b91c1c !important;
+}
+
+.sidebar-footer .dropdown-item i {
+    font-size: 1rem !important;
+    width: 18px !important;
+    text-align: center !important;
+    opacity: 0.7 !important;
+}
+
+.sidebar-footer .dropdown-divider {
+    margin: 0.375rem 0 !important;
+    border-color: #e5e7eb !important;
+    opacity: 1 !important;
+}
+
+/* 4. USER ACTIONS CON SFONDO LEGGERO */
+.user-actions {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    padding: 0.375rem !important;
+    background: rgba(248, 250, 252, 0.5) !important; /* Sfondo molto leggero */
+    border-radius: 8px !important;
+    border: 1px solid rgba(226, 232, 240, 0.5) !important;
+}
+
+.user-actions .btn {
+    padding: 0.375rem 0.625rem !important;
+    font-size: 0.8125rem !important;
+    border-radius: 6px !important;
+    border: 1px solid transparent !important;
+    transition: all 0.15s ease !important;
+}
+
+.user-actions .btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.user-actions .btn-primary {
+    background: #3b82f6 !important;
+    color: white !important;
+}
+
+.user-actions .btn-secondary {
+    background: #6b7280 !important;
+    color: white !important;
+}
+
+.user-actions .btn-danger {
+    background: #ef4444 !important;
+    color: white !important;
+}
+
+/* 5. FIX LOGO NEXIO */
+.sidebar-header {
+    padding: 1.5rem 1rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.sidebar-logo {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-decoration: none !important;
+    gap: 0.75rem !important;
+}
+
+/* Rimuovo il filter che nasconde il logo */
+.sidebar-logo img {
+    width: 56px !important;
+    height: 56px !important;
+    filter: none !important; /* Rimuovo il filter che causava il quadrato bianco */
+    opacity: 1 !important;
+}
+
+/* Se il logo è scuro su sfondo scuro, usa questo invece */
+.sidebar-logo .logo-wrapper {
+    width: 56px !important;
+    height: 56px !important;
+    background: white !important;
+    border-radius: 12px !important;
+    padding: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.sidebar-logo .logo-wrapper img {
+    width: 100% !important;
+    height: 100% !important;
+    filter: none !important;
+}
+
+/* Testo NEXIO e motto */
+.sidebar-logo-text {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+}
+
+.sidebar-logo-text .logo-title {
+    font-size: 1.75rem !important;
+    font-weight: 700 !important;
+    color: white !important;
+    letter-spacing: 0.05em !important;
+    margin: 0 !important;
+}
+
+.sidebar-logo-text .logo-motto {
+    font-size: 0.6875rem !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+}
+
+/* 6. MIGLIORAMENTI LOG-ATTIVITA.PHP */
+.filters-form {
+    background: white !important;
+    padding: 1.5rem !important;
+    border-radius: 10px !important;
+    border: 1px solid #e5e7eb !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.filters-form .btn {
+    padding: 0.625rem 1.25rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    border-radius: 8px !important;
+}
+
+.log-table {
+    background: white !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+.log-table th {
+    background: #f9fafb !important;
+    padding: 0.875rem !important;
+    font-size: 0.8125rem !important;
+    font-weight: 600 !important;
+    color: #6b7280 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.log-table td {
+    padding: 0.875rem !important;
+    font-size: 0.875rem !important;
+    color: #1f2937 !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+}
+
+.log-table tr:hover {
+    background: #f9fafb !important;
+}
+
+/* 7. RESPONSIVE ADJUSTMENTS */
+@media (max-width: 768px) {
+    .sidebar-footer .user-info {
+        flex-wrap: wrap !important;
+    }
+    
+    .sidebar-footer .user-details {
+        flex: 1 1 auto !important;
+        min-width: 150px !important;
+    }
+    
+    .user-actions {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+    
+    .badge {
+        font-size: 0.75rem !important;
+        padding: 0.25rem 0.625rem !important;
+    }
+}
+
+/* 8. DARK MODE COMPATIBILITY */
+@media (prefers-color-scheme: dark) {
+    .user-actions {
+        background: rgba(30, 41, 59, 0.5) !important;
+        border-color: rgba(71, 85, 105, 0.5) !important;
+    }
+}
+
+/* 9. PRINT STYLES */
+@media print {
+    .sidebar,
+    .user-actions,
+    .btn-icon,
+    .dropdown {
+        display: none !important;
+    }
+}
+
+/* 10. ANIMATION IMPROVEMENTS */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.sidebar-footer .dropdown-menu.show {
+    animation: slideIn 0.2s ease !important;
+}

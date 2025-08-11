@@ -1,0 +1,781 @@
+/* Nexio Platform - Comprehensive UI Fixes */
+/* Date: 2025-08-11 */
+
+/* ============================================
+   1. GLOBAL FONT FAMILY AND BUTTON STYLING
+   ============================================ */
+
+* {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+/* Unified button styling */
+.btn,
+button,
+input[type="submit"],
+input[type="button"],
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger,
+.btn-warning,
+.btn-info,
+.btn-light,
+.btn-dark,
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-success,
+.btn-outline-danger,
+.btn-outline-warning,
+.btn-outline-info,
+.btn-outline-light,
+.btn-outline-dark,
+[class*="btn-"] {
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-weight: 500 !important;
+    border-radius: 2px !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    padding: 0.5rem 1rem !important;
+    transition: all 0.15s ease !important;
+}
+
+/* Button hover states */
+.btn:hover,
+button:hover,
+[class*="btn-"]:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Button active states */
+.btn:active,
+button:active,
+[class*="btn-"]:active {
+    transform: translateY(0) !important;
+}
+
+/* ============================================
+   2. LOGIN PAGE IMPROVEMENTS
+   ============================================ */
+
+.login-container .form-label {
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+    color: #6b7280 !important;
+    font-weight: 500 !important;
+}
+
+.login-container .form-input {
+    border: 1px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    padding: 0.625rem 0.875rem !important;
+}
+
+.login-container .form-input:focus {
+    background-color: white !important;
+    border-color: #2d5a9f !important;
+    box-shadow: 0 0 0 3px rgba(45, 90, 159, 0.1) !important;
+}
+
+/* ============================================
+   3. HEADER USER INFO DISPLAY
+   ============================================ */
+
+.user-info,
+.header-user-info,
+#user-info,
+.navbar-user-info {
+    display: flex !important;
+    align-items: center !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    max-width: 200px !important;
+    line-height: 1.3 !important;
+}
+
+.user-info .user-name,
+.header-user-info .user-name {
+    white-space: normal !important;
+    word-break: break-word !important;
+    line-height: 1.3 !important;
+    max-width: 150px !important;
+}
+
+/* ============================================
+   4. GESTIONE UTENTI - BADGES AND BUTTONS
+   ============================================ */
+
+/* Role badges */
+.badge-super-admin,
+.badge[data-role="super_admin"],
+.role-super_admin {
+    background-color: #dc2626 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.badge-utente-speciale,
+.badge[data-role="utente_speciale"],
+.role-utente_speciale {
+    background-color: #f59e0b !important;
+    color: white !important;
+    border: none !important;
+}
+
+.badge-utente,
+.badge[data-role="utente"],
+.role-utente {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border: none !important;
+}
+
+/* Status badges */
+.badge-attivo,
+.badge-success,
+.status-attivo {
+    background-color: #10b981 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.badge-sospeso,
+.badge-warning,
+.status-sospeso {
+    background-color: #f59e0b !important;
+    color: white !important;
+    border: none !important;
+}
+
+.badge-cancellato,
+.badge-danger,
+.status-cancellato {
+    background-color: #ef4444 !important;
+    color: white !important;
+    border: none !important;
+}
+
+/* Button icons in gestione-utenti */
+.gestione-utenti .btn i,
+.gestione-utenti button i,
+.user-management .btn i,
+.user-management button i {
+    color: currentColor !important;
+    opacity: 0.9 !important;
+}
+
+.gestione-utenti .btn-primary i {
+    color: white !important;
+}
+
+.gestione-utenti .btn-warning i {
+    color: white !important;
+}
+
+.gestione-utenti .btn-danger i {
+    color: white !important;
+}
+
+.gestione-utenti .btn-success i {
+    color: white !important;
+}
+
+/* ============================================
+   5. LOG ATTIVITÀ IMPROVEMENTS
+   ============================================ */
+
+/* Move Elimina Log button to filter row */
+.log-attivita-page .btn-delete-logs,
+#deleteLogsBtn {
+    margin-left: auto !important;
+}
+
+.log-filters,
+.filter-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    flex-wrap: wrap !important;
+}
+
+/* Expandable log details */
+.log-row,
+.activity-log-row {
+    cursor: pointer !important;
+    transition: background-color 0.15s ease !important;
+}
+
+.log-row:hover,
+.activity-log-row:hover {
+    background-color: #f9fafb !important;
+}
+
+.log-details,
+.activity-log-details {
+    display: none;
+    padding: 1rem !important;
+    background-color: #f9fafb !important;
+    border-top: 1px solid #e5e7eb !important;
+    margin-top: 0.5rem !important;
+}
+
+.log-details.expanded,
+.activity-log-details.expanded {
+    display: block !important;
+}
+
+.log-details-content {
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+}
+
+.log-details-item {
+    margin-bottom: 0.5rem !important;
+}
+
+.log-details-label {
+    font-weight: 600 !important;
+    color: #374151 !important;
+    margin-right: 0.5rem !important;
+}
+
+/* ============================================
+   6. AZIENDE PAGE - SMALLER CARDS
+   ============================================ */
+
+.aziende-page .card,
+.companies-page .card,
+.azienda-card {
+    max-width: 350px !important;
+    margin: 0.5rem !important;
+}
+
+.aziende-page .card-body,
+.companies-page .card-body {
+    padding: 1rem !important;
+}
+
+.aziende-page .card-title,
+.companies-page .card-title {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+.aziende-page .card-text,
+.companies-page .card-text {
+    font-size: 0.875rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.aziende-grid,
+.companies-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+    gap: 1rem !important;
+}
+
+/* ============================================
+   7. EDIT COMPANY - WHITE ICONS
+   ============================================ */
+
+.edit-company .btn-primary i,
+.edit-company .btn-success i,
+.edit-company .btn-danger i,
+.edit-company .btn-warning i,
+.edit-company .btn-info i,
+.edit-company .btn-dark i,
+.modifica-azienda .btn-primary i,
+.modifica-azienda .btn-success i,
+.modifica-azienda .btn-danger i,
+.modifica-azienda .btn-warning i {
+    color: white !important;
+}
+
+/* Colored backgrounds with white icons */
+.bg-primary i,
+.bg-success i,
+.bg-danger i,
+.bg-warning i,
+.bg-info i,
+.bg-dark i,
+.bg-secondary i {
+    color: white !important;
+}
+
+/* ============================================
+   8. TICKETS PAGE - SEPARATOR LINES AND BADGES
+   ============================================ */
+
+.tickets-table tbody tr,
+#ticketsTable tbody tr {
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.tickets-table tbody tr:last-child,
+#ticketsTable tbody tr:last-child {
+    border-bottom: none !important;
+}
+
+/* Ticket status badges */
+.badge-aperto,
+.ticket-status-aperto,
+.status-aperto {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+.badge-in-lavorazione,
+.ticket-status-in_lavorazione,
+.status-in_lavorazione {
+    background-color: #f59e0b !important;
+    color: white !important;
+}
+
+.badge-chiuso,
+.ticket-status-chiuso,
+.status-chiuso {
+    background-color: #10b981 !important;
+    color: white !important;
+}
+
+/* Priority badges */
+.badge-bassa,
+.priority-bassa {
+    background-color: #6b7280 !important;
+    color: white !important;
+}
+
+.badge-media,
+.priority-media {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+.badge-alta,
+.priority-alta {
+    background-color: #f59e0b !important;
+    color: white !important;
+}
+
+.badge-critica,
+.priority-critica {
+    background-color: #dc2626 !important;
+    color: white !important;
+}
+
+/* Delete button for closed tickets (super users only) */
+.ticket-delete-btn {
+    display: none;
+}
+
+.super-admin .ticket-chiuso .ticket-delete-btn,
+.super-admin .status-chiuso .ticket-delete-btn {
+    display: inline-block !important;
+    margin-left: 0.5rem !important;
+}
+
+/* ============================================
+   9. CALENDARIO EVENTI - BADGES AND COLORS
+   ============================================ */
+
+/* Event type badges */
+.badge-evento,
+.event-type-evento,
+.tipo-evento {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+.badge-riunione,
+.event-type-riunione,
+.tipo-riunione {
+    background-color: #8b5cf6 !important;
+    color: white !important;
+}
+
+.badge-task,
+.event-type-task,
+.tipo-task {
+    background-color: #10b981 !important;
+    color: white !important;
+}
+
+.badge-promemoria,
+.event-type-promemoria,
+.tipo-promemoria {
+    background-color: #f59e0b !important;
+    color: white !important;
+}
+
+/* Calendar month header */
+.calendar-header,
+.fc-toolbar-title,
+.calendar-month-header {
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+}
+
+/* Assegna Task button */
+.btn-assign-task,
+#assignTaskBtn,
+.assegna-task-btn {
+    background-color: #10b981 !important;
+    color: white !important;
+    border-color: #10b981 !important;
+}
+
+.btn-assign-task:hover,
+#assignTaskBtn:hover,
+.assegna-task-btn:hover {
+    background-color: #059669 !important;
+    border-color: #059669 !important;
+}
+
+/* ============================================
+   10. SIDEBAR FIXES
+   ============================================ */
+
+.sidebar-header,
+.logo-wrapper {
+    background-color: #162d4f !important;
+}
+
+.sidebar-header .logo-wrapper {
+    background-color: transparent !important;
+}
+
+.sidebar {
+    background-color: #162d4f !important;
+}
+
+.sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.sidebar .nav-link:hover {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.sidebar .nav-link.active {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* ============================================
+   11. GENERAL BADGE FIXES
+   ============================================ */
+
+.badge {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    border-radius: 2px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+}
+
+/* Ensure all badges have white text */
+.badge-primary,
+.badge-secondary,
+.badge-success,
+.badge-danger,
+.badge-warning,
+.badge-info,
+.badge-light,
+.badge-dark {
+    color: white !important;
+}
+
+.badge-light {
+    background-color: #9ca3af !important;
+}
+
+/* ============================================
+   12. TABLE IMPROVEMENTS
+   ============================================ */
+
+.table tbody tr {
+    transition: background-color 0.15s ease !important;
+}
+
+.table tbody tr:hover {
+    background-color: #f9fafb !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+/* ============================================
+   13. FORM IMPROVEMENTS
+   ============================================ */
+
+.form-control,
+.form-select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+select,
+textarea {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 2px !important;
+    transition: all 0.15s ease !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #2d5a9f !important;
+    box-shadow: 0 0 0 3px rgba(45, 90, 159, 0.1) !important;
+    outline: none !important;
+}
+
+/* ============================================
+   14. CARD IMPROVEMENTS
+   ============================================ */
+
+.card {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 4px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.card-header {
+    background-color: #f9fafb !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    font-weight: 600 !important;
+}
+
+/* ============================================
+   15. ALERT IMPROVEMENTS
+   ============================================ */
+
+.alert {
+    border-radius: 2px !important;
+    border-width: 1px !important;
+}
+
+.alert-success {
+    background-color: #f0fdf4 !important;
+    border-color: #10b981 !important;
+    color: #065f46 !important;
+}
+
+.alert-danger {
+    background-color: #fef2f2 !important;
+    border-color: #ef4444 !important;
+    color: #991b1b !important;
+}
+
+.alert-warning {
+    background-color: #fffbeb !important;
+    border-color: #f59e0b !important;
+    color: #92400e !important;
+}
+
+.alert-info {
+    background-color: #eff6ff !important;
+    border-color: #3b82f6 !important;
+    color: #1e40af !important;
+}
+
+/* ============================================
+   16. MODAL IMPROVEMENTS
+   ============================================ */
+
+.modal-header {
+    background-color: #f9fafb !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+.modal-footer {
+    background-color: #f9fafb !important;
+    border-top: 1px solid #e5e7eb !important;
+}
+
+.modal-content {
+    border-radius: 4px !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+/* ============================================
+   17. PAGINATION IMPROVEMENTS
+   ============================================ */
+
+.pagination .page-link {
+    border: 1px solid #e5e7eb !important;
+    color: #2d5a9f !important;
+}
+
+.pagination .page-link:hover {
+    background-color: #f9fafb !important;
+    border-color: #2d5a9f !important;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #2d5a9f !important;
+    border-color: #2d5a9f !important;
+    color: white !important;
+}
+
+/* ============================================
+   18. BREADCRUMB IMPROVEMENTS
+   ============================================ */
+
+.breadcrumb {
+    background-color: transparent !important;
+    padding: 0 !important;
+}
+
+.breadcrumb-item {
+    font-size: 0.875rem !important;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "/" !important;
+    color: #9ca3af !important;
+}
+
+/* ============================================
+   19. DROPDOWN IMPROVEMENTS
+   ============================================ */
+
+.dropdown-menu {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+}
+
+.dropdown-item:hover {
+    background-color: #f9fafb !important;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+    background-color: #2d5a9f !important;
+    color: white !important;
+}
+
+/* ============================================
+   20. LOADING STATES
+   ============================================ */
+
+.spinner-border {
+    width: 1rem !important;
+    height: 1rem !important;
+    border-width: 2px !important;
+}
+
+.btn .spinner-border {
+    margin-right: 0.5rem !important;
+}
+
+/* ============================================
+   21. ACCESSIBILITY IMPROVEMENTS
+   ============================================ */
+
+:focus-visible {
+    outline: 2px solid #2d5a9f !important;
+    outline-offset: 2px !important;
+}
+
+/* ============================================
+   22. PRINT STYLES
+   ============================================ */
+
+@media print {
+    .sidebar,
+    .navbar,
+    .btn,
+    button,
+    .pagination,
+    .breadcrumb {
+        display: none !important;
+    }
+    
+    .content-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        page-break-inside: avoid !important;
+    }
+}
+
+/* ============================================
+   23. RESPONSIVE IMPROVEMENTS
+   ============================================ */
+
+@media (max-width: 768px) {
+    .table-responsive {
+        border: 1px solid #e5e7eb !important;
+        border-radius: 4px !important;
+    }
+    
+    .btn {
+        width: 100% !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .card {
+        margin-bottom: 1rem !important;
+    }
+}
+
+/* ============================================
+   24. ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out !important;
+}
+
+/* ============================================
+   25. UTILITIES
+   ============================================ */
+
+.text-uppercase {
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+}
+
+.text-muted {
+    color: #6b7280 !important;
+}
+
+.border-light {
+    border-color: #e5e7eb !important;
+}
+
+.bg-light {
+    background-color: #f9fafb !important;
+}
+
+/* End of UI Fixes */

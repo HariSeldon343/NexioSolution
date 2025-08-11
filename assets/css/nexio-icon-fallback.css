@@ -1,0 +1,447 @@
+/**
+ * Nexio Icon Fallback CSS
+ * Emergency fallback styles for icons and UI elements
+ * This ensures basic functionality even if FontAwesome fails to load
+ */
+
+/* Force icon display with fallback content */
+.fa:empty::before,
+.fas:empty::before,
+.far:empty::before,
+.fab:empty::before,
+.fal:empty::before,
+.fad:empty::before {
+    display: inline-block !important;
+    font-style: normal !important;
+    font-variant: normal !important;
+    text-rendering: auto !important;
+    -webkit-font-smoothing: antialiased !important;
+}
+
+/* Unicode fallbacks for critical navigation icons */
+.fa-bars:empty::before { content: "☰" !important; }
+.fa-home:empty::before { content: "⌂" !important; }
+.fa-users:empty::before { content: "👥" !important; }
+.fa-user:empty::before { content: "👤" !important; }
+.fa-file:empty::before { content: "📄" !important; }
+.fa-folder:empty::before { content: "📁" !important; }
+.fa-calendar:empty::before { content: "📅" !important; }
+.fa-bell:empty::before { content: "🔔" !important; }
+.fa-cog:empty::before, .fa-cogs:empty::before { content: "⚙" !important; }
+.fa-sign-out-alt:empty::before { content: "⇤" !important; }
+.fa-plus:empty::before { content: "+" !important; font-weight: bold !important; }
+.fa-edit:empty::before, .fa-pen:empty::before { content: "✎" !important; }
+.fa-trash:empty::before, .fa-trash-alt:empty::before { content: "🗑" !important; }
+.fa-download:empty::before { content: "⬇" !important; }
+.fa-upload:empty::before { content: "⬆" !important; }
+.fa-search:empty::before { content: "🔍" !important; }
+.fa-times:empty::before, .fa-close:empty::before { content: "✕" !important; }
+.fa-check:empty::before { content: "✓" !important; }
+.fa-exclamation-triangle:empty::before { content: "⚠" !important; }
+.fa-info-circle:empty::before { content: "ⓘ" !important; }
+
+/* Ensure all buttons are visible and properly styled */
+.btn,
+button.btn,
+a.btn,
+input[type="button"].btn,
+input[type="submit"].btn,
+input[type="reset"].btn {
+    display: inline-block !important;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    vertical-align: middle !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    background-color: transparent !important;
+    border: 1px solid transparent !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 1rem !important;
+    border-radius: 0.25rem !important;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Primary button style */
+.btn-primary {
+    color: #fff !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+.btn-primary:hover {
+    color: #fff !important;
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+}
+
+/* Success button style */
+.btn-success {
+    color: #fff !important;
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+}
+
+.btn-success:hover {
+    color: #fff !important;
+    background-color: #157347 !important;
+    border-color: #146c43 !important;
+}
+
+/* Danger button style */
+.btn-danger {
+    color: #fff !important;
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+.btn-danger:hover {
+    color: #fff !important;
+    background-color: #bb2d3b !important;
+    border-color: #b02a37 !important;
+}
+
+/* Warning button style */
+.btn-warning {
+    color: #000 !important;
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+}
+
+.btn-warning:hover {
+    color: #000 !important;
+    background-color: #ffca2c !important;
+    border-color: #ffc720 !important;
+}
+
+/* Info button style */
+.btn-info {
+    color: #000 !important;
+    background-color: #0dcaf0 !important;
+    border-color: #0dcaf0 !important;
+}
+
+.btn-info:hover {
+    color: #000 !important;
+    background-color: #31d2f2 !important;
+    border-color: #25cff2 !important;
+}
+
+/* Secondary button style */
+.btn-secondary {
+    color: #fff !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+.btn-secondary:hover {
+    color: #fff !important;
+    background-color: #5c636a !important;
+    border-color: #565e64 !important;
+}
+
+/* Light button style */
+.btn-light {
+    color: #000 !important;
+    background-color: #f8f9fa !important;
+    border-color: #f8f9fa !important;
+}
+
+.btn-light:hover {
+    color: #000 !important;
+    background-color: #f9fafb !important;
+    border-color: #f9fafb !important;
+}
+
+/* Dark button style */
+.btn-dark {
+    color: #fff !important;
+    background-color: #212529 !important;
+    border-color: #212529 !important;
+}
+
+.btn-dark:hover {
+    color: #fff !important;
+    background-color: #1c1f23 !important;
+    border-color: #1a1e21 !important;
+}
+
+/* Small button modifier */
+.btn-sm {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+    border-radius: 0.2rem !important;
+}
+
+/* Large button modifier */
+.btn-lg {
+    padding: 0.5rem 1rem !important;
+    font-size: 1.25rem !important;
+    border-radius: 0.3rem !important;
+}
+
+/* Block button modifier */
+.btn-block {
+    display: block !important;
+    width: 100% !important;
+}
+
+/* Outline button variants */
+.btn-outline-primary {
+    color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-primary:hover {
+    color: #fff !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+.btn-outline-success {
+    color: #198754 !important;
+    border-color: #198754 !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-success:hover {
+    color: #fff !important;
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+}
+
+.btn-outline-danger {
+    color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    background-color: transparent !important;
+}
+
+.btn-outline-danger:hover {
+    color: #fff !important;
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+/* Icon buttons */
+.btn-icon {
+    padding: 0.375rem !important;
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Ensure modals are hidden by default */
+.modal:not(.show) {
+    display: none !important;
+}
+
+/* Remove orphaned modal backdrops */
+body > .modal-backdrop:only-child {
+    display: none !important;
+}
+
+/* Fix modal z-index issues */
+.modal {
+    z-index: 1050 !important;
+}
+
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+/* Ensure dropdowns work */
+.dropdown-menu {
+    position: absolute !important;
+    z-index: 1000 !important;
+    display: none !important;
+    min-width: 10rem !important;
+    padding: 0.5rem 0 !important;
+    margin: 0 !important;
+    font-size: 1rem !important;
+    color: #212529 !important;
+    text-align: left !important;
+    list-style: none !important;
+    background-color: #fff !important;
+    background-clip: padding-box !important;
+    border: 1px solid rgba(0,0,0,.15) !important;
+    border-radius: 0.25rem !important;
+}
+
+.dropdown-menu.show {
+    display: block !important;
+}
+
+/* Ensure tables are visible */
+.table {
+    width: 100% !important;
+    margin-bottom: 1rem !important;
+    color: #212529 !important;
+    background-color: transparent !important;
+}
+
+.table th,
+.table td {
+    padding: 0.75rem !important;
+    vertical-align: top !important;
+    border-top: 1px solid #dee2e6 !important;
+}
+
+.table thead th {
+    vertical-align: bottom !important;
+    border-bottom: 2px solid #dee2e6 !important;
+    background-color: #f8f9fa !important;
+    font-weight: 600 !important;
+}
+
+.table tbody + tbody {
+    border-top: 2px solid #dee2e6 !important;
+}
+
+/* Ensure forms are visible */
+.form-control {
+    display: block !important;
+    width: 100% !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 1rem !important;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+    color: #212529 !important;
+    background-color: #fff !important;
+    background-clip: padding-box !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 0.25rem !important;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+}
+
+.form-control:focus {
+    color: #212529 !important;
+    background-color: #fff !important;
+    border-color: #86b7fe !important;
+    outline: 0 !important;
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25) !important;
+}
+
+/* Ensure alerts are visible */
+.alert {
+    position: relative !important;
+    padding: 0.75rem 1.25rem !important;
+    margin-bottom: 1rem !important;
+    border: 1px solid transparent !important;
+    border-radius: 0.25rem !important;
+}
+
+.alert-success {
+    color: #0f5132 !important;
+    background-color: #d1e7dd !important;
+    border-color: #badbcc !important;
+}
+
+.alert-danger {
+    color: #842029 !important;
+    background-color: #f8d7da !important;
+    border-color: #f5c2c7 !important;
+}
+
+.alert-warning {
+    color: #664d03 !important;
+    background-color: #fff3cd !important;
+    border-color: #ffecb5 !important;
+}
+
+.alert-info {
+    color: #055160 !important;
+    background-color: #cff4fc !important;
+    border-color: #b6effb !important;
+}
+
+/* Ensure cards are visible */
+.card {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+    word-wrap: break-word !important;
+    background-color: #fff !important;
+    background-clip: border-box !important;
+    border: 1px solid rgba(0,0,0,.125) !important;
+    border-radius: 0.25rem !important;
+}
+
+.card-header {
+    padding: 0.75rem 1.25rem !important;
+    margin-bottom: 0 !important;
+    background-color: rgba(0,0,0,.03) !important;
+    border-bottom: 1px solid rgba(0,0,0,.125) !important;
+}
+
+.card-body {
+    flex: 1 1 auto !important;
+    padding: 1.25rem !important;
+}
+
+/* Mobile menu toggle button */
+.mobile-menu-toggle {
+    position: fixed !important;
+    top: 1rem !important;
+    left: 1rem !important;
+    z-index: 1001 !important;
+    display: none !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    background-color: #fff !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 0.25rem !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    cursor: pointer !important;
+}
+
+@media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+}
+
+/* Ensure sidebar is properly positioned */
+.sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    width: 250px !important;
+    background-color: #2c3e50 !important;
+    z-index: 1000 !important;
+    overflow-y: auto !important;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s ease !important;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0) !important;
+    }
+}
+
+/* Ensure main content is properly positioned */
+.main-content {
+    margin-left: 250px !important;
+    padding: 20px !important;
+    min-height: 100vh !important;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0 !important;
+    }
+}

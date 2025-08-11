@@ -3,33 +3,50 @@
  * Vista lista eventi
  */
 
+// Initialize CSRF token manager if not already done
+if (!isset($csrf)) {
+    require_once 'backend/utils/CSRFTokenManager.php';
+    $csrf = CSRFTokenManager::getInstance();
+}
+
+// Include calendar helper
+require_once 'backend/utils/CalendarHelper.php';
+
 // Combina eventi e task in un array unico
 $allItems = [];
 
-// Aggiungi eventi
-foreach ($eventi as $evento) {
-    $allItems[] = [
-        'type' => 'event',
-        'data' => $evento,
-        'date' => strtotime($evento['data_inizio'])
-    ];
-}
-
-// Aggiungi task se disponibili
-if (isset($user_tasks) && !empty($user_tasks)) {
-    foreach ($user_tasks as $task) {
-        $allItems[] = [
-            'type' => 'task',
-            'data' => $task,
-            'date' => strtotime($task['data_inizio'])
-        ];
+// Aggiungi eventi (assicurati che $eventi sia definito e sia un array)
+if (isset($eventi) && is_array($eventi)) {
+    foreach ($eventi as $evento) {
+        if (!empty($evento['data_inizio'])) {
+            $allItems[] = [
+                'type' => 'event',
+                'data' => $evento,
+                'date' => strtotime($evento['data_inizio'])
+            ];
+        }
     }
 }
 
-// Ordina per data
-usort($allItems, function($a, $b) {
-    return $a['date'] - $b['date'];
-});
+// Aggiungi task se disponibili
+if (isset($user_tasks) && is_array($user_tasks) && !empty($user_tasks)) {
+    foreach ($user_tasks as $task) {
+        if (!empty($task['data_inizio'])) {
+            $allItems[] = [
+                'type' => 'task',
+                'data' => $task,
+                'date' => strtotime($task['data_inizio'])
+            ];
+        }
+    }
+}
+
+// Ordina per data solo se ci sono elementi
+if (!empty($allItems)) {
+    usort($allItems, function($a, $b) {
+        return $a['date'] - $b['date'];
+    });
+}
 ?>
 
 <div class="events-list-view">
@@ -72,6 +89,12 @@ usort($allItems, function($a, $b) {
                     <span class="start-time"><?= date('H:i', strtotime($evento['data_inizio'])) ?></span>
                     <?php if ($evento['data_fine'] && $evento['data_fine'] !== $evento['data_inizio']): ?>
                     <span class="end-time">- <?= date('H:i', strtotime($evento['data_fine'])) ?></span>
+                    <?php endif; ?>
+                    <?php 
+                    $durationMinutes = CalendarHelper::calculateDurationMinutes($evento['data_inizio'], $evento['data_fine']);
+                    if ($durationMinutes > 0): 
+                    ?>
+                    <span class="event-duration"><?= CalendarHelper::formatDuration($durationMinutes) ?></span>
                     <?php endif; ?>
                 </div>
                 
@@ -126,10 +149,10 @@ usort($allItems, function($a, $b) {
                     <a href="?action=modifica&id=<?= $evento['id'] ?>" class="btn btn-sm btn-outline">
                         <i class="fas fa-edit"></i>
                     </a>
-                    <a href="?action=elimina&id=<?= $evento['id'] ?>" class="btn btn-sm btn-danger"
-                       onclick="return confirm('Sei sicuro di voler eliminare questo evento?')">
+                    <button type="button" class="btn btn-sm btn-danger"
+                            onclick="deleteEvent(<?= $evento['id'] ?>, '<?= htmlspecialchars($evento['titolo'], ENT_QUOTES) ?>')">
                         <i class="fas fa-trash"></i>
-                    </a>
+                    </button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -143,7 +166,7 @@ usort($allItems, function($a, $b) {
             <div class="event-card task-card" data-task-id="<?= $task['id'] ?>">
                 <div class="event-time">
                     <span class="task-type">TASK</span>
-                    <span class="task-duration"><?= $task['giornate_previste'] ?> gg</span>
+                    <span class="task-duration"><?= CalendarHelper::formatTaskDuration($task['giornate_previste']) ?></span>
                 </div>
                 
                 <div class="event-content">
@@ -290,6 +313,15 @@ usort($allItems, function($a, $b) {
 .end-time {
     color: #718096;
     font-size: 14px;
+}
+
+.event-duration {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #a0aec0;
+    font-weight: normal;
+    font-style: italic;
 }
 
 .event-content {
@@ -524,3 +556,27 @@ usort($allItems, function($a, $b) {
     }
 }
 </style>
+
+<!-- Hidden form for secure event deletion with CSRF token -->
+<form id="deleteEventForm" method="POST" style="display: none;">
+    <input type="hidden" name="csrf_token" value="<?= $csrf->getToken() ?>">
+</form>
+
+<script>
+function deleteEvent(eventId, eventTitle) {
+    if (confirm('Sei sicuro di voler eliminare l\'evento "' + eventTitle + '"?')) {
+        const form = document.getElementById('deleteEventForm');
+        const currentUrl = new URL(window.location.href);
+        
+        // Build the action URL with proper parameters
+        const actionUrl = new URL('<?= APP_PATH ?>/calendario-eventi.php', window.location.origin);
+        actionUrl.searchParams.set('action', 'elimina');
+        actionUrl.searchParams.set('id', eventId);
+        actionUrl.searchParams.set('view', currentUrl.searchParams.get('view') || 'list');
+        actionUrl.searchParams.set('date', currentUrl.searchParams.get('date') || '<?= date('Y-m-d') ?>');
+        
+        form.action = actionUrl.toString();
+        form.submit();
+    }
+}
+</script>

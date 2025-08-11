@@ -140,30 +140,33 @@ function db_insert($table, $data) {
 function db_update($table, $data, $where, $whereParams = []) {
     global $pdo;
     $setParts = [];
-    foreach (array_keys($data) as $field) {
-        $setParts[] = "{$field} = :{$field}";
+    $allParams = [];
+    $paramCounter = 0;
+    
+    // Use numbered placeholders for SET clause
+    foreach ($data as $field => $value) {
+        $setParts[] = "{$field} = :set_{$paramCounter}";
+        $allParams[":set_{$paramCounter}"] = $value;
+        $paramCounter++;
     }
     
-    $sql = "UPDATE {$table} SET " . implode(', ', $setParts) . " WHERE {$where}";
+    // Replace ? with numbered placeholders in WHERE clause
+    $whereProcessed = $where;
+    if (!empty($whereParams)) {
+        $whereCounter = 0;
+        $whereProcessed = preg_replace_callback('/\?/', function($match) use (&$whereCounter, &$allParams, $whereParams) {
+            $placeholder = ":where_{$whereCounter}";
+            $allParams[$placeholder] = $whereParams[$whereCounter];
+            $whereCounter++;
+            return $placeholder;
+        }, $where);
+    }
+    
+    $sql = "UPDATE {$table} SET " . implode(', ', $setParts) . " WHERE {$whereProcessed}";
     
     $stmt = $pdo->prepare($sql);
-    foreach ($data as $field => $value) {
-        $stmt->bindValue(":{$field}", $value);
-    }
-    
-    // Handle both numeric and associative arrays for where params
-    if (!empty($whereParams)) {
-        if (array_keys($whereParams) === range(0, count($whereParams) - 1)) {
-            // Numeric array - bind by position
-            foreach ($whereParams as $index => $value) {
-                $stmt->bindValue($index + 1, $value);
-            }
-        } else {
-            // Associative array - bind by name
-            foreach ($whereParams as $param => $value) {
-                $stmt->bindValue($param, $value);
-            }
-        }
+    foreach ($allParams as $param => $value) {
+        $stmt->bindValue($param, $value);
     }
     
     $stmt->execute();

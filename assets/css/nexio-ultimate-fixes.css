@@ -1,0 +1,653 @@
+/**
+ * NEXIO ULTIMATE FIXES CSS
+ * Maximum priority styles with inline-level specificity
+ * Forces all UI elements to display correctly
+ * Created: 2025-08-11
+ */
+
+/* ===================================================
+   FORCE FONTAWESOME ICONS TO DISPLAY
+   =================================================== */
+
+/* Global FontAwesome fix */
+i[class*="fa-"]::before,
+.fas::before,
+.far::before,
+.fab::before,
+.fa::before {
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome", "Font Awesome 6 Brands", "Font Awesome 5 Brands" !important;
+    font-weight: 900 !important;
+    font-style: normal !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    display: inline-block !important;
+    font-variant: normal !important;
+    text-rendering: auto !important;
+    line-height: 1 !important;
+}
+
+/* Force specific icons in sidebar */
+.sidebar .menu-item i::before,
+.sidebar-footer i::before {
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+    font-weight: 900 !important;
+}
+
+/* Icon content fallbacks */
+i.fa-home::before, i.fas.fa-home::before { content: "\f015" !important; }
+i.fa-folder-open::before, i.fas.fa-folder-open::before { content: "\f07c" !important; }
+i.fa-calendar-alt::before, i.fas.fa-calendar-alt::before { content: "\f073" !important; }
+i.fa-tasks::before, i.fas.fa-tasks::before { content: "\f0ae" !important; }
+i.fa-headset::before, i.fas.fa-headset::before { content: "\f590" !important; }
+i.fa-clipboard-list::before, i.fas.fa-clipboard-list::before { content: "\f46d" !important; }
+i.fa-building::before, i.fas.fa-building::before { content: "\f1ad" !important; }
+i.fa-users::before, i.fas.fa-users::before { content: "\f0c0" !important; }
+i.fa-user-tie::before, i.fas.fa-user-tie::before { content: "\f508" !important; }
+i.fa-cog::before, i.fas.fa-cog::before { content: "\f013" !important; }
+i.fa-envelope::before, i.fas.fa-envelope::before { content: "\f0e0" !important; }
+i.fa-server::before, i.fas.fa-server::before { content: "\f233" !important; }
+i.fa-history::before, i.fas.fa-history::before { content: "\f1da" !important; }
+i.fa-user-circle::before, i.fas.fa-user-circle::before { content: "\f2bd" !important; }
+i.fa-sign-out-alt::before, i.fas.fa-sign-out-alt::before { content: "\f2f5" !important; }
+i.fa-shield-alt::before, i.fas.fa-shield-alt::before { content: "\f3ed" !important; }
+i.fa-user::before, i.fas.fa-user::before { content: "\f007" !important; }
+i.fa-ellipsis-v::before, i.fas.fa-ellipsis-v::before { content: "\f142" !important; }
+i.fa-exchange-alt::before, i.fas.fa-exchange-alt::before { content: "\f362" !important; }
+i.fa-bars::before, i.fas.fa-bars::before { content: "\f0c9" !important; }
+
+/* ===================================================
+   FORCE BADGE STYLING
+   =================================================== */
+
+/* All badges must have background */
+.badge,
+[class*="badge-"],
+.role-badge,
+[class*="role-"],
+.user-role span,
+.sidebar .user-role {
+    display: inline-block !important;
+    padding: 0.35rem 0.75rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    vertical-align: baseline !important;
+    border-radius: 0.375rem !important;
+    background-image: none !important;
+}
+
+/* Primary/Super Admin Badge */
+.badge-primary,
+.bg-primary.badge,
+.role-super_admin,
+.user-role:has(.fa-shield-alt) {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+/* Success Badge */
+.badge-success,
+.bg-success.badge,
+.role-admin {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+/* Warning Badge */
+.badge-warning,
+.bg-warning.badge,
+.role-utente_speciale {
+    background-color: #ffc107 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+/* Secondary Badge */
+.badge-secondary,
+.bg-secondary.badge,
+.role-utente {
+    background-color: #6c757d !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+/* Info Badge */
+.badge-info,
+.bg-info.badge {
+    background-color: #0dcaf0 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+/* Danger Badge */
+.badge-danger,
+.bg-danger.badge {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+/* ===================================================
+   FORCE BUTTON STYLING
+   =================================================== */
+
+/* All buttons MUST be uppercase */
+.btn,
+button.btn,
+a.btn,
+input[type="submit"],
+input[type="button"],
+button:not(.no-style) {
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.375rem !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    display: inline-block !important;
+    line-height: 1.5 !important;
+    text-decoration: none !important;
+}
+
+/* Primary Button */
+.btn-primary,
+button.btn-primary,
+a.btn-primary,
+input[type="submit"].btn-primary {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: #0b5ed7 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(13,110,253,0.35) !important;
+}
+
+/* Success Button */
+.btn-success,
+button.btn-success,
+a.btn-success {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+}
+
+.btn-success:hover,
+.btn-success:focus {
+    background-color: #157347 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(25,135,84,0.35) !important;
+}
+
+/* Danger Button */
+.btn-danger,
+button.btn-danger,
+a.btn-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+.btn-danger:hover,
+.btn-danger:focus {
+    background-color: #bb2d3b !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(220,53,69,0.35) !important;
+}
+
+/* Warning Button */
+.btn-warning,
+button.btn-warning,
+a.btn-warning {
+    background-color: #ffc107 !important;
+    color: #000000 !important;
+}
+
+.btn-warning:hover,
+.btn-warning:focus {
+    background-color: #ffca2c !important;
+    color: #000000 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(255,193,7,0.35) !important;
+}
+
+/* Info Button */
+.btn-info,
+button.btn-info,
+a.btn-info {
+    background-color: #0dcaf0 !important;
+    color: #000000 !important;
+}
+
+.btn-info:hover,
+.btn-info:focus {
+    background-color: #31d2f2 !important;
+    color: #000000 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(13,202,240,0.35) !important;
+}
+
+/* Secondary Button */
+.btn-secondary,
+button.btn-secondary,
+a.btn-secondary {
+    background-color: #6c757d !important;
+    color: #ffffff !important;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+    background-color: #5c636a !important;
+    color: #ffffff !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(108,117,125,0.35) !important;
+}
+
+/* Outline Buttons */
+.btn-outline-primary {
+    background-color: transparent !important;
+    color: #0d6efd !important;
+    border: 2px solid #0d6efd !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+.btn-outline-danger {
+    background-color: transparent !important;
+    color: #dc3545 !important;
+    border: 2px solid #dc3545 !important;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+/* Button Sizes */
+.btn-sm {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.8125rem !important;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+}
+
+/* ===================================================
+   SIDEBAR FIXES
+   =================================================== */
+
+/* Sidebar styling */
+.sidebar {
+    background: #162d4f !important;
+    color: #ffffff !important;
+}
+
+/* Sidebar menu icons MUST be visible */
+.sidebar .menu-item {
+    color: rgba(255,255,255,0.8) !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0.75rem 1.5rem !important;
+    text-decoration: none !important;
+}
+
+.sidebar .menu-item i {
+    width: 20px !important;
+    margin-right: 12px !important;
+    text-align: center !important;
+    font-size: 1rem !important;
+    color: rgba(255,255,255,0.8) !important;
+}
+
+.sidebar .menu-item:hover {
+    background-color: rgba(255,255,255,0.1) !important;
+    color: #ffffff !important;
+}
+
+.sidebar .menu-item:hover i {
+    color: #ffffff !important;
+}
+
+.sidebar .menu-item.active {
+    background-color: rgba(255,255,255,0.15) !important;
+    color: #ffffff !important;
+    border-left: 3px solid #ffffff !important;
+}
+
+.sidebar .menu-item.active i {
+    color: #ffffff !important;
+}
+
+/* Sidebar user info */
+.sidebar .user-role {
+    font-size: 0.75rem !important;
+    color: rgba(255,255,255,0.7) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.sidebar .user-role i {
+    margin-right: 4px !important;
+    font-size: 0.75rem !important;
+}
+
+/* ===================================================
+   TABLE FIXES
+   =================================================== */
+
+.table {
+    width: 100% !important;
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+.table th {
+    background-color: #f8f9fa !important;
+    color: #495057 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.05em !important;
+    padding: 0.75rem !important;
+    border-bottom: 2px solid #dee2e6 !important;
+}
+
+.table td {
+    padding: 0.75rem !important;
+    color: #212529 !important;
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa !important;
+}
+
+/* ===================================================
+   CARD FIXES
+   =================================================== */
+
+.card {
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0,0,0,0.125) !important;
+    border-radius: 0.375rem !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+.card-header {
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid rgba(0,0,0,0.125) !important;
+    padding: 1rem !important;
+    font-weight: 600 !important;
+    color: #495057 !important;
+}
+
+.card-body {
+    padding: 1.25rem !important;
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+/* ===================================================
+   FORM FIXES
+   =================================================== */
+
+.form-control,
+.form-select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+select,
+textarea {
+    display: block !important;
+    width: 100% !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    color: #495057 !important;
+    background-color: #ffffff !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 0.375rem !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    color: #495057 !important;
+    background-color: #ffffff !important;
+    border-color: #86b7fe !important;
+    outline: 0 !important;
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,0.25) !important;
+}
+
+.form-label,
+label {
+    display: inline-block !important;
+    margin-bottom: 0.5rem !important;
+    font-weight: 500 !important;
+    color: #212529 !important;
+    font-size: 0.875rem !important;
+}
+
+/* ===================================================
+   ALERT FIXES
+   =================================================== */
+
+.alert {
+    padding: 1rem 1.25rem !important;
+    margin-bottom: 1rem !important;
+    border: 1px solid transparent !important;
+    border-radius: 0.375rem !important;
+}
+
+.alert-success {
+    color: #0f5132 !important;
+    background-color: #d1e7dd !important;
+    border-color: #badbcc !important;
+}
+
+.alert-danger {
+    color: #842029 !important;
+    background-color: #f8d7da !important;
+    border-color: #f5c2c7 !important;
+}
+
+.alert-warning {
+    color: #664d03 !important;
+    background-color: #fff3cd !important;
+    border-color: #ffecb5 !important;
+}
+
+.alert-info {
+    color: #055160 !important;
+    background-color: #cff4fc !important;
+    border-color: #b6effb !important;
+}
+
+/* ===================================================
+   TYPOGRAPHY FIXES
+   =================================================== */
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
+    font-size: 0.875rem !important;
+    line-height: 1.5 !important;
+    color: #212529 !important;
+    background-color: #f8f9fa !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600 !important;
+    color: #212529 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+h1 { font-size: 2.5rem !important; }
+h2 { font-size: 2rem !important; }
+h3 { font-size: 1.75rem !important; }
+h4 { font-size: 1.5rem !important; }
+h5 { font-size: 1.25rem !important; }
+h6 { font-size: 1rem !important; }
+
+p {
+    margin-top: 0 !important;
+    margin-bottom: 1rem !important;
+    color: #495057 !important;
+}
+
+a {
+    color: #0d6efd !important;
+    text-decoration: none !important;
+}
+
+a:hover {
+    color: #0a58ca !important;
+}
+
+/* ===================================================
+   UTILITY OVERRIDES
+   =================================================== */
+
+.text-uppercase {
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+}
+
+.text-primary { color: #0d6efd !important; }
+.text-success { color: #198754 !important; }
+.text-danger { color: #dc3545 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-info { color: #0dcaf0 !important; }
+.text-secondary { color: #6c757d !important; }
+.text-muted { color: #6c757d !important; }
+.text-white { color: #ffffff !important; }
+.text-dark { color: #212529 !important; }
+
+.bg-primary { background-color: #0d6efd !important; }
+.bg-success { background-color: #198754 !important; }
+.bg-danger { background-color: #dc3545 !important; }
+.bg-warning { background-color: #ffc107 !important; }
+.bg-info { background-color: #0dcaf0 !important; }
+.bg-secondary { background-color: #6c757d !important; }
+.bg-light { background-color: #f8f9fa !important; }
+.bg-dark { background-color: #212529 !important; }
+.bg-white { background-color: #ffffff !important; }
+
+.border { border: 1px solid #dee2e6 !important; }
+.border-primary { border-color: #0d6efd !important; }
+.border-success { border-color: #198754 !important; }
+.border-danger { border-color: #dc3545 !important; }
+.border-warning { border-color: #ffc107 !important; }
+.border-info { border-color: #0dcaf0 !important; }
+.border-secondary { border-color: #6c757d !important; }
+
+.shadow-sm { box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075) !important; }
+.shadow { box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important; }
+.shadow-lg { box-shadow: 0 1rem 3rem rgba(0,0,0,0.175) !important; }
+
+/* ===================================================
+   RESPONSIVE FIXES
+   =================================================== */
+
+@media (max-width: 768px) {
+    .btn {
+        font-size: 0.8125rem !important;
+        padding: 0.375rem 0.75rem !important;
+    }
+    
+    .table {
+        font-size: 0.8125rem !important;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem !important;
+    }
+    
+    .card-body {
+        padding: 1rem !important;
+    }
+    
+    body {
+        font-size: 0.8125rem !important;
+    }
+}
+
+/* ===================================================
+   CRITICAL Z-INDEX
+   =================================================== */
+
+.sidebar { z-index: 1000 !important; }
+.modal-backdrop { z-index: 1040 !important; }
+.modal { z-index: 1050 !important; }
+.dropdown-menu { z-index: 1100 !important; }
+.tooltip { z-index: 1200 !important; }
+
+/* ===================================================
+   FORCE VISIBILITY
+   =================================================== */
+
+.hidden,
+.d-none {
+    display: none !important;
+}
+
+.visible,
+.d-block {
+    display: block !important;
+}
+
+.d-inline-block {
+    display: inline-block !important;
+}
+
+.d-flex {
+    display: flex !important;
+}
+
+/* ===================================================
+   EMERGENCY FIXES FOR SPECIFIC ISSUES
+   =================================================== */
+
+/* Force sidebar icons to show */
+.sidebar i[class*="fa-"] {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Force badge backgrounds */
+[class*="badge"] {
+    background-clip: padding-box !important;
+    background-origin: padding-box !important;
+}
+
+/* Force button text */
+.btn span,
+.btn {
+    text-rendering: optimizeLegibility !important;
+}
+
+/* End of Ultimate Fixes */

@@ -1,0 +1,424 @@
+/**
+ * Button and Icon Improvements
+ * Enhances readability and consistency across the platform
+ */
+
+/* ==============================================
+   Global Button Improvements
+   ============================================== */
+
+/* Base button styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ensure icons in buttons are properly sized */
+.btn i,
+.btn .fas,
+.btn .far,
+.btn .fa {
+    font-size: 14px !important;
+    width: auto;
+    height: auto;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+/* Button hover effects */
+.btn:hover {
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.btn:hover i,
+.btn:hover .fas,
+.btn:hover .far,
+.btn:hover .fa {
+    transform: scale(1.05);
+}
+
+/* Primary button style */
+.btn-primary {
+    background: #6366f1;
+    border: 1px solid #6366f1;
+    color: white;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.15);
+}
+
+.btn-primary:hover {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    color: white;
+    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.25);
+}
+
+/* Success button style */
+.btn-success {
+    background: #10b981;
+    border: 1px solid #10b981;
+    color: white;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.15);
+}
+
+.btn-success:hover {
+    background: #059669;
+    border-color: #059669;
+    color: white;
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.25);
+}
+
+/* Info button style */
+.btn-info {
+    background: #3b82f6;
+    border: 1px solid #3b82f6;
+    color: white;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+}
+
+.btn-info:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: white;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.25);
+}
+
+/* Warning button style */
+.btn-warning {
+    background: #f59e0b;
+    border: 1px solid #f59e0b;
+    color: white;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.15);
+}
+
+.btn-warning:hover {
+    background: #d97706;
+    border-color: #d97706;
+    color: white;
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.25);
+}
+
+/* Danger button style */
+.btn-danger {
+    background: #ef4444;
+    border: 1px solid #ef4444;
+    color: white;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.15);
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: white;
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.25);
+}
+
+/* Secondary button style */
+.btn-secondary {
+    background: #6b7280;
+    border: 1px solid #6b7280;
+    color: white;
+    box-shadow: 0 2px 4px rgba(107, 114, 128, 0.15);
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+    border-color: #4b5563;
+    color: white;
+    box-shadow: 0 4px 8px rgba(107, 114, 128, 0.25);
+}
+
+/* Light button style */
+.btn-light {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-light:hover {
+    background: #e5e7eb;
+    border-color: #d1d5db;
+    color: #374151;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Button sizes */
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.btn-sm i,
+.btn-sm .fas,
+.btn-sm .far,
+.btn-sm .fa {
+    font-size: 12px !important;
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 16px;
+}
+
+.btn-lg i,
+.btn-lg .fas,
+.btn-lg .far,
+.btn-lg .fa {
+    font-size: 18px !important;
+}
+
+/* Round buttons */
+.btn-round {
+    border-radius: 50px;
+}
+
+/* Icon-only buttons */
+.btn-icon {
+    padding: 10px;
+    min-width: auto;
+    gap: 0;
+}
+
+.btn-icon i,
+.btn-icon .fas,
+.btn-icon .far,
+.btn-icon .fa {
+    margin: 0;
+}
+
+/* ==============================================
+   View Buttons Styling
+   ============================================== */
+
+.view-buttons {
+    display: flex;
+    gap: 8px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.view-btn:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    color: #4b5563;
+    transform: translateY(-1px);
+}
+
+.view-btn.active {
+    background: #6366f1;
+    border-color: #6366f1;
+    color: white;
+}
+
+.view-btn.active:hover {
+    background: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.view-btn i,
+.view-btn .fas,
+.view-btn .far,
+.view-btn .fa {
+    font-size: 14px !important;
+    width: auto;
+    height: auto;
+}
+
+/* ==============================================
+   Calendar Actions Buttons
+   ============================================== */
+
+.calendar-actions {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.calendar-actions .btn {
+    min-width: 120px;
+}
+
+/* ==============================================
+   Empty State Specific Overrides
+   ============================================== */
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f9fafb;
+    border-radius: 12px;
+    margin: 20px 0;
+}
+
+.empty-state > i:first-child,
+.empty-state > .fas:first-child,
+.empty-state > .far:first-child,
+.empty-state > .fa:first-child {
+    font-size: 42px !important;
+    color: #d1d5db !important;
+    margin-bottom: 20px !important;
+    display: inline-block !important;
+}
+
+.empty-state h2 {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    margin: 16px 0 !important;
+}
+
+.empty-state p {
+    font-size: 14px !important;
+    color: #6b7280 !important;
+    margin-bottom: 24px !important;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.empty-state .btn {
+    margin: 8px 4px !important;
+}
+
+/* ==============================================
+   Responsive Design
+   ============================================== */
+
+@media (max-width: 768px) {
+    .btn {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    
+    .view-buttons {
+        justify-content: center;
+    }
+    
+    .calendar-actions {
+        justify-content: center;
+    }
+    
+    .calendar-actions .btn {
+        min-width: 100px;
+        flex: 1 1 calc(50% - 5px);
+        max-width: 200px;
+    }
+    
+    .empty-state {
+        padding: 30px 15px;
+    }
+    
+    .empty-state > i:first-child,
+    .empty-state > .fas:first-child,
+    .empty-state > .far:first-child,
+    .empty-state > .fa:first-child {
+        font-size: 36px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+    
+    .btn i,
+    .btn .fas,
+    .btn .far,
+    .btn .fa {
+        font-size: 12px !important;
+    }
+    
+    .view-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+    
+    .calendar-actions .btn {
+        flex: 1 1 100%;
+        max-width: none;
+    }
+}
+
+/* ==============================================
+   Accessibility Improvements
+   ============================================== */
+
+.btn:focus,
+.view-btn:focus {
+    outline: 2px solid #6366f1;
+    outline-offset: 2px;
+}
+
+.btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Ensure sufficient color contrast */
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Loading state */
+.btn.loading {
+    color: transparent;
+    pointer-events: none;
+}
+
+.btn.loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: button-loading-spinner 0.6s linear infinite;
+}
+
+@keyframes button-loading-spinner {
+    from {
+        transform: rotate(0turn);
+    }
+    to {
+        transform: rotate(1turn);
+    }
+}

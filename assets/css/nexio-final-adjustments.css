@@ -1,0 +1,423 @@
+/* ========================================
+   NEXIO FINAL ADJUSTMENTS - Ultimi Ritocchi
+   ======================================== */
+
+/* 1. RIDUZIONE H2 CON ICONE */
+h2 {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    margin-bottom: 1rem !important;
+}
+
+h2 i {
+    font-size: 1.125rem !important;
+    color: #64748b !important;
+}
+
+/* Specifico per i panel headers */
+.panel-header h2,
+.dashboard-panel h2 {
+    font-size: 1.125rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* 2. BADGE UNIFORMI PER RUOLI */
+.badge,
+.badge-info,
+.badge-success,
+.badge-warning,
+.badge-danger,
+.badge-primary,
+.badge-secondary,
+.role-badge,
+.status-badge,
+span[class*="badge"],
+span[class*="role-"] {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    border-radius: 9999px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Colori specifici per ruoli */
+.badge-info,
+.role-badge.role-super_admin,
+.role-super_admin,
+span:contains("Super Admin") {
+    background-color: #0ea5e9 !important;
+    color: white !important;
+}
+
+.badge-success,
+.role-badge.role-admin,
+.role-admin {
+    background-color: #10b981 !important;
+    color: white !important;
+}
+
+.badge-warning,
+.role-badge.role-utente_speciale,
+.role-utente_speciale {
+    background-color: #f59e0b !important;
+    color: white !important;
+}
+
+.badge-secondary,
+.role-badge.role-utente,
+.role-utente {
+    background-color: #64748b !important;
+    color: white !important;
+}
+
+/* 3. USER INFO SIDEBAR - PADDING RIDOTTO ALL'1% */
+.sidebar-footer {
+    padding: 0.5rem !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+}
+
+.sidebar-footer .user-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.5rem !important; /* Ridotto significativamente */
+    margin: 0.25rem !important; /* Margine minimo */
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 8px !important;
+    position: relative !important;
+}
+
+/* Avatar più compatto */
+.sidebar-footer .user-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    flex-shrink: 0 !important;
+}
+
+/* User details più compatti */
+.sidebar-footer .user-details {
+    flex: 1 !important;
+    min-width: 0 !important;
+    padding-right: 0.5rem !important;
+}
+
+.sidebar-footer .user-name {
+    color: white !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.2 !important;
+    margin-bottom: 0.125rem !important;
+}
+
+.sidebar-footer .user-role {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 0.6875rem !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+    line-height: 1 !important;
+}
+
+.sidebar-footer .user-role i {
+    font-size: 0.625rem !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Dropdown button più piccolo e meglio posizionato */
+.sidebar-footer .dropdown {
+    position: absolute !important;
+    right: 0.25rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+.sidebar-footer .btn-icon {
+    background: transparent !important;
+    border: none !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    padding: 0.25rem !important;
+    width: 24px !important;
+    height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+}
+
+.sidebar-footer .btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.sidebar-footer .btn-icon i {
+    font-size: 0.75rem !important;
+}
+
+/* Dropdown menu ottimizzato */
+.sidebar-footer .dropdown-menu {
+    background: white !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    padding: 0.25rem !important;
+    min-width: 160px !important;
+}
+
+.sidebar-footer .dropdown-item {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.8125rem !important;
+    color: #1e293b !important;
+    border-radius: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    transition: background 0.15s ease !important;
+}
+
+.sidebar-footer .dropdown-item:hover {
+    background: #f1f5f9 !important;
+}
+
+.sidebar-footer .dropdown-item i {
+    font-size: 0.875rem !important;
+    width: 16px !important;
+    text-align: center !important;
+}
+
+.sidebar-footer .dropdown-divider {
+    margin: 0.25rem 0 !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* 4. ALTRI H2 E TITOLI */
+.page-header h1 {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+}
+
+.page-subtitle {
+    font-size: 0.875rem !important;
+    color: #64748b !important;
+}
+
+.card-header h3,
+.panel-title {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+}
+
+/* 5. RESPONSIVE ADJUSTMENTS */
+@media (max-width: 768px) {
+    h2 {
+        font-size: 1.125rem !important;
+    }
+    
+    h2 i {
+        font-size: 1rem !important;
+    }
+    
+    .sidebar-footer .user-info {
+        padding: 0.375rem !important;
+    }
+    
+    .sidebar-footer .user-avatar {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .sidebar-footer .user-name {
+        font-size: 0.75rem !important;
+    }
+    
+    .sidebar-footer .user-role {
+        font-size: 0.625rem !important;
+    }
+}
+
+/* 6. BADGES IN TABELLE */
+table .badge,
+td .badge,
+.table .badge {
+    padding: 0.125rem 0.5rem !important;
+    font-size: 0.6875rem !important;
+}
+
+/* 7. STAT CARDS H3 */
+.stat-card h3,
+.stat-card-modern h3 {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    margin: 0 !important;
+}
+
+/* 8. FORM LABELS */
+label {
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    color: #475569 !important;
+    margin-bottom: 0.25rem !important;
+}
+
+/* 9. BREADCRUMB */
+.breadcrumb {
+    font-size: 0.8125rem !important;
+}
+
+.breadcrumb a {
+    color: #64748b !important;
+}
+
+/* 10. TOOLTIPS */
+.tooltip {
+    font-size: 0.75rem !important;
+}
+
+/* 11. PAGINATION */
+.pagination {
+    font-size: 0.875rem !important;
+}
+
+.page-link {
+    padding: 0.375rem 0.75rem !important;
+}
+
+/* 12. CARDS COMPATTE */
+.card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.card-header {
+    padding: 0.75rem 1rem !important;
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.card-body {
+    padding: 1rem !important;
+}
+
+/* 13. ALERTS COMPATTI */
+.alert {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.875rem !important;
+    border-radius: 6px !important;
+}
+
+.alert i {
+    font-size: 1rem !important;
+}
+
+/* 14. MODALS COMPATTI */
+.modal-header {
+    padding: 1rem !important;
+}
+
+.modal-header h4,
+.modal-header h5 {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+}
+
+.modal-body {
+    padding: 1rem !important;
+}
+
+.modal-footer {
+    padding: 0.75rem 1rem !important;
+}
+
+/* 15. SIDEBAR MENU ITEMS PIÙ COMPATTI */
+.sidebar-menu .menu-item a {
+    padding: 0.625rem 1rem !important;
+    font-size: 0.8125rem !important;
+}
+
+.sidebar-menu .menu-item i {
+    font-size: 0.875rem !important;
+    width: 18px !important;
+}
+
+.menu-section-title {
+    font-size: 0.625rem !important;
+    padding: 0.5rem 1rem 0.25rem !important;
+}
+
+/* 16. QUICK ACTIONS PIÙ COMPATTE */
+.quick-action {
+    padding: 0.75rem !important;
+}
+
+.quick-action i {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.quick-action span {
+    font-size: 0.75rem !important;
+}
+
+/* 17. FILE CARDS PIÙ COMPATTE */
+.file-card {
+    padding: 0.75rem !important;
+}
+
+.file-card .file-name {
+    font-size: 0.8125rem !important;
+}
+
+.file-card .file-meta {
+    font-size: 0.6875rem !important;
+}
+
+/* 18. NOTIFICATIONS COMPATTE */
+.notification-item {
+    padding: 0.625rem !important;
+    font-size: 0.8125rem !important;
+}
+
+/* 19. TIMELINE COMPATTA */
+.timeline-item {
+    padding: 0.75rem !important;
+}
+
+.timeline-item .timeline-date {
+    font-size: 0.6875rem !important;
+}
+
+.timeline-item .timeline-content {
+    font-size: 0.8125rem !important;
+}
+
+/* 20. FOOTER COMPATTO */
+footer {
+    padding: 1rem !important;
+    font-size: 0.75rem !important;
+}

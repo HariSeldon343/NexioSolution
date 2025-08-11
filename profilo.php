@@ -12,8 +12,7 @@ $message = '';
 $error = '';
 
 // Carica dati completi utente dal database
-$stmt = db_query("SELECT * FROM utenti WHERE id = ?");
-$stmt->execute([$user['id']]);
+$stmt = db_query("SELECT * FROM utenti WHERE id = ?", [$user['id']]);
 $userData = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Gestisci aggiornamento profilo

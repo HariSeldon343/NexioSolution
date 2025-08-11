@@ -7,10 +7,13 @@
 require_once 'backend/config/config.php';
 require_once 'backend/utils/EventInvite.php';
 require_once 'backend/utils/ModulesHelper.php';
-
+require_once 'backend/utils/CSRFTokenManager.php';
 
 $auth = Auth::getInstance();
 $auth->requireAuth();
+
+// Initialize CSRF token manager
+$csrf = CSRFTokenManager::getInstance();
 
 $user = $auth->getUser();
 $currentAzienda = $auth->getCurrentAzienda();
@@ -428,6 +431,16 @@ switch ($action) {
             redirect(APP_PATH . '/calendario-eventi.php');
         }
         
+        // Verifica CSRF token se richiesta POST
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $csrf->verifyRequest();
+            } catch (Exception $e) {
+                $_SESSION['error'] = "Token di sicurezza non valido. Riprova.";
+                redirect(APP_PATH . '/calendario-eventi.php');
+            }
+        }
+        
         try {
             db_connection()->beginTransaction();
             
@@ -469,7 +482,7 @@ switch ($action) {
             $_SESSION['error'] = "Errore durante l'eliminazione dell'evento: " . $e->getMessage();
         }
         
-        redirect(APP_PATH . '/calendario-eventi.php');
+        redirect(APP_PATH . '/calendario-eventi.php?view=' . ($_GET['view'] ?? 'month') . '&date=' . ($_GET['date'] ?? date('Y-m-d')));
         break;
         
     case 'modifica_task':
@@ -713,6 +726,15 @@ function getEventsForView($view, $date, $user, $auth, $filter_azienda_id = null,
             $params[] = $year;
             $params[] = $month;
             break;
+            
+        case 'list':
+            // For list view, show events from the current month or future
+            $year = date('Y', strtotime($date));
+            $month = date('m', strtotime($date));
+            $firstDayOfMonth = "$year-$month-01";
+            $whereClause .= " AND DATE(e.data_inizio) >= ?";
+            $params[] = $firstDayOfMonth;
+            break;
     }
     
     $sql = "SELECT e.*, 
@@ -727,8 +749,14 @@ function getEventsForView($view, $date, $user, $auth, $filter_azienda_id = null,
             GROUP BY e.id
             ORDER BY e.data_inizio ASC";
     
-    $stmt = db_query($sql, $params);
-    return $stmt->fetchAll();
+    try {
+        $stmt = db_query($sql, $params);
+        $result = $stmt->fetchAll();
+        return $result ?: [];
+    } catch (Exception $e) {
+        error_log("Error fetching events: " . $e->getMessage());
+        return [];
+    }
 }
 
 // Carica eventi e task se l'utente ha i permessi
@@ -799,6 +827,15 @@ if ($isSuperAdmin || $isUtenteSpeciale) {
             $task_params[] = $start_month;
             $task_params[] = $end_month;
             break;
+            
+        case 'list':
+            // For list view, show tasks from the current month or future
+            $year = date('Y', strtotime($date));
+            $month = date('m', strtotime($date));
+            $firstDayOfMonth = "$year-$month-01";
+            $task_sql .= " AND t.data_fine >= ?";
+            $task_params[] = $firstDayOfMonth;
+            break;
     }
     
     $task_sql .= " ORDER BY t.data_inizio ASC";
@@ -814,6 +851,7 @@ if ($isSuperAdmin || $isUtenteSpeciale) {
 }
 
 $pageTitle = 'Calendario Eventi';
+$bodyClass = 'calendario-eventi-page';
 include dirname(__FILE__) . '/components/header.php';
 require_once 'components/page-header.php';
 ?>
@@ -831,6 +869,13 @@ $calendarActions = [
         'icon' => 'fas fa-plus',
         'href' => '?action=new',
         'class' => 'unified-btn unified-btn-primary'
+    ],
+    [
+        'text' => 'Importa ICS',
+        'icon' => 'fas fa-file-import',
+        'href' => '#',
+        'class' => 'unified-btn unified-btn-success',
+        'onclick' => 'return openICSImportModal()'
     ],
     [
         'text' => 'Esporta Calendario',
@@ -867,7 +912,7 @@ renderPageHeader('Calendario Eventi', 'Visualizza e gestisci gli eventi', 'calen
     <?php endif; ?>
     
     <div class="export-dropdown" style="position: relative;">
-        <button class="btn btn-secondary dropdown-toggle" onclick="toggleExportDropdown()">
+        <button class="btn btn-secondary dropdown-toggle" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;" onclick="toggleExportDropdown()">
             <i class="fas fa-download"></i> Esporta ICS
         </button>
         <div class="dropdown-menu" id="exportDropdown" style="position: absolute; top: 100%; right: 0; margin-top: 4px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; min-width: 200px;">
@@ -892,7 +937,7 @@ renderPageHeader('Calendario Eventi', 'Visualizza e gestisci gli eventi', 'calen
     <?php endif; ?>
     
     <?php if ($isSuperAdmin): ?>
-    <a href="?action=nuovo_task" class="btn btn-primary" style="background: #10b981;">
+    <a href="?action=nuovo_task" class="btn btn-primary" style="background: #0fb37a;">
         <i class="fas fa-tasks"></i> Assegna Task
     </a>
     <?php endif; ?>
@@ -1704,5 +1749,256 @@ function sendTaskCancellationNotification($task, $utente, $cancellatore) {
     return $mailer->send($utente['email'], $subject, $body);
 }
 ?>
+
+<!-- ICS Import Modal - Hidden by default, opens only on button click -->
+<div class="modal fade" id="icsImportModal" tabindex="-1" aria-labelledby="icsImportModalLabel" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="icsImportModalLabel">
+                    <i class="fas fa-file-import"></i> Importa Eventi da File ICS
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <form id="icsImportForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="icsFile" class="form-label">Seleziona file ICS/iCal</label>
+                        <input type="file" class="form-control" id="icsFile" name="ics_file" accept=".ics,.ical,.ifb,.icalendar" required>
+                        <div class="form-text">
+                            Formati supportati: .ics, .ical, .ifb, .icalendar
+                        </div>
+                    </div>
+                    
+                    <?php if ($isSuperAdmin && count($aziende_list) > 0): ?>
+                    <div class="mb-3">
+                        <label for="importAzienda" class="form-label">Importa per azienda</label>
+                        <select class="form-select" id="importAzienda" name="azienda_id">
+                            <option value="">Seleziona azienda...</option>
+                            <?php foreach ($aziende_list as $azienda): ?>
+                                <option value="<?php echo $azienda['id']; ?>">
+                                    <?php echo htmlspecialchars($azienda['nome']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Nota:</strong> Gli eventi duplicati verranno saltati automaticamente.
+                        I partecipanti verranno aggiunti solo se trovati nel sistema.
+                    </div>
+                    
+                    <div id="importProgress" style="display: none;">
+                        <div class="progress mb-2">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                        </div>
+                        <p class="text-center text-muted">Importazione in corso...</p>
+                    </div>
+                    
+                    <div id="importResult" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-primary" id="importBtn">
+                        <i class="fas fa-upload"></i> Importa Eventi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Ensure modal is properly initialized and doesn't auto-open
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure modal is hidden on page load
+    const modalElement = document.getElementById('icsImportModal');
+    if (modalElement) {
+        modalElement.style.display = 'none';
+        modalElement.classList.remove('show');
+        modalElement.setAttribute('aria-hidden', 'true');
+        
+        // Remove any existing backdrop
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+    }
+});
+
+// ICS Import functionality
+function openICSImportModal() {
+    try {
+        // Prevent any default action
+        if (typeof event !== 'undefined') {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        // Check if Bootstrap is loaded
+        if (typeof bootstrap === 'undefined') {
+            alert('Bootstrap non è caricato. Ricarica la pagina.');
+            return false;
+        }
+        
+        const modalElement = document.getElementById('icsImportModal');
+        if (!modalElement) {
+            console.error('Modal element not found');
+            return false;
+        }
+        
+        // Remove inline display none before showing
+        modalElement.style.display = '';
+        
+        // Close any existing modal instance first
+        const existingModal = bootstrap.Modal.getInstance(modalElement);
+        if (existingModal) {
+            existingModal.dispose();
+        }
+        
+        // Create new modal instance with backdrop
+        const modal = new bootstrap.Modal(modalElement, {
+            backdrop: true,
+            keyboard: true,
+            focus: true
+        });
+        
+        // Reset form when modal opens
+        const form = document.getElementById('icsImportForm');
+        if (form) {
+            form.reset();
+            const progressEl = document.getElementById('importProgress');
+            const resultEl = document.getElementById('importResult');
+            if (progressEl) progressEl.style.display = 'none';
+            if (resultEl) {
+                resultEl.style.display = 'none';
+                resultEl.innerHTML = '';
+            }
+        }
+        
+        // Show modal
+        modal.show();
+        
+        // Add event listener to hide on close
+        modalElement.addEventListener('hidden.bs.modal', function () {
+            modalElement.style.display = 'none';
+        }, { once: true });
+        
+    } catch (error) {
+        console.error('Error opening modal:', error);
+        alert('Errore nell\'apertura del modal. Ricarica la pagina.');
+    }
+    
+    return false;
+}
+
+document.getElementById('icsImportForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('icsFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Seleziona un file ICS da importare');
+        return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Il file è troppo grande. Dimensione massima: 5MB');
+        return;
+    }
+    
+    // Show progress
+    document.getElementById('importProgress').style.display = 'block';
+    document.getElementById('importResult').style.display = 'none';
+    document.getElementById('importBtn').disabled = true;
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('ics_file', file);
+    
+    // Add azienda_id if super admin
+    <?php if ($isSuperAdmin): ?>
+    const aziendaSelect = document.getElementById('importAzienda');
+    if (aziendaSelect && aziendaSelect.value) {
+        formData.append('azienda_id', aziendaSelect.value);
+    }
+    <?php endif; ?>
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
+    // Send request
+    fetch('<?php echo APP_PATH; ?>/backend/api/import-ics.php', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-Token': csrfToken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('importProgress').style.display = 'none';
+        document.getElementById('importBtn').disabled = false;
+        
+        const resultDiv = document.getElementById('importResult');
+        resultDiv.style.display = 'block';
+        
+        if (data.success) {
+            let resultHtml = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Importazione completata!</strong><br>
+                    Eventi importati: ${data.imported}<br>
+                    Eventi saltati (duplicati): ${data.skipped}<br>
+                    Totale eventi nel file: ${data.total}
+                </div>
+            `;
+            
+            if (data.warnings && data.warnings.length > 0) {
+                resultHtml += `
+                    <div class="alert alert-warning">
+                        <strong>Avvisi:</strong>
+                        <ul class="mb-0">
+                            ${data.warnings.map(w => `<li>${w}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            resultDiv.innerHTML = resultHtml;
+            
+            // Reload page after 3 seconds to show new events
+            if (data.imported > 0) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            }
+        } else {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Errore durante l'importazione:</strong><br>
+                    ${data.error || 'Errore sconosciuto'}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        document.getElementById('importProgress').style.display = 'none';
+        document.getElementById('importBtn').disabled = false;
+        
+        document.getElementById('importResult').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Errore di rete:</strong><br>
+                ${error.message || 'Impossibile completare l\'importazione'}
+            </div>
+        `;
+        document.getElementById('importResult').style.display = 'block';
+    });
+});
+</script>
 
 <?php include dirname(__FILE__) . '/components/footer.php'; ?>

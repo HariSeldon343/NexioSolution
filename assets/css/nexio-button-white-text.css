@@ -1,0 +1,380 @@
+/**
+ * Nexio Button White Text Fix
+ * Forces white text color on all primary, secondary, and danger buttons regardless of inline styles
+ * Created: 2025-08-11
+ * Updated: 2025-08-11 - Added secondary and danger button support
+ */
+
+/* Maximum specificity to override inline styles - PRIMARY, SECONDARY, AND DANGER */
+.btn-primary,
+.btn.btn-primary,
+button.btn-primary,
+button.btn.btn-primary,
+input[type="button"].btn-primary,
+input[type="submit"].btn-primary,
+input[type="reset"].btn-primary,
+a.btn-primary,
+a.btn.btn-primary,
+[class*="btn"][class*="primary"],
+.btn-secondary,
+.btn.btn-secondary,
+button.btn-secondary,
+button.btn.btn-secondary,
+input[type="button"].btn-secondary,
+input[type="submit"].btn-secondary,
+input[type="reset"].btn-secondary,
+a.btn-secondary,
+a.btn.btn-secondary,
+[class*="btn"][class*="secondary"],
+.btn-danger,
+.btn.btn-danger,
+button.btn-danger,
+button.btn.btn-danger,
+input[type="button"].btn-danger,
+input[type="submit"].btn-danger,
+input[type="reset"].btn-danger,
+a.btn-danger,
+a.btn.btn-danger,
+[class*="btn"][class*="danger"] {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Ensure text inside primary and secondary buttons is white */
+.btn-primary *,
+.btn.btn-primary *,
+button.btn-primary *,
+button.btn.btn-primary *,
+input[type="button"].btn-primary *,
+input[type="submit"].btn-primary *,
+input[type="reset"].btn-primary *,
+a.btn-primary *,
+a.btn.btn-primary *,
+.btn-secondary *,
+.btn.btn-secondary *,
+button.btn-secondary *,
+button.btn.btn-secondary *,
+input[type="button"].btn-secondary *,
+input[type="submit"].btn-secondary *,
+input[type="reset"].btn-secondary *,
+a.btn-secondary *,
+a.btn.btn-secondary *,
+.btn-danger *,
+.btn.btn-danger *,
+button.btn-danger *,
+button.btn.btn-danger *,
+input[type="button"].btn-danger *,
+input[type="submit"].btn-danger *,
+input[type="reset"].btn-danger *,
+a.btn-danger *,
+a.btn.btn-danger * {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Icons inside primary and secondary buttons */
+.btn-primary i,
+.btn-primary .fa,
+.btn-primary .fas,
+.btn-primary .far,
+.btn-primary .fab,
+.btn-primary svg,
+.btn-primary span,
+.btn-secondary i,
+.btn-secondary .fa,
+.btn-secondary .fas,
+.btn-secondary .far,
+.btn-secondary .fab,
+.btn-secondary svg,
+.btn-secondary span,
+.btn-danger i,
+.btn-danger .fa,
+.btn-danger .fas,
+.btn-danger .far,
+.btn-danger .fab,
+.btn-danger svg,
+.btn-danger span {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Hover states */
+.btn-primary:hover,
+.btn.btn-primary:hover,
+button.btn-primary:hover,
+a.btn-primary:hover,
+.btn-secondary:hover,
+.btn.btn-secondary:hover,
+button.btn-secondary:hover,
+a.btn-secondary:hover,
+.btn-danger:hover,
+.btn.btn-danger:hover,
+button.btn-danger:hover,
+a.btn-danger:hover {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+.btn-primary:hover *,
+.btn.btn-primary:hover *,
+button.btn-primary:hover *,
+a.btn-primary:hover *,
+.btn-secondary:hover *,
+.btn.btn-secondary:hover *,
+button.btn-secondary:hover *,
+a.btn-secondary:hover *,
+.btn-danger:hover *,
+.btn.btn-danger:hover *,
+button.btn-danger:hover *,
+a.btn-danger:hover * {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Focus states */
+.btn-primary:focus,
+.btn.btn-primary:focus,
+button.btn-primary:focus,
+a.btn-primary:focus,
+.btn-secondary:focus,
+.btn.btn-secondary:focus,
+button.btn-secondary:focus,
+a.btn-secondary:focus,
+.btn-danger:focus,
+.btn.btn-danger:focus,
+button.btn-danger:focus,
+a.btn-danger:focus {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+.btn-primary:focus *,
+.btn.btn-primary:focus *,
+button.btn-primary:focus *,
+a.btn-primary:focus *,
+.btn-secondary:focus *,
+.btn.btn-secondary:focus *,
+button.btn-secondary:focus *,
+a.btn-secondary:focus *,
+.btn-danger:focus *,
+.btn.btn-danger:focus *,
+button.btn-danger:focus *,
+a.btn-danger:focus * {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Active states */
+.btn-primary:active,
+.btn.btn-primary:active,
+button.btn-primary:active,
+a.btn-primary:active,
+.btn-primary.active,
+.btn.btn-primary.active,
+.btn-secondary:active,
+.btn.btn-secondary:active,
+button.btn-secondary:active,
+a.btn-secondary:active,
+.btn-secondary.active,
+.btn.btn-secondary.active,
+.btn-danger:active,
+.btn.btn-danger:active,
+button.btn-danger:active,
+a.btn-danger:active,
+.btn-danger.active,
+.btn.btn-danger.active {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+.btn-primary:active *,
+.btn.btn-primary:active *,
+button.btn-primary:active *,
+a.btn-primary:active *,
+.btn-primary.active *,
+.btn.btn-primary.active *,
+.btn-secondary:active *,
+.btn.btn-secondary:active *,
+button.btn-secondary:active *,
+a.btn-secondary:active *,
+.btn-secondary.active *,
+.btn.btn-secondary.active *,
+.btn-danger:active *,
+.btn.btn-danger:active *,
+button.btn-danger:active *,
+a.btn-danger:active *,
+.btn-danger.active *,
+.btn.btn-danger.active * {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Disabled states */
+.btn-primary:disabled,
+.btn-primary.disabled,
+.btn-primary[disabled],
+button.btn-primary:disabled,
+button.btn-primary[disabled],
+.btn-secondary:disabled,
+.btn-secondary.disabled,
+.btn-secondary[disabled],
+button.btn-secondary:disabled,
+button.btn-secondary[disabled] {
+    color: #ffffff !important;
+    color: white !important;
+    opacity: 0.65;
+}
+
+/* Special case for buttons with inline styles */
+[style*="color: rgb(45, 90, 159)"].btn-primary,
+[style*="color:#2d5a9f"].btn-primary,
+[style*="color: #2d5a9f"].btn-primary {
+    color: #ffffff !important;
+    color: white !important;
+}
+
+/* Ensure background stays blue for primary buttons */
+.btn-primary {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+}
+
+/* Fix for buttons with white background inline style */
+.btn-primary[style*="background: white"],
+.btn-primary[style*="background:white"],
+.btn-primary[style*="background-color: white"],
+.btn-primary[style*="background-color:white"],
+.btn-primary[style*="background: rgb(255, 255, 255)"],
+.btn-primary[style*="background-color: rgb(255, 255, 255)"] {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+/* Override any conflicting text color rules */
+body .btn-primary,
+html body .btn-primary,
+body button.btn-primary,
+body input.btn-primary,
+body a.btn-primary {
+    color: #ffffff !important;
+}
+
+/* Ensure spans and other elements inside buttons inherit white color */
+.btn-primary span,
+.btn-primary div,
+.btn-primary p,
+.btn-primary small,
+.btn-primary strong,
+.btn-primary em,
+.btn-primary b,
+.btn-primary u {
+    color: inherit !important;
+    color: #ffffff !important;
+}
+
+/* Fix for Font Awesome icons that might have different colors */
+.btn-primary [class^="fa"],
+.btn-primary [class*=" fa"] {
+    color: #ffffff !important;
+}
+
+/* Ultimate override using attribute selector */
+[class~="btn-primary"] {
+    color: #ffffff !important;
+}
+
+[class~="btn-primary"] * {
+    color: #ffffff !important;
+}
+
+/* Use !important with higher specificity */
+html body .container .btn-primary,
+html body .container-fluid .btn-primary,
+html body .main-content .btn-primary,
+html body form .btn-primary,
+html body div .btn-primary,
+html body .container .btn-secondary,
+html body .container-fluid .btn-secondary,
+html body .main-content .btn-secondary,
+html body form .btn-secondary,
+html body div .btn-secondary {
+    color: #ffffff !important;
+}
+
+/* Target buttons in specific areas of the platform */
+.filter-section .btn-primary,
+.search-section .btn-primary,
+.form-actions .btn-primary,
+.modal-footer .btn-primary,
+.card-footer .btn-primary,
+.table .btn-primary,
+.toolbar .btn-primary,
+.action-buttons .btn-primary {
+    color: #ffffff !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+/* Inline style override hack - use CSS variables */
+.btn-primary {
+    --btn-color: #ffffff !important;
+    color: var(--btn-color) !important;
+}
+
+/* Danger button specific overrides */
+.btn-danger,
+button.btn-danger,
+input.btn-danger,
+a.btn-danger,
+button[onclick*="Delete"].btn-danger,
+button[onclick*="delete"].btn-danger,
+button[onclick*="Elimina"].btn-danger,
+button[onclick*="elimina"].btn-danger {
+    color: #ffffff !important;
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+.btn-danger:hover,
+button.btn-danger:hover,
+a.btn-danger:hover {
+    color: #ffffff !important;
+    background-color: #bb2d3b !important;
+    border-color: #b02a37 !important;
+}
+
+/* Force white on danger button children */
+.btn-danger *,
+.btn-danger i,
+.btn-danger span,
+.btn-danger .fa,
+.btn-danger .fas {
+    color: #ffffff !important;
+}
+
+/* Target danger buttons in specific areas */
+.filter-section .btn-danger,
+.search-section .btn-danger,
+.form-actions .btn-danger,
+.modal-footer .btn-danger,
+.card-footer .btn-danger,
+.table .btn-danger,
+.toolbar .btn-danger,
+.action-buttons .btn-danger,
+.log-attivita .btn-danger {
+    color: #ffffff !important;
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+/* CSS variable for danger buttons */
+.btn-danger {
+    --btn-color: #ffffff !important;
+    color: var(--btn-color) !important;
+}

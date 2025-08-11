@@ -157,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $aziendaId = db_connection()->lastInsertId();
                     $_SESSION['success'] = "Azienda creata con successo!";
                 } else {
-                    db_update('aziende', $data, 'id = :id', ['id' => $aziendaId]);
+                    db_update('aziende', $data, 'id = ?', [$aziendaId]);
                     $_SESSION['success'] = "Azienda aggiornata con successo!";
                 }
                 
@@ -566,6 +566,7 @@ if ($action === 'view' && $aziendaId) {
 }
 
 $pageTitle = 'Gestione Aziende';
+$bodyClass = 'aziende-page companies-page';
 require_once 'components/header.php';
 ?>
 
@@ -592,11 +593,16 @@ require_once 'components/header.php';
     /* Using page-header from dashboard instead of content-header */
     
     .btn {
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: 10px;
-        font-size: 15px;
-        font-weight: 500;
+        padding: 0.75rem 1.5rem !important;
+        border: none !important;
+        border-radius: 10px !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
         cursor: pointer;
         transition: all 0.3s ease;
         display: inline-flex;
@@ -802,61 +808,97 @@ require_once 'components/header.php';
     
     .aziende-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 350px));
+        gap: 2rem;
+        margin-bottom: 3rem;
+        justify-content: center;
     }
     
     .azienda-card {
         background: white;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        border: 1px solid #e5e7eb;
-        transition: all 0.2s ease;
+        border-radius: 20px !important;
+        padding: 2rem !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+        border: none !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        max-width: 350px !important;
+        margin: 0 auto !important;
+    }
+    
+    .azienda-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #2563eb, #60a5fa);
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
     
     .azienda-card:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        transform: translateY(-2px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
+        transform: translateY(-8px);
+    }
+    
+    .azienda-card:hover::before {
+        opacity: 1;
     }
     
     .azienda-header {
         display: flex;
         justify-content: space-between;
         align-items: start;
-        margin-bottom: 15px;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid #f1f5f9;
     }
     
     .azienda-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: 5px;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.025em;
     }
     
     .azienda-stats {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px solid var(--border-color);
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: 12px;
     }
     
     .azienda-stat {
         text-align: center;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
     .azienda-stat-value {
-        font-size: 20px;
-        font-weight: 600;
-        color: var(--text-primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #2563eb, #60a5fa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.2;
     }
     
     .azienda-stat-label {
-        font-size: 12px;
-        color: var(--text-secondary);
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 0.25rem;
     }
     
     .users-grid {
@@ -951,8 +993,12 @@ if ($action === 'nuovo' && !isset($azienda)) {
     
     <!-- Action button moved outside header -->
     <div style="margin-bottom: 2rem;">
-        <a href="<?php echo APP_PATH; ?>/aziende.php?action=nuovo" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Nuova Azienda
+        <a href="<?php echo APP_PATH; ?>/aziende.php?action=nuovo" 
+           class="btn" 
+           style="background: linear-gradient(135deg, #2563eb, #60a5fa) !important; color: white !important; padding: 1rem 2rem !important; border-radius: 12px !important; font-weight: 600 !important; font-size: 1rem !important; box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25) !important; transition: all 0.3s ease !important;"
+           onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(37, 99, 235, 0.3) !important';"
+           onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(37, 99, 235, 0.25) !important';">
+            <i class="fas fa-plus-circle"></i> Nuova Azienda
         </a>
     </div>
     
@@ -1706,7 +1752,11 @@ if ($action === 'nuovo' && !isset($azienda)) {
                         <?php if (isset($current_azienda['logo_path']) && !empty($current_azienda['logo_path'])): ?>
                             <img src="<?php echo APP_PATH . htmlspecialchars($current_azienda['logo_path']); ?>" 
                                  alt="Logo <?php echo htmlspecialchars($current_azienda['nome']); ?>" 
-                                 style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px; border: 1px solid #e0e0e0;">
+                                 style="width: 50px; height: 50px; object-fit: contain; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: white; padding: 8px;">
+                        <?php else: ?>
+                            <div style="width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #2563eb, #60a5fa); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.25rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
+                                <?php echo strtoupper(substr($current_azienda['nome'], 0, 1)); ?>
+                            </div>
                         <?php endif; ?>
                         <div>
                             <div class="azienda-title"><?php echo htmlspecialchars($current_azienda['nome']); ?></div>
@@ -1717,14 +1767,15 @@ if ($action === 'nuovo' && !isset($azienda)) {
                             <?php endif; ?>
                         </div>
                     </div>
-                    <span class="status-badge status-<?php echo $current_azienda['stato']; ?>">
+                    <span class="badge <?php echo $current_azienda['stato'] === 'attiva' ? 'badge-success' : 'badge-warning'; ?>" style="padding: 0.5rem 1rem !important; border-radius: 20px !important; font-weight: 600 !important;">
+                        <?php echo $current_azienda['stato'] === 'attiva' ? '<i class="fas fa-check-circle"></i> ' : '<i class="fas fa-pause-circle"></i> '; ?>
                         <?php echo ucfirst($current_azienda['stato']); ?>
                     </span>
                 </div>
                 
                 <?php if (!empty($current_azienda['citta']) || !empty($current_azienda['provincia'])): ?>
-                <div style="font-size: 14px; color: #718096; margin-bottom: 15px;">
-                    <i class="fas fa-map-marker-alt"></i> 
+                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #64748b; margin-bottom: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 8px;">
+                    <i class="fas fa-map-marker-alt" style="color: #2563eb;"></i> 
                     <?php 
                     $location = [];
                     if (!empty($current_azienda['citta'])) $location[] = $current_azienda['citta'];
@@ -1780,15 +1831,22 @@ if ($action === 'nuovo' && !isset($azienda)) {
                 </div>
                 <?php endif; ?>
                 
-                <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-                    <a href="<?php echo APP_PATH; ?>/aziende.php?action=view&id=<?php echo $current_azienda['id']; ?>" class="btn btn-primary btn-small">
+                <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <a href="<?php echo APP_PATH; ?>/aziende.php?action=view&id=<?php echo $current_azienda['id']; ?>" 
+                       class="btn" 
+                       style="background: linear-gradient(135deg, #2563eb, #60a5fa) !important; color: white !important; padding: 0.75rem 1.25rem !important; border-radius: 10px !important; font-weight: 600 !important; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;">
                         <i class="fas fa-eye"></i> Dettagli
                     </a>
-                    <a href="<?php echo APP_PATH; ?>/aziende.php?action=edit&id=<?php echo $current_azienda['id']; ?>" class="btn btn-secondary btn-small">
+                    <a href="<?php echo APP_PATH; ?>/aziende.php?action=edit&id=<?php echo $current_azienda['id']; ?>" 
+                       class="btn" 
+                       style="background: #f8fafc !important; color: #1e293b !important; padding: 0.75rem 1.25rem !important; border-radius: 10px !important; font-weight: 600 !important; box-shadow: inset 0 0 0 2px #e2e8f0 !important;">
                         <i class="fas fa-edit"></i> Modifica
                     </a>
                     <?php if ($auth->isSuperAdmin()): ?>
-                    <button type="button" class="btn btn-danger btn-small" onclick="confirmDeleteAzienda(<?php echo $current_azienda['id']; ?>, '<?php echo htmlspecialchars(addslashes($current_azienda['nome'])); ?>')">
+                    <button type="button" 
+                            class="btn" 
+                            style="background: linear-gradient(135deg, #ef4444, #f87171) !important; color: white !important; padding: 0.75rem 1.25rem !important; border-radius: 10px !important; font-weight: 600 !important; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;"
+                            onclick="confirmDeleteAzienda(<?php echo $current_azienda['id']; ?>, '<?php echo htmlspecialchars(addslashes($current_azienda['nome'])); ?>')">
                         <i class="fas fa-trash"></i> Elimina
                     </button>
                     <?php endif; ?>

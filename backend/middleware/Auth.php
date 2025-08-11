@@ -158,7 +158,7 @@ class Auth {
     }
     
     public function isSuperAdmin() {
-        return $this->user && ($this->user['ruolo'] === 'super_admin' || $this->user['ruolo'] === 'admin');
+        return $this->user && $this->user['ruolo'] === 'super_admin';
     }
     
     /**
@@ -414,10 +414,6 @@ class Auth {
                 'folder_view', 'folder_create', 'folder_edit',
                 'iso_configure', 'iso_manage_compliance', 'iso_audit_access'
             ],
-            'admin' => [
-                'document_view', 'document_edit', 'document_upload', 'document_delete',
-                'folder_view', 'folder_create', 'folder_edit', 'folder_delete'
-            ],
             'manager' => [
                 'document_view', 'document_edit', 'document_upload',
                 'folder_view', 'folder_create'
@@ -556,7 +552,7 @@ class Auth {
             case 'documents':
                 return in_array($permission, ['read', 'write']);
             case 'users':
-                return $this->user['ruolo'] === 'admin';
+                return false; // Solo super_admin può gestire utenti
             default:
                 return true;
         }
@@ -675,8 +671,8 @@ class Auth {
             return false;
         }
         
-        // Super admin e admin possono invitare
-        return $this->isSuperAdmin() || in_array($this->user['ruolo'], ['admin', 'proprietario']);
+        // Solo super admin può invitare
+        return $this->isSuperAdmin() || $this->user['ruolo'] === 'proprietario';
     }
     
     public function getCurrentAziendaId() {
@@ -749,7 +745,7 @@ class Auth {
             
             // Crea l'associazione
             $ruolo = 'referente'; // Ruolo default
-            if (strpos($email, 'admin') !== false) {
+            if (strpos($email, 'responsabile') !== false) {
                 $ruolo = 'responsabile_aziendale';
             }
             

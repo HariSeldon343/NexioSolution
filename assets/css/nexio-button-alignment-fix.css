@@ -1,0 +1,256 @@
+/**
+ * Nexio Button Alignment Fix
+ * Fixes icon vertical alignment and ensures buttons fit their content
+ * Created: 2025-08-11
+ */
+
+/* Fix button width to fit content */
+.btn,
+button.btn,
+a.btn,
+input[type="button"].btn,
+input[type="submit"].btn {
+    /* Remove fixed width constraints */
+    width: auto !important;
+    min-width: auto !important;
+    max-width: none !important;
+    
+    /* Ensure proper inline-flex display for alignment */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    /* Allow content to determine width */
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    
+    /* Proper padding for content */
+    padding: 0.5rem 1rem !important; /* 8px 16px - slightly more padding */
+    
+    /* Height constraints */
+    height: auto !important;
+    min-height: 36px !important;
+    max-height: 40px !important;
+    
+    /* Line height for vertical centering */
+    line-height: 1.25 !important;
+}
+
+/* Icon alignment inside buttons */
+.btn i,
+.btn .fa,
+.btn .fas,
+.btn .far,
+.btn .fab,
+button i,
+button .fa,
+button .fas,
+a.btn i,
+a.btn .fa,
+a.btn .fas {
+    /* Vertical alignment fix */
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    line-height: 1 !important;
+    
+    /* Proper sizing */
+    font-size: 0.875rem !important; /* 14px */
+    width: auto !important;
+    height: auto !important;
+    
+    /* Margin for spacing from text */
+    margin-right: 0.375rem !important; /* 6px */
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    
+    /* Position relative to parent */
+    position: relative !important;
+    top: 0 !important;
+}
+
+/* Remove margin if icon is last child */
+.btn i:last-child,
+.btn .fa:last-child,
+.btn .fas:last-child {
+    margin-right: 0 !important;
+}
+
+/* Remove margin if icon is only child */
+.btn i:only-child,
+.btn .fa:only-child,
+.btn .fas:only-child {
+    margin: 0 !important;
+}
+
+/* Specific fix for ticket creation button */
+a[href*="tickets.php?action=nuovo"],
+a[href*="action=nuovo"],
+.btn:contains("primo ticket"),
+.btn:contains("first ticket") {
+    /* Ensure full width for text */
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
+    min-width: fit-content !important;
+    padding: 0.5rem 1rem !important;
+    
+    /* Fix height */
+    height: 38px !important;
+    max-height: 38px !important;
+    
+    /* Text should not be cut off */
+    white-space: nowrap !important;
+    overflow: visible !important;
+}
+
+/* Fix icon in ticket button */
+a[href*="tickets.php?action=nuovo"] i,
+a[href*="action=nuovo"] i {
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    margin-right: 0.375rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1 !important;
+}
+
+/* Uppercase text buttons need more spacing */
+.btn[style*="text-transform: uppercase"],
+.btn[style*="text-transform:uppercase"] {
+    letter-spacing: 0.025em !important; /* Reduced spacing */
+    padding: 0.5rem 1rem !important; /* More horizontal padding */
+}
+
+/* Fix for flex container buttons */
+.d-flex .btn,
+.flex .btn,
+.btn-group .btn {
+    flex: 0 0 auto !important; /* Don't stretch */
+}
+
+/* Empty state buttons */
+.empty-state .btn,
+.no-data .btn,
+.text-center .btn {
+    display: inline-flex !important;
+    margin: 0 auto !important;
+    width: auto !important;
+}
+
+/* Card and modal footer buttons */
+.card-footer .btn,
+.modal-footer .btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
+}
+
+/* Fix button text alignment */
+.btn {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* Fix for buttons with both icon and text */
+.btn > i + span,
+.btn > .fa + span,
+.btn > .fas + span,
+.btn > i + *:not(i),
+.btn > .fa + *:not(.fa),
+.btn > .fas + *:not(.fas) {
+    display: inline !important;
+    vertical-align: middle !important;
+    line-height: 1 !important;
+}
+
+/* Flexbox fix for all buttons */
+.btn {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.375rem !important; /* Space between icon and text */
+}
+
+/* Remove any transform that might affect alignment */
+.btn[style*="transform"],
+.btn i[style*="transform"] {
+    transform: none !important;
+}
+
+/* Fix vertical centering for all button content */
+.btn * {
+    vertical-align: middle !important;
+}
+
+/* Small buttons adjustment */
+.btn-sm {
+    padding: 0.375rem 0.75rem !important;
+    min-height: 30px !important;
+    max-height: 32px !important;
+}
+
+.btn-sm i {
+    font-size: 0.75rem !important; /* 12px */
+    margin-right: 0.25rem !important;
+}
+
+/* Large buttons adjustment */
+.btn-lg {
+    padding: 0.625rem 1.25rem !important;
+    min-height: 44px !important;
+    max-height: 48px !important;
+}
+
+.btn-lg i {
+    font-size: 1rem !important; /* 16px */
+    margin-right: 0.5rem !important;
+}
+
+/* Icon-only buttons */
+.btn-icon {
+    padding: 0.5rem !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+}
+
+.btn-icon i {
+    margin: 0 !important;
+}
+
+/* Fix for inline style height overrides */
+.btn[style*="height: auto"] {
+    height: auto !important;
+    min-height: 36px !important;
+    max-height: 40px !important;
+}
+
+/* Ensure text is visible */
+.btn {
+    text-overflow: unset !important;
+    overflow: visible !important;
+}
+
+/* Fix specific inline styles that break alignment */
+.btn[style*="max-height: 36px"] {
+    max-height: 38px !important; /* Give a bit more room */
+    height: 38px !important;
+    line-height: 1.25 !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .btn {
+        padding: 0.5rem 0.875rem !important;
+        min-height: 38px !important;
+    }
+    
+    .btn i {
+        font-size: 0.875rem !important;
+    }
+}

@@ -30,15 +30,12 @@ $sectionTitles = MenuHelper::getSectionTitles();
 function renderMenuItem($item, $currentPage, $key = '') {
     $isActive = MenuHelper::isActivePage($item['url'], $currentPage, $item['aliases'] ?? []);
     $activeClass = $isActive ? 'active' : '';
-    $style = isset($item['color']) ? "color: {$item['color']};" : '';
     $onclick = isset($item['onclick']) ? "onclick=\"{$item['onclick']}\"" : '';
     
-    echo '<div class="menu-item">';
-    echo "<a href=\"" . APP_PATH . "/{$item['url']}\" class=\"{$activeClass}\" style=\"{$style}\" {$onclick}>";
-    echo "<i class=\"{$item['icon']}\"></i>";
+    echo "<a href=\"" . APP_PATH . "/{$item['url']}\" class=\"menu-item {$activeClass}\" {$onclick}>";
+    echo "<i class=\"{$item['icon']}\" style=\"font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free'; font-weight: 900; display: inline-block; width: 20px; margin-right: 10px; text-align: center;\"></i>";
     echo "<span>{$item['title']}</span>";
     echo '</a>';
-    echo '</div>';
 }
 
 /**
@@ -51,12 +48,18 @@ function renderMenuSection($title) {
 }
 ?>
 
-<aside class="sidebar">
+<aside class="sidebar" style="background: #162d4f !important;">
     <!-- Header Sidebar -->
     <div class="sidebar-header">
-        <img src="<?php echo APP_PATH; ?>/assets/images/nexio-icon.svg" alt="Nexio Logo" class="sidebar-logo">
-        <h2>✦ Nexio</h2>
-        <p>Semplifica, Connetti, Cresci Insieme</p>
+        <a href="<?php echo APP_PATH; ?>/dashboard.php" class="sidebar-logo">
+            <div class="logo-wrapper">
+                <img src="<?php echo APP_PATH; ?>/assets/images/nexio-icon.svg" alt="Nexio">
+            </div>
+            <div class="sidebar-logo-text">
+                <span class="logo-title">NEXIO</span>
+                <span class="logo-motto">Semplifica, Connetti, Cresci Insieme</span>
+            </div>
+        </a>
     </div>
     
     <!-- Menu Navigazione -->
@@ -70,6 +73,8 @@ function renderMenuSection($title) {
                 continue;
             }
             
+            // Nessun separatore tra sezioni per un design più pulito
+            
             // Renderizza titolo sezione
             renderMenuSection($sectionTitles[$sectionKey]);
             
@@ -81,46 +86,69 @@ function renderMenuSection($title) {
         ?>
     </nav>
     
-    <!-- Info Utente -->
-    <div class="user-info">
-        <div class="user-name">
-            <?php 
-            $fullName = trim(($user['nome'] ?? '') . ' ' . ($user['cognome'] ?? ''));
-            echo htmlspecialchars($fullName ?: 'Utente');
-            ?>
-        </div>
-        <div class="user-role">
-            <?php 
-            $isSuperAdmin = $auth->isSuperAdmin();
-            if ($isSuperAdmin) {
-                echo 'Super Admin';
-            } else {
-                $role = $user['ruolo'] ?? 'Utente';
-                echo htmlspecialchars(ucfirst($role));
-            }
-            ?>
-        </div>
-        
-        <!-- Info Azienda se presente -->
-        <?php 
-        $currentAzienda = $auth->getCurrentAzienda();
-        if ($currentAzienda && !empty($currentAzienda['azienda_nome'])): 
-        ?>
-        <div class="user-company">
-            <i class="fas fa-building" style="margin-right: 5px; color: #a0aec0;"></i>
-            <?php echo htmlspecialchars($currentAzienda['azienda_nome']); ?>
-            
-            <!-- Link per cambiare azienda se ce ne sono più di una -->
-            <?php if (count($auth->getUserAziende()) > 1): ?>
-            <div style="margin-top: 5px;">
-                <a href="<?php echo APP_PATH; ?>/seleziona-azienda.php" 
-                   style="color: #4299e1; font-size: 11px; text-decoration: none;">
-                    <i class="fas fa-exchange-alt"></i> Cambia Azienda
-                </a>
+    <!-- Footer Sidebar con Info Utente -->
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <div class="user-avatar">
+                <?php 
+                $fullName = trim(($user['nome'] ?? '') . ' ' . ($user['cognome'] ?? ''));
+                $initials = '';
+                if ($fullName) {
+                    $parts = explode(' ', $fullName);
+                    $initials = strtoupper(substr($parts[0], 0, 1));
+                    if (isset($parts[1])) {
+                        $initials .= strtoupper(substr($parts[1], 0, 1));
+                    }
+                }
+                echo $initials ?: 'U';
+                ?>
             </div>
-            <?php endif; ?>
+            <div class="user-details">
+                <div class="user-name" title="<?php echo htmlspecialchars($fullName ?: 'Utente'); ?>" style="white-space: normal; overflow-wrap: break-word; line-height: 1.2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; display: -webkit-box;">
+                    <?php echo htmlspecialchars($fullName ?: 'Utente'); ?>
+                </div>
+                <div class="user-role" style="display: flex; align-items: center;">
+                    <?php 
+                    $isSuperAdmin = $auth->isSuperAdmin();
+                    if ($isSuperAdmin) {
+                        echo '<i class="fas fa-shield-alt" style="color: rgba(255,255,255,0.7); margin-right: 4px; font-size: 0.75rem; font-family: \'Font Awesome 6 Free\', \'Font Awesome 5 Free\'; font-weight: 900;"></i>';
+                        echo '<span style="background-color: #0d6efd; color: white; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;">Super Admin</span>';
+                    } else {
+                        $role = $user['ruolo'] ?? 'Utente';
+                        echo '<i class="fas fa-user" style="color: rgba(255,255,255,0.7); margin-right: 4px; font-size: 0.75rem; font-family: \'Font Awesome 6 Free\', \'Font Awesome 5 Free\'; font-weight: 900;"></i>';
+                        echo '<span style="background-color: #6c757d; color: white; padding: 0.25rem 0.5rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block;">' . htmlspecialchars(ucfirst($role)) . '</span>';
+                    }
+                    ?>
+                </div>
+            </div>
+            
+            <!-- Menu dropdown utente -->
+            <div class="dropdown">
+                <button class="btn-icon" data-bs-toggle="dropdown">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="<?php echo APP_PATH; ?>/profilo.php"><i class="fas fa-user-circle"></i> Profilo</a></li>
+                    <?php 
+                    // Verifica se l'utente ha più aziende
+                    try {
+                        $userAziende = [];
+                        if (isset($user['id'])) {
+                            $stmt = db_query("SELECT COUNT(*) as count FROM utenti_aziende WHERE utente_id = ?", [$user['id']]);
+                            $count = $stmt ? $stmt->fetch()['count'] : 0;
+                            if ($count > 1): ?>
+                                <li><a class="dropdown-item" href="<?php echo APP_PATH; ?>/seleziona-azienda.php"><i class="fas fa-exchange-alt"></i> Cambia Azienda</a></li>
+                            <?php endif;
+                        }
+                    } catch (Exception $e) {
+                        // Ignora errori
+                    }
+                    ?>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="<?php echo APP_PATH; ?>/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                </ul>
+            </div>
         </div>
-        <?php endif; ?>
     </div>
 </aside>
 
@@ -128,115 +156,165 @@ function renderMenuSection($title) {
 <?php if (!defined('SIDEBAR_ASSETS_INCLUDED')): ?>
 <?php define('SIDEBAR_ASSETS_INCLUDED', true); ?>
 <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/sidebar-responsive.css?v=<?php echo time(); ?>">
-<script src="<?php echo APP_PATH; ?>/assets/js/sidebar-mobile.js?v=<?php echo time(); ?>" defer></script>
 <?php endif; ?>
 <style>
-    /* Sidebar Styles */
+    /* Sidebar - Design Minimale */
     .sidebar {
-        width: 250px;
-        background: #2d3748;
-        color: white;
-        padding: 20px;
-        position: fixed;
-        height: 100vh;
-        overflow-y: auto;
-        z-index: 1000;
-        left: 0;
-        top: 0;
+        width: 260px !important;
+        background: #162d4f !important;
+        color: white !important;
+        padding: 0 !important;
+        position: fixed !important;
+        height: 100vh !important;
+        overflow-y: auto !important;
+        z-index: 1000 !important;
+        left: 0 !important;
+        top: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        border-right: 1px solid rgba(255,255,255,0.1) !important;
     }
     
     .sidebar-header {
-        margin-bottom: 30px;
-        text-align: center;
-        padding: 10px;
+        padding: 1.5rem !important;
+        border-bottom: 1px solid rgba(255,255,255,0.1) !important;
     }
     
     .sidebar-logo {
-        width: 60px !important;
-        height: 60px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        color: white !important;
+        text-decoration: none !important;
+        transition: opacity 0.15s ease !important;
+    }
+    
+    .sidebar-logo:hover {
+        opacity: 0.9;
+    }
+    
+    .sidebar-logo img {
+        width: 56px !important;
+        height: 56px !important;
+        border-radius: 4px !important;
+        background: transparent !important;
+        padding: 0 !important;
+        filter: brightness(0) invert(1) !important;
+    }
+    
+    .sidebar-logo span {
+        font-size: 1.25rem !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.025em !important;
+        color: white !important;
+        text-transform: uppercase !important;
+    }
+    
+    .sidebar-menu {
+        flex: 1 !important;
+        padding: 1rem 0 !important;
+        overflow-y: auto !important;
+    }
+    
+    .menu-item {
         display: block !important;
-        object-fit: contain !important;
-        margin: 0 auto 15px auto !important;
-        filter: none !important;
+        padding: 0.75rem 1.5rem !important;
+        color: rgba(255,255,255,0.7) !important;
+        text-decoration: none !important;
+        transition: opacity 0.15s ease !important;
+        position: relative !important;
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
     }
     
-    .sidebar-header h2 {
-        color: #4299e1;
-        font-size: 24px;
-        margin-bottom: 5px;
-        display: none; /* Nascondi quando c'è il logo */
+    .menu-item:hover {
+        background: rgba(255,255,255,0.05) !important;
+        color: white !important;
     }
     
-    .sidebar-header p {
-        font-size: 12px;
-        color: #a0aec0;
-        margin: 0;
+    .menu-item.active {
+        background: rgba(255,255,255,0.08) !important;
+        color: white !important;
+        border-left: 2px solid white !important;
     }
     
-    .sidebar-menu .menu-item {
-        margin-bottom: 5px;
+    .menu-item.active::before {
+        content: '' !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        width: 2px !important;
+        background: white !important;
     }
     
-    .sidebar-menu .menu-item a {
-        display: flex;
-        align-items: center;
-        padding: 12px 15px;
-        color: #e2e8f0;
-        text-decoration: none;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        font-size: 14px;
+    .menu-item i {
+        width: 20px !important;
+        margin-right: 10px !important;
+        font-size: 0.875rem !important;
+        vertical-align: middle !important;
+        opacity: 0.8 !important;
     }
     
-    .sidebar-menu .menu-item a:hover,
-    .sidebar-menu .menu-item a.active {
-        background: #4299e1;
-        color: white;
-    }
-    
-    .sidebar-menu .menu-item a i {
-        margin-right: 12px;
-        width: 20px;
-        text-align: center;
-        font-size: 16px;
+    .menu-separator {
+        height: 1px !important;
+        background: rgba(255,255,255,0.08) !important;
+        margin: 0.5rem 1.5rem !important;
     }
     
     .menu-section-title {
-        font-size: 12px;
-        color: #a0aec0;
-        margin-bottom: 15px;
-        margin-top: 20px;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-size: 0.625rem !important;
+        color: rgba(255,255,255,0.4) !important;
+        margin: 1rem 1.5rem 0.5rem !important;
+        font-weight: 400 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.1em !important;
+    }
+    
+    .sidebar-footer {
+        padding: 1rem 1.5rem !important;
+        border-top: 1px solid rgba(255,255,255,0.1) !important;
     }
     
     .user-info {
-        margin-top: 30px;
-        padding: 15px;
-        background: #1a202c;
-        border-radius: 8px;
-        text-align: center;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        color: white !important;
+        padding: 0.5rem 0 !important;
+    }
+    
+    .user-avatar {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 4px !important;
+        background: rgba(255,255,255,0.1) !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-weight: 400 !important;
+        font-size: 0.875rem !important;
+        color: rgba(255,255,255,0.9) !important;
+        text-transform: uppercase !important;
+    }
+    
+    .user-details {
+        flex: 1 !important;
     }
     
     .user-name {
-        font-weight: bold;
-        margin-bottom: 5px;
-        font-size: 14px;
+        font-weight: 400 !important;
+        font-size: 0.875rem !important;
+        color: rgba(255,255,255,0.9) !important;
+        margin-bottom: 0.125rem !important;
     }
     
     .user-role {
-        font-size: 12px;
-        color: #a0aec0;
-        margin-bottom: 8px;
-    }
-    
-    .user-company {
-        font-size: 11px;
-        color: #cbd5e0;
-        margin-top: 8px;
-        padding-top: 8px;
-        border-top: 1px solid #2d3748;
+        font-size: 0.75rem !important;
+        color: rgba(255,255,255,0.5) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.025em !important;
     }
     
     /* Responsive */
@@ -256,12 +334,12 @@ function renderMenuSection($title) {
     }
     
     .main-content {
-        margin-left: 250px;
-        padding: 20px;
-        background: #f7fafc;
-        min-height: 100vh;
-        width: calc(100vw - 250px);
-        flex: 1;
+        margin-left: 260px !important;
+        padding: 2rem !important;
+        background: #ffffff !important;
+        min-height: 100vh !important;
+        width: calc(100vw - 260px) !important;
+        flex: 1 !important;
     }
     
     @media (max-width: 768px) {

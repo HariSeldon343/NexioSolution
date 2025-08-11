@@ -1,0 +1,238 @@
+/**
+ * Nexio Table Complete Reset
+ * Removes ALL conflicting styles and rebuilds table from scratch
+ * Created: 2025-08-11
+ */
+
+/* DISABLE ALL PREVIOUS TABLE FIXES FIRST */
+.log-table table[class],
+.log-table table[style],
+table.log-table[class],
+table.log-table[style] {
+    all: unset !important;
+}
+
+/* REBUILD TABLE FROM SCRATCH */
+.log-table {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    margin: 20px 0 !important;
+}
+
+.log-table table {
+    /* Basic table properties */
+    display: table !important;
+    width: 100% !important;
+    min-width: 800px !important;
+    border-spacing: 0 !important;
+    border-collapse: collapse !important;
+    background: white !important;
+    font-family: inherit !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    color: #333 !important;
+    
+    /* Remove ALL transforms and positioning */
+    transform: none !important;
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* TABLE STRUCTURE */
+.log-table thead {
+    display: table-header-group !important;
+}
+
+.log-table tbody {
+    display: table-row-group !important;
+}
+
+.log-table tr {
+    display: table-row !important;
+    height: auto !important;
+}
+
+.log-table th,
+.log-table td {
+    display: table-cell !important;
+    position: static !important;
+    transform: none !important;
+    margin: 0 !important;
+    box-sizing: content-box !important;
+    vertical-align: middle !important;
+}
+
+/* HEADERS */
+.log-table thead th {
+    padding: 12px 8px !important;
+    background: #f5f5f5 !important;
+    border: 1px solid #ddd !important;
+    font-weight: bold !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    color: #333 !important;
+    font-size: 13px !important;
+}
+
+/* DATA CELLS */
+.log-table tbody td {
+    padding: 10px 8px !important;
+    border: 1px solid #ddd !important;
+    background: white !important;
+    color: #555 !important;
+    text-align: left !important;
+}
+
+/* SIMPLE COLUMN WIDTHS - NO nth-child */
+.log-table colgroup {
+    display: table-column-group !important;
+}
+
+.log-table col {
+    display: table-column !important;
+}
+
+/* Use colgroup for column widths */
+.log-table col:nth-child(1) { width: 130px !important; } /* Data/Ora */
+.log-table col:nth-child(2) { width: 140px !important; } /* Utente */
+.log-table col:nth-child(3) { width: 80px !important; }  /* Tipo */
+.log-table col:nth-child(4) { width: 100px !important; } /* Azione */
+.log-table col:nth-child(5) { width: auto !important; }  /* Dettagli */
+.log-table col:nth-child(6) { width: 120px !important; } /* Azienda */
+
+/* TEXT HANDLING */
+.log-table td {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Details cell can expand */
+.log-table .details-cell {
+    white-space: normal !important;
+    min-width: 200px !important;
+}
+
+/* Date cell should not wrap */
+.log-table td:first-child {
+    white-space: nowrap !important;
+}
+
+/* REMOVE ALL INLINE STYLES THAT BREAK LAYOUT */
+.log-table th[style*="max-width"] {
+    max-width: none !important;
+}
+
+.log-table td[style*="max-width"] {
+    max-width: none !important;
+}
+
+/* ZEBRA STRIPING */
+.log-table tbody tr:nth-child(odd) {
+    background: #fff !important;
+}
+
+.log-table tbody tr:nth-child(even) {
+    background: #f9f9f9 !important;
+}
+
+/* HOVER */
+.log-table tbody tr:hover {
+    background: #f0f0f0 !important;
+}
+
+/* BADGES AND SPECIAL ELEMENTS */
+.log-table .action-badge,
+.log-table .entity-type {
+    display: inline-block !important;
+    padding: 2px 6px !important;
+    border-radius: 3px !important;
+    font-size: 12px !important;
+    font-weight: normal !important;
+}
+
+.log-table .action-badge {
+    background: #e0e0e0 !important;
+    color: #333 !important;
+}
+
+.log-table .entity-type {
+    background: #f0f0f0 !important;
+    color: #666 !important;
+}
+
+/* USER INFO */
+.log-table .user-info-cell {
+    line-height: 1.3 !important;
+}
+
+.log-table .user-name {
+    font-weight: 500 !important;
+}
+
+.log-table .user-email {
+    font-size: 11px !important;
+    color: #888 !important;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .log-table table {
+        min-width: 600px !important;
+    }
+    
+    .log-table th,
+    .log-table td {
+        padding: 6px 4px !important;
+        font-size: 12px !important;
+    }
+}
+
+/* ULTRA HIGH SPECIFICITY OVERRIDES */
+html body .main-content .log-table table,
+html body .content .log-table table {
+    table-layout: auto !important;
+    width: 100% !important;
+}
+
+html body .main-content .log-table th,
+html body .main-content .log-table td,
+html body .content .log-table th,
+html body .content .log-table td {
+    position: static !important;
+    transform: none !important;
+    display: table-cell !important;
+}
+
+/* DISABLE CONFLICTING STYLES FROM OTHER CSS FILES */
+.log-table table.table {
+    all: revert !important;
+    display: table !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+}
+
+/* Ensure visibility */
+.log-table,
+.log-table * {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Remove any fixed positioning */
+.log-table table,
+.log-table thead,
+.log-table tbody,
+.log-table tr,
+.log-table th,
+.log-table td {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: auto !important;
+}

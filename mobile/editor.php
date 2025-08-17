@@ -42,8 +42,11 @@ if ($docId) {
     <link rel="manifest" href="manifest.php">
     <link rel="icon" type="image/png" href="icons/icon-192x192.png">
     
-    <!-- TinyMCE -->
-    <script src="<?php echo asset_url('vendor/tinymce/js/tinymce/tinymce.min.js'); ?>"></script>
+    <!-- OnlyOffice Integration for Mobile -->
+    <script>
+        const USE_ONLYOFFICE = true;
+        const documentId = '<?php echo $docId ?? ''; ?>';
+    </script>
     
     <style>
         * {
@@ -170,8 +173,8 @@ if ($docId) {
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
-        /* TinyMCE Mobile Overrides */
-        .tox-tinymce {
+        /* OnlyOffice Mobile Overrides */
+        .onlyoffice-container {
             border: none !important;
             border-radius: 8px !important;
         }
@@ -345,67 +348,29 @@ if ($docId) {
     <div id="toast" class="toast"></div>
     
     <script>
-        // Initialize TinyMCE with mobile-optimized configuration
-        tinymce.init({
-            selector: '#editor',
-            height: 400,
-            mobile: {
-                theme: 'silver',
-                toolbar_mode: 'scrolling',
-                toolbar: 'undo redo | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image',
-                plugins: 'lists link image autoresize'
-            },
-            plugins: 'lists link image table code autoresize autolink',
-            toolbar: 'undo redo | formatselect | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist | link image table | code',
-            toolbar_mode: 'sliding',
-            menubar: false,
-            statusbar: false,
-            branding: false,
-            content_style: `
-                body { 
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                    font-size: 16px;
-                    line-height: 1.6;
-                    padding: 12px;
-                }
-                p { margin: 0 0 1em 0; }
-            `,
-            autoresize_bottom_margin: 50,
-            autoresize_min_height: 300,
-            default_link_target: '_blank',
-            link_assume_external_targets: true,
-            images_upload_handler: function (blobInfo, success, failure) {
-                const formData = new FormData();
-                formData.append('file', blobInfo.blob(), blobInfo.filename());
+        // Redirect to OnlyOffice Editor for mobile
+        function initializeEditor() {
+            // Show migration notice
+            const editorDiv = document.getElementById('editor');
+            if (editorDiv) {
+                editorDiv.innerHTML = `
+                    <div style="padding: 20px; background: #e3f2fd; border-radius: 8px; text-align: center;">
+                        <h4 style="margin: 0 0 10px 0; color: #1976d2;">Editor Aggiornato</h4>
+                        <p style="margin: 0 0 15px 0; color: #424242;">L'editor mobile ora utilizza OnlyOffice per una migliore esperienza collaborativa.</p>
+                        <p style="margin: 0; color: #757575;">Reindirizzamento automatico...</p>
+                    </div>
+                `;
                 
-                fetch(window.NexioConfig.API_URL + '/upload-image.php', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                    }
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        success(result.location);
-                    } else {
-                        failure('Upload failed: ' + result.error);
-                    }
-                })
-                .catch(() => failure('Upload failed'));
-            },
-            setup: function(editor) {
-                // Auto-save draft every 30 seconds
-                let autoSaveTimer;
-                editor.on('change keyup', function() {
-                    clearTimeout(autoSaveTimer);
-                    autoSaveTimer = setTimeout(() => {
-                        saveDraft(true); // Silent save
-                    }, 30000);
-                });
+                // Auto-redirect
+                setTimeout(() => {
+                    window.location.href = `../onlyoffice-editor.php?id=${documentId}`;
+                }, 2000);
             }
-        });
+        }
+        
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initializeEditor);
+        
         
         // Show toast notification
         function showToast(message, type = 'info') {
@@ -423,7 +388,7 @@ if ($docId) {
         async function saveDocument(asDraft = false) {
             const titolo = document.getElementById('titolo').value;
             const tipo = document.getElementById('tipo').value;
-            const contenuto = tinymce.get('editor').getContent();
+            const contenuto = document.getElementById('editor').innerHTML; // Using OnlyOffice now
             const docId = document.getElementById('doc_id').value;
             
             if (!titolo) {
@@ -493,13 +458,8 @@ if ($docId) {
             }
         }
         
-        // Prevent accidental navigation
-        window.addEventListener('beforeunload', function(e) {
-            if (tinymce.get('editor').isDirty()) {
-                e.preventDefault();
-                e.returnValue = 'Hai modifiche non salvate. Sei sicuro di voler uscire?';
-            }
-        });
+        // Prevent accidental navigation - handled by OnlyOffice
+        // OnlyOffice has its own unsaved changes detection
     </script>
 </body>
 </html>

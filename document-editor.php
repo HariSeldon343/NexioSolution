@@ -1,6 +1,6 @@
 <?php
 /**
- * Document Editor - Editor di documenti online con TinyMCE
+ * Document Editor - Editor di documenti online con OnlyOffice
  * Supporta conversione DOCX, collaborazione real-time e versionamento
  */
 
@@ -138,8 +138,11 @@ if (!isset($_SESSION['csrf_token'])) {
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- TinyMCE Self-Hosted -->
-    <script src="assets/vendor/tinymce/js/tinymce/tinymce.min.js"></script>
+    <!-- OnlyOffice Integration -->
+    <script>
+        // OnlyOffice will be loaded when needed from the editor page
+        const USE_ONLYOFFICE = true;
+    </script>
     
     <!-- Custom styles -->
     <style>
@@ -519,43 +522,43 @@ if (!isset($_SESSION['csrf_token'])) {
     let wsReconnectAttempts = 0;
     const WS_MAX_RECONNECT_ATTEMPTS = 3;
     
-    // Inizializzazione TinyMCE
-    tinymce.init({
-        selector: '#document-editor',
-        license_key: '4jharm4wbljffqkf1cmbbehx5nzacqseuqlmsjoyre65ikvr',
-        base_url: '/piattaforma-collaborativa/assets/vendor/tinymce/js/tinymce',
-        suffix: '.min',
-        height: '100%',
-        readonly: !CAN_EDIT,
-        
-        // Plugin open-source only
-        plugins: [
-            'anchor', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-            'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime',
-            'media', 'table', 'help', 'wordcount', 'pagebreak', 'autosave',
-            'codesample', 'directionality', 'emoticons', 'importcss',
-            'nonbreaking', 'quickbars', 'save', 'searchreplace', 'visualchars'
-        ],
-        
-        toolbar: 'undo redo | blocks | bold italic underline strikethrough | ' +
-                'alignleft aligncenter alignright alignjustify | ' +
-                'bullist numlist outdent indent | table | insertTOC | ' +
-                'pagebreak | removeformat | code fullscreen | help',
-                
-        menubar: 'file edit view insert format table tools help',
-        
-        block_formats: 'Paragrafo=p; Titolo 1=h1; Titolo 2=h2; Titolo 3=h3; Titolo 4=h4; Titolo 5=h5; Titolo 6=h6',
-        
-        content_style: `
-            body { 
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                font-size: 14px; 
-                line-height: 1.6;
-                color: #333;
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-            }
+    // Migrazione a OnlyOffice
+    // L'editor document-editor.php ora usa OnlyOffice invece di TinyMCE
+    // Per modificare documenti, utilizzare onlyoffice-editor.php
+    
+    function initializeEditor() {
+        // Mostra messaggio di migrazione
+        const editorElement = document.getElementById('document-editor');
+        if (editorElement) {
+            const migrationNotice = document.createElement('div');
+            migrationNotice.className = 'alert alert-info m-3';
+            migrationNotice.innerHTML = `
+                <h4><i class="fas fa-info-circle"></i> Editor Aggiornato</h4>
+                <p>Questo editor ora utilizza OnlyOffice Document Server per una migliore esperienza di editing.</p>
+                <p>Stai per essere reindirizzato all'editor OnlyOffice...</p>
+                <div class="mt-3">
+                    <a href="onlyoffice-editor.php?id=${DOCUMENT_ID}" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt"></i> Apri con OnlyOffice
+                    </a>
+                    <a href="filesystem.php" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Torna ai documenti
+                    </a>
+                </div>
+            `;
+            editorElement.parentElement.insertBefore(migrationNotice, editorElement);
+            editorElement.style.display = 'none';
+            
+            // Auto-redirect dopo 3 secondi
+            setTimeout(() => {
+                window.location.href = `onlyoffice-editor.php?id=${DOCUMENT_ID}`;
+            }, 3000);
+        }
+    }
+    
+    // Chiamata immediata per inizializzare
+    document.addEventListener('DOMContentLoaded', initializeEditor);
+    
+    /* Codice legacy TinyMCE - Rimosso e sostituito con OnlyOffice
             h1, h2, h3, h4, h5, h6 { 
                 color: #2c3e50; 
                 margin-top: 1.5em;
@@ -642,6 +645,7 @@ if (!isset($_SESSION['csrf_token'])) {
             });
         }
     });
+    */
     
     // Inizializzazione WebSocket
     function initWebSocket() {

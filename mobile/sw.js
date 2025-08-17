@@ -15,8 +15,7 @@ const STATIC_ASSETS = [
   '/piattaforma-collaborativa/mobile/offline.html',
   '/piattaforma-collaborativa/mobile/manifest.json',
   '/piattaforma-collaborativa/assets/images/nexio-icon.svg',
-  '/piattaforma-collaborativa/assets/images/nexio-logo.svg',
-  '/piattaforma-collaborativa/assets/vendor/tinymce/js/tinymce/tinymce.min.js'
+  '/piattaforma-collaborativa/assets/images/nexio-logo.svg'
 ];
 
 // Cache limits

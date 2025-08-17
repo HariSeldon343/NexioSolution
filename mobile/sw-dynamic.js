@@ -35,7 +35,7 @@ const CACHE_LIMITS = {
 const API_PATTERN = /\/api\//;
 const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|svg|webp)$/i;
 const STATIC_PATTERN = /\.(css|js)$/i;
-const TINYMCE_PATTERN = /\/tinymce\//;
+const ONLYOFFICE_PATTERN = /\/onlyoffice\//;
 
 // Installazione del Service Worker
 self.addEventListener('install', event => {
@@ -91,8 +91,8 @@ self.addEventListener('fetch', event => {
   // Ignora richieste esterne al nostro dominio
   if (url.origin !== location.origin) return;
   
-  // Non cachare TinyMCE assets
-  if (TINYMCE_PATTERN.test(url.pathname)) {
+  // Non cachare OnlyOffice assets
+  if (ONLYOFFICE_PATTERN.test(url.pathname)) {
     event.respondWith(fetch(request));
     return;
   }

@@ -1,0 +1,34 @@
+/* Nexio - Disable all animations and transitions sitewide */
+/* Load this file LAST to override any previous rules */
+
+html, body, *, *::before, *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Respect user prefers-reduced-motion as well (no-op here since animations are off) */
+@media (prefers-reduced-motion: reduce) {
+  html, body, *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* Prevent any page-entry transforms (zoom/slide) */
+body, .main-content, .content, .page, .page-container, .app-container, .container, .container-fluid {
+  transform: none !important;
+}
+
+/* Disable dropdown/modal/menu entrance animations */
+.dropdown-menu, .dropdown-menu.show,
+.modal, .modal.show,
+.sidebar, .sidebar.active,
+.log-details, .log-details.expanded {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Disable custom keyframed effects by name, if applied inline */
+[class*="fade"], [class*="slide"], [class*="zoom"], [class*="pulse"], [class*="spin"] {
+  animation: none !important;
+}
+
+/* Avoid smooth scrolling side effects */
+html { scroll-behavior: auto !important; } 

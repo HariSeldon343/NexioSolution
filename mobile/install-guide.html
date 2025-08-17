@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Guida Installazione PWA - Nexio</title>
+    <link rel="manifest" href="/piattaforma-collaborativa/mobile/manifest.json">
+    <link rel="icon" type="image/png" href="/piattaforma-collaborativa/mobile/icons/icon-192x192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 20px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .steps {
+            list-style: none;
+        }
+        
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+        
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: #2563eb;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-title {
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .step-description {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+        
+        .install-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: none;
+        }
+        
+        .install-button.show {
+            display: block;
+        }
+        
+        .install-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+        
+        .browser-section {
+            display: none;
+        }
+        
+        .browser-section.active {
+            display: block;
+        }
+        
+        .browser-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .browser-tab {
+            padding: 10px 20px;
+            background: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        
+        .browser-tab:hover {
+            background: #e2e8f0;
+        }
+        
+        .browser-tab.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        
+        .warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+        
+        .success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 10px;
+            margin-top: 16px;
+        }
+        
+        .icon-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📱</div>
+            <h1>Installa Nexio PWA</h1>
+            <p class="subtitle">Accedi rapidamente a Nexio dal tuo dispositivo</p>
+        </div>
+        
+        <div class="card">
+            <button id="installBtn" class="install-button" onclick="installPWA()">
+                🚀 Installa App
+            </button>
+            
+            <div class="browser-tabs">
+                <div class="browser-tab active" onclick="showBrowser('chrome')">Chrome/Edge</div>
+                <div class="browser-tab" onclick="showBrowser('safari')">Safari iOS</div>
+                <div class="browser-tab" onclick="showBrowser('firefox')">Firefox</div>
+            </div>
+            
+            <!-- Chrome/Edge Instructions -->
+            <div id="chrome-section" class="browser-section active">
+                <div class="card-title">
+                    <span>🌐</span>
+                    <span>Chrome / Edge (Android & Desktop)</span>
+                </div>
+                <ol class="steps">
+                    <li class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Apri il sito in Chrome o Edge</div>
+                            <div class="step-description">
+                                Naviga a: <code>localhost/piattaforma-collaborativa/mobile/</code>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Cerca l'icona di installazione</div>
+                            <div class="step-description">
+                                Su mobile: tocca il menu ⋮ e seleziona "Installa app" o "Aggiungi a schermata Home"<br>
+                                Su desktop: clicca sull'icona ➕ nella barra degli indirizzi
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Conferma l'installazione</div>
+                            <div class="step-description">
+                                Clicca "Installa" nel popup che appare
+                            </div>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+            
+            <!-- Safari iOS Instructions -->
+            <div id="safari-section" class="browser-section">
+                <div class="card-title">
+                    <span>🍎</span>
+                    <span>Safari (iPhone/iPad)</span>
+                </div>
+                <ol class="steps">
+                    <li class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Apri il sito in Safari</div>
+                            <div class="step-description">
+                                Assicurati di usare Safari (non Chrome su iOS)
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Tocca il pulsante Condividi</div>
+                            <div class="step-description">
+                                È l'icona quadrata con la freccia verso l'alto nella barra inferiore
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Scorri e tocca "Aggiungi a Home"</div>
+                            <div class="step-description">
+                                Potresti dover scorrere verso il basso nel menu di condivisione
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">Conferma il nome e tocca "Aggiungi"</div>
+                            <div class="step-description">
+                                L'app apparirà sulla tua schermata Home
+                            </div>
+                        </div>
+                    </li>
+                </ol>
+                <div class="warning">
+                    ⚠️ Su iOS, le PWA hanno alcune limitazioni rispetto ad Android
+                </div>
+            </div>
+            
+            <!-- Firefox Instructions -->
+            <div id="firefox-section" class="browser-section">
+                <div class="card-title">
+                    <span>🦊</span>
+                    <span>Firefox</span>
+                </div>
+                <ol class="steps">
+                    <li class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Apri il sito in Firefox</div>
+                            <div class="step-description">
+                                Firefox supporta PWA su Android (non su desktop)
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Tocca il menu ⋮</div>
+                            <div class="step-description">
+                                Si trova nell'angolo in alto a destra
+                            </div>
+                        </div>
+                    </li>
+                    <li class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Seleziona "Installa"</div>
+                            <div class="step-description">
+                                Se non vedi l'opzione, tocca "Aggiungi a schermata principale"
+                            </div>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">
+                <span>✅</span>
+                <span>Requisiti per l'installazione</span>
+            </div>
+            <div id="requirements"></div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">
+                <span>🖼️</span>
+                <span>Icone App</span>
+            </div>
+            <div class="icon-grid">
+                <img src="/piattaforma-collaborativa/mobile/icons/icon-72x72.png" class="icon-preview" alt="72x72">
+                <img src="/piattaforma-collaborativa/mobile/icons/icon-96x96.png" class="icon-preview" alt="96x96">
+                <img src="/piattaforma-collaborativa/mobile/icons/icon-128x128.png" class="icon-preview" alt="128x128">
+                <img src="/piattaforma-collaborativa/mobile/icons/icon-192x192.png" class="icon-preview" alt="192x192">
+                <img src="/piattaforma-collaborativa/mobile/icons/icon-512x512.png" class="icon-preview" alt="512x512">
+            </div>
+        </div>
+        
+        <div class="success" id="successMessage">
+            ✅ App installata con successo! Puoi chiudere questa pagina.
+        </div>
+    </div>
+    
+    <script>
+        let deferredPrompt;
+        
+        // Check requirements
+        async function checkRequirements() {
+            const reqDiv = document.getElementById('requirements');
+            const requirements = [];
+            
+            // HTTPS check
+            const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+            requirements.push({
+                name: 'Connessione sicura (HTTPS/localhost)',
+                met: isSecure
+            });
+            
+            // Service Worker check
+            const hasSW = 'serviceWorker' in navigator;
+            requirements.push({
+                name: 'Service Worker supportato',
+                met: hasSW
+            });
+            
+            // Manifest check
+            const hasManifest = document.querySelector('link[rel="manifest"]');
+            requirements.push({
+                name: 'Web App Manifest presente',
+                met: !!hasManifest
+            });
+            
+            // Check if SW is registered
+            if (hasSW) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                requirements.push({
+                    name: 'Service Worker registrato',
+                    met: registrations.length > 0
+                });
+            }
+            
+            reqDiv.innerHTML = requirements.map(req => `
+                <div class="step">
+                    <div class="step-number" style="background: ${req.met ? '#10b981' : '#ef4444'}">
+                        ${req.met ? '✓' : '✗'}
+                    </div>
+                    <div class="step-content">
+                        <div class="step-title">${req.name}</div>
+                        <div class="step-description">${req.met ? 'Requisito soddisfatto' : 'Requisito non soddisfatto'}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            return requirements.every(r => r.met);
+        }
+        
+        // Show browser instructions
+        function showBrowser(browser) {
+            // Hide all sections
+            document.querySelectorAll('.browser-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.browser-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(`${browser}-section`).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // Install PWA
+        function installPWA() {
+            if (!deferredPrompt) {
+                alert('Il prompt di installazione non è disponibile. Segui le istruzioni manuali sopra.');
+                return;
+            }
+            
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                    document.getElementById('successMessage').style.display = 'block';
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+                document.getElementById('installBtn').style.display = 'none';
+            });
+        }
+        
+        // Listen for install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').classList.add('show');
+        });
+        
+        // Listen for app installed
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('installBtn').style.display = 'none';
+        });
+        
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/piattaforma-collaborativa/mobile/sw.js', {
+                scope: '/piattaforma-collaborativa/'
+            }).then(registration => {
+                console.log('Service Worker registered:', registration);
+            }).catch(error => {
+                console.error('Service Worker registration failed:', error);
+            });
+        }
+        
+        // Check if already installed
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            document.getElementById('successMessage').textContent = '✅ App già installata! Puoi usarla dalla schermata Home.';
+            document.getElementById('successMessage').style.display = 'block';
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            checkRequirements();
+        });
+    </script>
+</body>
+</html>

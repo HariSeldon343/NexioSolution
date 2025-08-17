@@ -1,0 +1,140 @@
+/* OVERRIDE FINALE - Garantisce scroll sulla pagina */
+/* Questo file DEVE essere caricato per ULTIMO per sovrascrivere tutti i conflitti */
+
+/* Reset completo per garantire scroll */
+html {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: 100% !important;
+    scroll-behavior: smooth !important;
+}
+
+body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    max-height: none !important;
+    position: relative !important;
+}
+
+/* Rimuove qualsiasi overflow: hidden su elementi principali */
+body > *:not(.sidebar) {
+    overflow: visible !important;
+}
+
+/* Main content deve permettere scroll */
+.main-content {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    max-height: none !important;
+    position: relative !important;
+    margin-left: 280px !important;
+    padding: 2rem !important;
+}
+
+/* Container principale */
+.container,
+.container-fluid {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+}
+
+/* Page header non deve limitare l'altezza */
+.page-header {
+    overflow: visible !important;
+    height: auto !important;
+}
+
+/* Card e contenuti */
+.card,
+.card-body {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+}
+
+/* Tabelle scrollabili orizzontalmente ma non verticalmente */
+.table-responsive {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    max-width: 100% !important;
+}
+
+/* Sidebar rimane fissa */
+.sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    width: 280px !important;
+    z-index: 1000 !important;
+}
+
+/* Forza lo scroll anche con !important multipli */
+body {
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+}
+
+/* Assicura che il viewport sia scrollabile */
+@media screen {
+    html, body {
+        overflow-y: auto !important;
+        height: auto !important;
+        min-height: 100% !important;
+    }
+    
+    .main-content {
+        overflow-y: visible !important;
+        overflow-x: visible !important;
+    }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0 !important;
+        padding: 1rem !important;
+    }
+    
+    .sidebar {
+        transform: translateX(-100%) !important;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0) !important;
+    }
+    
+    body {
+        overflow-y: auto !important;
+    }
+}
+
+/* Override di qualsiasi height: 100vh su body o html */
+html[style*="height: 100vh"],
+body[style*="height: 100vh"] {
+    height: auto !important;
+    min-height: 100vh !important;
+}
+
+/* Fix per possibili conflitti con Bootstrap */
+.modal-open {
+    overflow-y: auto !important;
+}
+
+/* Assicura che i modal non blocchino lo scroll della pagina */
+body.modal-open {
+    overflow-y: auto !important;
+    padding-right: 0 !important;
+}
+
+/* Debug: forza scrollbar sempre visibile */
+html {
+    overflow-y: scroll !important;
+}

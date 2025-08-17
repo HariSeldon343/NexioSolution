@@ -353,8 +353,8 @@ function sendWelcomeEmail($email, $nome, $password) {
         // Costruisci il corpo dell'email con link diretto (senza tracking)
         // Importante: non usare tag <a> per evitare il tracking di Brevo
         $body = "
-        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-            <h2 style='color: #2d5a9f;'>Benvenuto su Nexio, {$nome}!</h2>
+        <div >
+            <h2 >Benvenuto su Nexio, {$nome}!</h2>
             
             <p>Il tuo account è stato creato con successo. Di seguito trovi le tue credenziali di accesso:</p>
             
@@ -363,17 +363,17 @@ function sendWelcomeEmail($email, $nome, $password) {
                 <p><strong>Password temporanea:</strong> {$password}</p>
             </div>
             
-            <p style='color: #d97706;'><strong>Importante:</strong> Al primo accesso ti verrà richiesto di cambiare la password.</p>
+            <p ><strong>Importante:</strong> Al primo accesso ti verrà richiesto di cambiare la password.</p>
             
             <p>Per accedere alla piattaforma, copia e incolla questo link nel tuo browser:</p>
             <div style='background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0; word-break: break-all;'>
-                <code style='font-family: monospace; color: #2d5a9f;'>{$baseUrl}/login.php</code>
+                <code >{$baseUrl}/login.php</code>
             </div>
             
             <p style='margin-top: 20px;'>Oppure clicca sul pulsante sottostante:</p>
             <p><a href='{$baseUrl}/login.php' style='background: #2d5a9f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;'>Accedi a Nexio</a></p>
             
-            <p style='color: #666; font-size: 12px; margin-top: 30px;'>
+            <p >
                 Questo messaggio è stato inviato automaticamente. Per assistenza, contatta l'amministratore del sistema.
             </p>
         </div>
@@ -501,27 +501,48 @@ function checkEmailExists($email) {
 
 function deleteUser($userId) {
     try {
+        // Inizia transazione per garantire atomicità
+        db_connection()->beginTransaction();
+        
         // Protezione utente principale
         $stmt = db_query("SELECT email FROM utenti WHERE id = ?", [$userId]);
         $targetUser = $stmt->fetch();
         
-        if ($targetUser && $targetUser['email'] === 'asamodeo@fortibyte.it') {
+        if (!$targetUser) {
+            db_connection()->rollback();
+            return ['success' => false, 'message' => 'Utente non trovato'];
+        }
+        
+        if ($targetUser['email'] === 'asamodeo@fortibyte.it') {
+            db_connection()->rollback();
             return ['success' => false, 'message' => 'Non è possibile eliminare questo utente'];
         }
         
-        // Non eliminiamo fisicamente, ma disattiviamo
-        // Corretto: db_update richiede WHERE come stringa e parametri separati
-        db_update('utenti', ['attivo' => 0], 'id = ?', [$userId]);
+        // Non eliminiamo fisicamente, ma disattiviamo (soft delete)
+        $updateResult = db_update('utenti', ['attivo' => 0], 'id = ?', [$userId]);
+        
+        if ($updateResult === false) {
+            db_connection()->rollback();
+            return ['success' => false, 'message' => 'Errore durante la disattivazione dell\'utente'];
+        }
         
         // Disattiva anche le associazioni aziendali
         db_query("UPDATE utenti_aziende SET attivo = 0 WHERE utente_id = ?", [$userId]);
         
+        // Commit della transazione
+        db_connection()->commit();
+        
         // Log attività
         if (class_exists('ActivityLogger')) {
-            $auth = Auth::getInstance();
-            $currentUser = $auth->getUser();
-            ActivityLogger::getInstance()->log('utente', 'delete', $userId, 
-                "Eliminato (disattivato) utente ID: {$userId} da utente ID: " . ($currentUser['id'] ?? 'sistema'));
+            try {
+                $auth = Auth::getInstance();
+                $currentUser = $auth->getUser();
+                ActivityLogger::getInstance()->log('utente', 'delete', $userId, 
+                    "Eliminato (disattivato) utente ID: {$userId} da utente ID: " . ($currentUser['id'] ?? 'sistema'));
+            } catch (Exception $logEx) {
+                // Non bloccare l'operazione se il log fallisce
+                error_log("Errore logging eliminazione utente: " . $logEx->getMessage());
+            }
         }
         
         return [
@@ -530,6 +551,10 @@ function deleteUser($userId) {
         ];
         
     } catch (Exception $e) {
+        // Rollback in caso di errore
+        if (db_connection()->inTransaction()) {
+            db_connection()->rollback();
+        }
         error_log("Errore eliminazione utente: " . $e->getMessage());
         return ['success' => false, 'message' => 'Errore durante l\'eliminazione dell\'utente: ' . $e->getMessage()];
     }
@@ -584,7 +609,7 @@ $aziende = [];
 try {
     // Count query semplificata
     $countQuery = "SELECT COUNT(DISTINCT u.id) as total FROM utenti u";
-    $whereConditions = [];
+    $whereConditions = ["u.attivo = 1"]; // Filtra solo utenti attivi
     $params = [];
     
     if ($search) {
@@ -620,7 +645,7 @@ try {
         LEFT JOIN aziende a ON ua.azienda_id = a.id
     ";
     
-    $whereConditions = [];
+    $whereConditions = ["u.attivo = 1"]; // Filtra solo utenti attivi
     $params = [];
     
     if ($search) {
@@ -654,9 +679,9 @@ try {
     
     // Fallback con query più semplice
     try {
-        $stmt = db_query("SELECT * FROM utenti ORDER BY data_registrazione DESC LIMIT ? OFFSET ?", [$limit, $offset]);
+        $stmt = db_query("SELECT * FROM utenti WHERE attivo = 1 ORDER BY data_registrazione DESC LIMIT ? OFFSET ?", [$limit, $offset]);
         $utenti = $stmt->fetchAll();
-        $totalUsers = db_query("SELECT COUNT(*) as total FROM utenti")->fetch()['total'];
+        $totalUsers = db_query("SELECT COUNT(*) as total FROM utenti WHERE attivo = 1")->fetch()['total'];
         $aziende = [];
     } catch (Exception $e2) {
         error_log("Errore anche con query semplificata: " . $e2->getMessage());
@@ -973,7 +998,7 @@ require_once 'components/page-header.php';
         <h2><i class="fas fa-filter"></i> Filtri e Azioni</h2>
     </div>
     <div class="action-bar">
-        <select id="filterAzienda" class="form-control" onchange="filterByAzienda(this.value)" style="max-width: 300px;">
+        <select id="filterAzienda" class="form-control" onchange="filterByAzienda(this.value)" >
             <option value="">Tutte le aziende</option>
             <?php foreach ($aziende as $azienda): ?>
                 <option value="<?php echo $azienda['id']; ?>" <?php echo $azienda_filter !== null && $azienda_filter == $azienda['id'] ? 'selected' : ''; ?>>
@@ -1151,7 +1176,7 @@ require_once 'components/page-header.php';
 
 <!-- Modal Crea Utente -->
 <div id="create-user-modal" class="modal">
-    <div class="modal-content" style="max-width: 700px;">
+    <div class="modal-content" >
         <div class="modal-header">
             <h3>Crea Nuovo Utente</h3>
             <button type="button" class="close" onclick="closeModal('create-user-modal')">&times;</button>
@@ -1160,7 +1185,7 @@ require_once 'components/page-header.php';
             <form id="create-user-form" onsubmit="return createUserAjax(event)">
                 <input type="hidden" name="action" value="create_user">
                 
-                <h3 style="margin-bottom: 1rem; color: #111827; font-size: 1.125rem;">Informazioni Personali</h3>
+                <h3 >Informazioni Personali</h3>
                 
                 <div class="form-row">
                     <div class="form-group">
@@ -1200,7 +1225,7 @@ require_once 'components/page-header.php';
                     </small>
                 </div>
                 
-                <h3 style="margin: 2rem 0 1rem 0; color: #111827; font-size: 1.125rem; border-top: 1px solid #e5e7eb; padding-top: 1.5rem;">Associazione Aziendale</h3>
+                <h3 >Associazione Aziendale</h3>
                 
                 <div class="form-row">
                     <div class="form-group">
@@ -1234,7 +1259,7 @@ require_once 'components/page-header.php';
                     <i class="fas fa-exclamation-triangle"></i> <span id="warning-text"></span>
                 </div>
                 
-                <h3 style="margin: 2rem 0 1rem 0; color: #111827; font-size: 1.125rem; border-top: 1px solid #e5e7eb; padding-top: 1.5rem;">Credenziali di Accesso</h3>
+                <h3 >Credenziali di Accesso</h3>
                 
                 <div class="form-group">
                     <label class="form-label">Password <span class="required">*</span></label>
@@ -1563,15 +1588,23 @@ async function deleteUser(userId) {
             // Rimuovi riga dalla tabella con animazione
             const row = document.querySelector(`tr[data-user-id="${userId}"]`);
             if (row) {
+                row.style.transition = 'opacity 0.3s';
                 row.style.opacity = '0';
                 setTimeout(() => {
                     row.remove();
                     
-                    // Se non ci sono più righe, mostra empty state
+                    // Se non ci sono più righe, ricarica la pagina per mostrare l'empty state
                     if (document.querySelectorAll('#usersTableBody tr').length === 0) {
-                        window.location.reload();
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
                     }
                 }, 300);
+            } else {
+                // Se la riga non esiste, ricarica la pagina per aggiornare la lista
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             }
         } else {
             showMessage(data.message || 'Errore durante l\'eliminazione dell\'utente', 'error');
@@ -1610,9 +1643,9 @@ async function checkEmail(email) {
         const data = await response.json();
         
         if (data.exists) {
-            emailCheck.innerHTML = '<span style="color: #ef4444;">Email già esistente!</span>';
+            emailCheck.innerHTML = '<span >Email già esistente!</span>';
         } else {
-            emailCheck.innerHTML = '<span style="color: #10b981;">Email disponibile</span>';
+            emailCheck.innerHTML = '<span >Email disponibile</span>';
         }
     } catch (error) {
         emailCheck.innerHTML = '';

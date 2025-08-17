@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>PWA Diagnostics - Nexio</title>
+    <link rel="manifest" href="/piattaforma-collaborativa/mobile/manifest.json">
+    <link rel="icon" type="image/png" href="/piattaforma-collaborativa/mobile/icons/icon-192x192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 32px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .diagnostic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .diagnostic-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: #f0f5ff;
+            border-radius: 8px;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8fafc;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .test-item:hover {
+            background: #e2e8f0;
+        }
+        
+        .status-icon {
+            width: 28px;
+            height: 28px;
+            margin-right: 12px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .status-icon.pass {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-icon.fail {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .status-icon.warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .status-icon.info {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .status-icon.loading {
+            background: #6b7280;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .test-details {
+            flex: 1;
+        }
+        
+        .test-label {
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 2px;
+        }
+        
+        .test-value {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .install-prompt {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+        }
+        
+        .install-prompt.ready {
+            display: block;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+        
+        .install-button {
+            background: white;
+            color: #10b981;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .install-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .install-button:disabled {
+            background: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .console {
+            background: #1e293b;
+            color: #10b981;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 30px;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .log-time {
+            color: #64748b;
+            margin-right: 10px;
+        }
+        
+        .log-level {
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        
+        .log-level.info { background: #3b82f6; color: white; }
+        .log-level.success { background: #10b981; color: white; }
+        .log-level.warning { background: #f59e0b; color: white; }
+        .log-level.error { background: #ef4444; color: white; }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .action-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .action-button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        
+        .success-banner {
+            background: #10b981;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.5s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .icon-preview {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .icon-preview img {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 PWA Diagnostics & Installation Test</h1>
+        
+        <div class="success-banner" id="successBanner">
+            ✅ PWA è pronta per l'installazione! Tutti i test sono stati superati.
+        </div>
+        
+        <div class="install-prompt" id="installPrompt">
+            <h2>🎉 App Pronta per l'Installazione!</h2>
+            <p>Nexio PWA soddisfa tutti i requisiti per l'installazione.</p>
+            <button id="installButton" class="install-button" onclick="installApp()">
+                Installa Ora
+            </button>
+        </div>
+        
+        <div class="diagnostic-grid">
+            <!-- Basic Requirements -->
+            <div class="diagnostic-card">
+                <div class="card-header">
+                    <div class="card-icon">🔒</div>
+                    <div class="card-title">Requisiti Base</div>
+                </div>
+                <div id="basicTests"></div>
+            </div>
+            
+            <!-- Manifest Tests -->
+            <div class="diagnostic-card">
+                <div class="card-header">
+                    <div class="card-icon">📋</div>
+                    <div class="card-title">Web App Manifest</div>
+                </div>
+                <div id="manifestTests"></div>
+            </div>
+            
+            <!-- Icon Tests -->
+            <div class="diagnostic-card">
+                <div class="card-header">
+                    <div class="card-icon">🖼️</div>
+                    <div class="card-title">Icone PWA</div>
+                </div>
+                <div id="iconTests"></div>
+            </div>
+            
+            <!-- Service Worker Tests -->
+            <div class="diagnostic-card">
+                <div class="card-header">
+                    <div class="card-icon">⚙️</div>
+                    <div class="card-title">Service Worker</div>
+                </div>
+                <div id="swTests"></div>
+            </div>
+            
+            <!-- Browser Support -->
+            <div class="diagnostic-card">
+                <div class="card-header">
+                    <div class="card-icon">🌐</div>
+                    <div class="card-title">Supporto Browser</div>
+                </div>
+                <div id="browserTests"></div>
+            </div>
+            
+            <!-- Installation Criteria -->
+            <div class="diagnostic-card">
+                <div class="card-header">
+                    <div class="card-icon">📱</div>
+                    <div class="card-title">Criteri Installazione</div>
+                </div>
+                <div id="installTests"></div>
+            </div>
+        </div>
+        
+        <div class="diagnostic-card">
+            <div class="card-header">
+                <div class="card-icon">🛠️</div>
+                <div class="card-title">Azioni di Debug</div>
+            </div>
+            <div class="action-buttons">
+                <button class="action-button" onclick="clearCache()">🗑️ Pulisci Cache</button>
+                <button class="action-button" onclick="updateSW()">🔄 Aggiorna SW</button>
+                <button class="action-button" onclick="unregisterSW()">❌ Rimuovi SW</button>
+                <button class="action-button" onclick="reRegisterSW()">✅ Registra SW</button>
+                <button class="action-button" onclick="testOffline()">📡 Test Offline</button>
+                <button class="action-button" onclick="testManifest()">📋 Ricarica Manifest</button>
+                <button class="action-button" onclick="runAllTests()">🔍 Riesegui Test</button>
+            </div>
+        </div>
+        
+        <div class="console" id="console">
+            <div class="log-entry">
+                <span class="log-time">[00:00:00]</span>
+                <span class="log-level info">INFO</span>
+                <span>Console pronta. Avvio diagnostica PWA...</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let deferredPrompt;
+        let testResults = {
+            basic: 0,
+            manifest: 0,
+            icons: 0,
+            sw: 0,
+            browser: 0,
+            install: 0
+        };
+        
+        function log(message, level = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const console = document.getElementById('console');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <span class="log-time">[${time}]</span>
+                <span class="log-level ${level}">${level.toUpperCase()}</span>
+                <span>${message}</span>
+            `;
+            console.appendChild(entry);
+            console.scrollTop = console.scrollHeight;
+        }
+        
+        function addTest(container, label, status, value = '') {
+            const div = document.createElement('div');
+            div.className = 'test-item';
+            
+            let icon = '...';
+            if (status === 'pass') {
+                icon = '✓';
+                testResults[container.replace('Tests', '')] += 1;
+            } else if (status === 'fail') icon = '✗';
+            else if (status === 'warning') icon = '!';
+            else if (status === 'info') icon = 'i';
+            
+            div.innerHTML = `
+                <div class="status-icon ${status}">${icon}</div>
+                <div class="test-details">
+                    <div class="test-label">${label}</div>
+                    ${value ? `<div class="test-value">${value}</div>` : ''}
+                </div>
+            `;
+            document.getElementById(container).appendChild(div);
+        }
+        
+        async function testBasicRequirements() {
+            log('Testing requisiti base...');
+            const container = 'basicTests';
+            document.getElementById(container).innerHTML = '';
+            
+            // HTTPS Check
+            const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            addTest(container, 'Connessione Sicura', isSecure ? 'pass' : 'fail', 
+                `${location.protocol}//${location.hostname}`);
+            
+            // Viewport meta tag
+            const viewport = document.querySelector('meta[name="viewport"]');
+            addTest(container, 'Viewport Meta Tag', viewport ? 'pass' : 'fail',
+                viewport ? viewport.content : 'Non trovato');
+            
+            // Theme color
+            const themeColor = document.querySelector('meta[name="theme-color"]');
+            addTest(container, 'Theme Color Meta', themeColor ? 'pass' : 'warning',
+                themeColor ? themeColor.content : 'Non definito');
+            
+            // Favicon
+            const favicon = document.querySelector('link[rel="icon"]');
+            addTest(container, 'Favicon', favicon ? 'pass' : 'warning',
+                favicon ? 'Presente' : 'Non trovato');
+            
+            return isSecure;
+        }
+        
+        async function testManifest() {
+            log('Testing Web App Manifest...');
+            const container = 'manifestTests';
+            document.getElementById(container).innerHTML = '';
+            
+            const manifestLink = document.querySelector('link[rel="manifest"]');
+            if (!manifestLink) {
+                addTest(container, 'Link Manifest', 'fail', 'Non trovato nel DOM');
+                return false;
+            }
+            
+            addTest(container, 'Link Manifest', 'pass', manifestLink.href);
+            
+            try {
+                const response = await fetch(manifestLink.href);
+                if (!response.ok) {
+                    addTest(container, 'Caricamento Manifest', 'fail', `HTTP ${response.status}`);
+                    return false;
+                }
+                
+                const manifest = await response.json();
+                addTest(container, 'Parsing JSON', 'pass', 'Valido');
+                
+                // Required fields
+                const requiredFields = ['name', 'short_name', 'start_url', 'display', 'icons'];
+                let allRequired = true;
+                
+                for (const field of requiredFields) {
+                    if (manifest[field]) {
+                        let value = manifest[field];
+                        if (field === 'icons') value = `${value.length} icone`;
+                        addTest(container, field, 'pass', value);
+                    } else {
+                        addTest(container, field, 'fail', 'Mancante');
+                        allRequired = false;
+                    }
+                }
+                
+                // Additional recommended fields
+                addTest(container, 'background_color', manifest.background_color ? 'pass' : 'warning',
+                    manifest.background_color || 'Non definito');
+                addTest(container, 'theme_color', manifest.theme_color ? 'pass' : 'warning',
+                    manifest.theme_color || 'Non definito');
+                addTest(container, 'orientation', manifest.orientation ? 'info' : 'info',
+                    manifest.orientation || 'any');
+                
+                // Display mode check
+                const validDisplay = ['fullscreen', 'standalone', 'minimal-ui'];
+                if (validDisplay.includes(manifest.display)) {
+                    addTest(container, 'Display Mode Valido', 'pass', manifest.display);
+                } else {
+                    addTest(container, 'Display Mode Valido', 'warning', 
+                        `${manifest.display} (consigliato: standalone)`);
+                }
+                
+                window.manifestData = manifest;
+                return allRequired;
+                
+            } catch (error) {
+                addTest(container, 'Errore Manifest', 'fail', error.message);
+                log(`Errore caricamento manifest: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function testIcons() {
+            log('Testing icone PWA...');
+            const container = 'iconTests';
+            document.getElementById(container).innerHTML = '';
+            
+            if (!window.manifestData || !window.manifestData.icons) {
+                addTest(container, 'Icone', 'fail', 'Manifest non caricato');
+                return false;
+            }
+            
+            const icons = window.manifestData.icons;
+            addTest(container, 'Numero Icone', 'info', `${icons.length} icone definite`);
+            
+            // Check required sizes
+            const requiredSizes = ['192x192', '512x512'];
+            const foundSizes = {};
+            let hasValidIcons = true;
+            
+            for (const size of requiredSizes) {
+                const icon = icons.find(i => i.sizes && i.sizes.includes(size));
+                if (icon) {
+                    foundSizes[size] = true;
+                    addTest(container, `Icona ${size}`, 'pass', 'Presente');
+                    
+                    // Test if icon is accessible
+                    try {
+                        const iconUrl = new URL(icon.src, window.location.href).href;
+                        const response = await fetch(iconUrl, { method: 'HEAD' });
+                        if (response.ok) {
+                            addTest(container, `${size} Accessibile`, 'pass', 'OK');
+                        } else {
+                            addTest(container, `${size} Accessibile`, 'fail', `HTTP ${response.status}`);
+                            hasValidIcons = false;
+                        }
+                    } catch (e) {
+                        addTest(container, `${size} Accessibile`, 'fail', 'Errore');
+                        hasValidIcons = false;
+                    }
+                } else {
+                    addTest(container, `Icona ${size}`, 'fail', 'Mancante');
+                    hasValidIcons = false;
+                }
+            }
+            
+            // Check for PNG format
+            const hasPng = icons.some(i => i.type === 'image/png');
+            addTest(container, 'Formato PNG', hasPng ? 'pass' : 'fail',
+                hasPng ? 'Almeno una PNG' : 'Nessuna PNG trovata');
+            
+            // Check for maskable icon
+            const hasMaskable = icons.some(i => i.purpose && i.purpose.includes('maskable'));
+            addTest(container, 'Icona Maskable', hasMaskable ? 'pass' : 'warning',
+                hasMaskable ? 'Presente' : 'Consigliata per Android');
+            
+            // Icon preview
+            if (icons.length > 0) {
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'icon-preview';
+                for (const icon of icons.slice(0, 4)) {
+                    const img = document.createElement('img');
+                    img.src = new URL(icon.src, window.location.href).href;
+                    img.title = icon.sizes;
+                    previewDiv.appendChild(img);
+                }
+                document.getElementById(container).appendChild(previewDiv);
+            }
+            
+            return hasValidIcons && hasPng;
+        }
+        
+        async function testServiceWorker() {
+            log('Testing Service Worker...');
+            const container = 'swTests';
+            document.getElementById(container).innerHTML = '';
+            
+            if (!('serviceWorker' in navigator)) {
+                addTest(container, 'API Service Worker', 'fail', 'Non supportata dal browser');
+                return false;
+            }
+            
+            addTest(container, 'API Service Worker', 'pass', 'Disponibile');
+            
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                
+                if (registrations.length === 0) {
+                    addTest(container, 'Registrazione', 'fail', 'Nessun SW registrato');
+                    log('Nessun Service Worker registrato', 'warning');
+                    return false;
+                }
+                
+                const reg = registrations[0];
+                addTest(container, 'Registrazione', 'pass', reg.scope);
+                
+                // Check SW state
+                const sw = reg.active || reg.waiting || reg.installing;
+                if (sw) {
+                    addTest(container, 'Stato SW', sw.state === 'activated' ? 'pass' : 'warning', sw.state);
+                    
+                    if (reg.active) {
+                        addTest(container, 'SW Attivo', 'pass', 'Operativo');
+                    } else if (reg.waiting) {
+                        addTest(container, 'SW in Attesa', 'warning', 'Aggiornamento disponibile');
+                    } else if (reg.installing) {
+                        addTest(container, 'SW in Installazione', 'info', 'In corso...');
+                    }
+                } else {
+                    addTest(container, 'Stato SW', 'fail', 'Non trovato');
+                    return false;
+                }
+                
+                // Test fetch handler
+                addTest(container, 'Fetch Handler', 'pass', 'Presente (assunto)');
+                
+                // Test offline page
+                try {
+                    const offlineUrl = '/piattaforma-collaborativa/mobile/offline.html';
+                    const response = await fetch(offlineUrl, { method: 'HEAD' });
+                    addTest(container, 'Pagina Offline', response.ok ? 'pass' : 'fail',
+                        response.ok ? 'Disponibile' : 'Non trovata');
+                } catch (e) {
+                    addTest(container, 'Pagina Offline', 'fail', 'Errore test');
+                }
+                
+                return true;
+                
+            } catch (error) {
+                addTest(container, 'Errore SW', 'fail', error.message);
+                log(`Errore Service Worker: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function testBrowserSupport() {
+            log('Testing supporto browser...');
+            const container = 'browserTests';
+            document.getElementById(container).innerHTML = '';
+            
+            // Check browser
+            const userAgent = navigator.userAgent.toLowerCase();
+            let browserName = 'Sconosciuto';
+            let browserSupport = false;
+            
+            if (userAgent.includes('chrome') && !userAgent.includes('edg')) {
+                browserName = 'Chrome';
+                browserSupport = true;
+            } else if (userAgent.includes('edg')) {
+                browserName = 'Edge';
+                browserSupport = true;
+            } else if (userAgent.includes('firefox')) {
+                browserName = 'Firefox';
+                browserSupport = true;
+            } else if (userAgent.includes('safari') && !userAgent.includes('chrome')) {
+                browserName = 'Safari';
+                browserSupport = true;
+            }
+            
+            addTest(container, 'Browser', browserSupport ? 'pass' : 'warning', browserName);
+            
+            // Check PWA APIs
+            addTest(container, 'Service Worker API', 'serviceWorker' in navigator ? 'pass' : 'fail',
+                'serviceWorker' in navigator ? 'Supportata' : 'Non supportata');
+            
+            addTest(container, 'Cache API', 'caches' in window ? 'pass' : 'fail',
+                'caches' in window ? 'Supportata' : 'Non supportata');
+            
+            addTest(container, 'Fetch API', 'fetch' in window ? 'pass' : 'fail',
+                'fetch' in window ? 'Supportata' : 'Non supportata');
+            
+            addTest(container, 'Promise API', 'Promise' in window ? 'pass' : 'fail',
+                'Promise' in window ? 'Supportata' : 'Non supportata');
+            
+            // Check if on mobile
+            const isMobile = /android|iphone|ipad|ipod/i.test(userAgent);
+            addTest(container, 'Dispositivo', 'info', isMobile ? 'Mobile' : 'Desktop');
+            
+            // Check connection
+            if ('connection' in navigator) {
+                const conn = navigator.connection;
+                addTest(container, 'Tipo Connessione', 'info', 
+                    conn.effectiveType || 'Sconosciuto');
+            }
+            
+            return browserSupport;
+        }
+        
+        async function testInstallCriteria() {
+            log('Testing criteri installazione...');
+            const container = 'installTests';
+            document.getElementById(container).innerHTML = '';
+            
+            let canInstall = true;
+            
+            // Check all requirements
+            const requirements = [
+                { name: 'HTTPS/Localhost', met: location.protocol === 'https:' || location.hostname === 'localhost' },
+                { name: 'Service Worker Attivo', met: await checkSWActive() },
+                { name: 'Manifest Valido', met: window.manifestData !== undefined },
+                { name: 'Icona 192x192', met: await checkIcon('192x192') },
+                { name: 'Icona 512x512', met: await checkIcon('512x512') },
+                { name: 'Start URL Valido', met: window.manifestData?.start_url !== undefined },
+                { name: 'Display Standalone/Fullscreen', met: ['standalone', 'fullscreen'].includes(window.manifestData?.display) }
+            ];
+            
+            for (const req of requirements) {
+                addTest(container, req.name, req.met ? 'pass' : 'fail',
+                    req.met ? 'Soddisfatto' : 'Non soddisfatto');
+                if (!req.met) canInstall = false;
+            }
+            
+            // Check if already installed
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                addTest(container, 'Stato Installazione', 'info', 'App già installata');
+            } else {
+                addTest(container, 'Stato Installazione', 'info', 'Non installata');
+            }
+            
+            // Check install prompt availability
+            if (deferredPrompt) {
+                addTest(container, 'Prompt Installazione', 'pass', 'Disponibile');
+            } else {
+                addTest(container, 'Prompt Installazione', 'warning', 'In attesa evento');
+            }
+            
+            return canInstall;
+        }
+        
+        async function checkSWActive() {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                return registrations.length > 0 && registrations[0].active !== null;
+            } catch {
+                return false;
+            }
+        }
+        
+        async function checkIcon(size) {
+            if (!window.manifestData?.icons) return false;
+            return window.manifestData.icons.some(i => i.sizes && i.sizes.includes(size));
+        }
+        
+        async function runAllTests() {
+            log('Avvio diagnostica completa PWA...', 'info');
+            
+            // Reset results
+            testResults = {
+                basic: 0,
+                manifest: 0,
+                icons: 0,
+                sw: 0,
+                browser: 0,
+                install: 0
+            };
+            
+            const results = await Promise.all([
+                testBasicRequirements(),
+                testManifest(),
+                testIcons(),
+                testServiceWorker(),
+                testBrowserSupport(),
+                testInstallCriteria()
+            ]);
+            
+            const allPassed = results.every(r => r);
+            
+            if (allPassed) {
+                document.getElementById('successBanner').style.display = 'block';
+                log('Tutti i test superati! PWA pronta per installazione.', 'success');
+            } else {
+                log('Alcuni test non superati. Verifica i requisiti mancanti.', 'warning');
+            }
+            
+            // Check if installable
+            checkInstallability();
+        }
+        
+        function checkInstallability() {
+            const totalTests = Object.values(testResults).reduce((a, b) => a + b, 0);
+            if (totalTests >= 15) { // Threshold for basic installability
+                if (deferredPrompt) {
+                    document.getElementById('installPrompt').classList.add('ready');
+                }
+            }
+        }
+        
+        // Action functions
+        async function clearCache() {
+            log('Pulizia cache in corso...', 'info');
+            try {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                log('Cache pulita con successo', 'success');
+            } catch (error) {
+                log(`Errore pulizia cache: ${error.message}`, 'error');
+            }
+        }
+        
+        async function updateSW() {
+            log('Aggiornamento Service Worker...', 'info');
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                if (registrations.length > 0) {
+                    await registrations[0].update();
+                    log('Service Worker aggiornato', 'success');
+                } else {
+                    log('Nessun Service Worker da aggiornare', 'warning');
+                }
+            } catch (error) {
+                log(`Errore aggiornamento SW: ${error.message}`, 'error');
+            }
+        }
+        
+        async function unregisterSW() {
+            log('Rimozione Service Worker...', 'info');
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(registrations.map(r => r.unregister()));
+                log('Service Worker rimosso', 'success');
+            } catch (error) {
+                log(`Errore rimozione SW: ${error.message}`, 'error');
+            }
+        }
+        
+        async function reRegisterSW() {
+            log('Registrazione Service Worker...', 'info');
+            try {
+                const registration = await navigator.serviceWorker.register('/piattaforma-collaborativa/mobile/sw.js', {
+                    scope: '/piattaforma-collaborativa/'
+                });
+                log('Service Worker registrato con successo', 'success');
+                setTimeout(() => runAllTests(), 1000);
+            } catch (error) {
+                log(`Errore registrazione SW: ${error.message}`, 'error');
+            }
+        }
+        
+        function testOffline() {
+            log('Test modalità offline...', 'info');
+            window.open('/piattaforma-collaborativa/mobile/offline.html', '_blank');
+        }
+        
+        function installApp() {
+            if (!deferredPrompt) {
+                log('Prompt installazione non disponibile', 'warning');
+                return;
+            }
+            
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    log('Installazione accettata dall\'utente', 'success');
+                } else {
+                    log('Installazione rifiutata dall\'utente', 'warning');
+                }
+                deferredPrompt = null;
+                document.getElementById('installPrompt').classList.remove('ready');
+            });
+        }
+        
+        // Event listeners
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            log('Evento installazione catturato - App installabile!', 'success');
+            document.getElementById('installPrompt').classList.add('ready');
+        });
+        
+        window.addEventListener('appinstalled', () => {
+            log('App installata con successo!', 'success');
+            document.getElementById('installPrompt').classList.remove('ready');
+        });
+        
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            // Register SW if not already registered
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/piattaforma-collaborativa/mobile/sw.js', {
+                    scope: '/piattaforma-collaborativa/'
+                }).then(() => {
+                    log('Service Worker registrato', 'info');
+                    setTimeout(() => runAllTests(), 500);
+                }).catch(error => {
+                    log(`Errore registrazione SW: ${error.message}`, 'error');
+                    runAllTests();
+                });
+            } else {
+                runAllTests();
+            }
+        });
+    </script>
+</body>
+</html>

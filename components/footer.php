@@ -7,8 +7,9 @@
     <!-- Bootstrap JavaScript Bundle (includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- NEXIO REDESIGN JavaScript -->
+    <!-- NEXIO REDESIGN JavaScript - DISABILITATO per evitare effetti zoom
     <script src="<?php echo APP_PATH; ?>/assets/js/nexio-redesign.js?v=<?php echo time(); ?>"></script>
+    -->
 
     <!-- Sistema di conferma cancellazione con cache busting -->
     <?php 

@@ -1,0 +1,489 @@
+/**
+ * Calendar Color System for Event Differentiation
+ * Differentiates events by company/source with subtle, professional colors
+ */
+
+/* Color Palette for Companies/Calendars */
+:root {
+    /* Company Colors - Soft Pastels */
+    --calendar-color-1: #e8f4fd; /* Light Blue */
+    --calendar-color-2: #fff0f6; /* Light Pink */
+    --calendar-color-3: #f0fdf4; /* Light Green */
+    --calendar-color-4: #fef3e2; /* Light Orange */
+    --calendar-color-5: #f3e8ff; /* Light Purple */
+    --calendar-color-6: #fef9e7; /* Light Yellow */
+    --calendar-color-7: #e8f5f5; /* Light Cyan */
+    --calendar-color-8: #ffe4e1; /* Light Coral */
+    
+    /* Border Colors (Darker versions) */
+    --calendar-border-1: #2563eb; /* Blue */
+    --calendar-border-2: #ec4899; /* Pink */
+    --calendar-border-3: #16a34a; /* Green */
+    --calendar-border-4: #ea580c; /* Orange */
+    --calendar-border-5: #9333ea; /* Purple */
+    --calendar-border-6: #ca8a04; /* Yellow */
+    --calendar-border-7: #0891b2; /* Cyan */
+    --calendar-border-8: #dc2626; /* Coral */
+    
+    /* Text Colors (Dark versions for readability) */
+    --calendar-text-1: #1e40af;
+    --calendar-text-2: #be185d;
+    --calendar-text-3: #166534;
+    --calendar-text-4: #c2410c;
+    --calendar-text-5: #7c3aed;
+    --calendar-text-6: #a16207;
+    --calendar-text-7: #0e7490;
+    --calendar-text-8: #b91c1c;
+    
+    /* Special Source Indicators */
+    --ics-import-color: #f0f9ff;
+    --ics-import-border: #0284c7;
+    --ics-import-text: #075985;
+    
+    --manual-event-color: #fafafa;
+    --manual-event-border: #525252;
+    --manual-event-text: #262626;
+}
+
+/* Calendar Legend Container */
+.calendar-legend {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid #e5e7eb;
+}
+
+.calendar-legend-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calendar-legend-title i {
+    color: #9ca3af;
+}
+
+.calendar-legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.legend-color-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 2px solid;
+    flex-shrink: 0;
+}
+
+.legend-separator {
+    width: 1px;
+    height: 20px;
+    background: #e5e7eb;
+    margin: 0 5px;
+}
+
+/* Source Type Indicators */
+.source-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.source-ics {
+    background: var(--ics-import-color);
+    color: var(--ics-import-text);
+    border: 1px solid var(--ics-import-border);
+}
+
+.source-manual {
+    background: var(--manual-event-color);
+    color: var(--manual-event-text);
+    border: 1px solid #d4d4d8;
+}
+
+/* Event Color Classes by Company */
+.event-company-1 {
+    background: var(--calendar-color-1) !important;
+    border-left-color: var(--calendar-border-1) !important;
+    color: var(--calendar-text-1);
+}
+
+.event-company-2 {
+    background: var(--calendar-color-2) !important;
+    border-left-color: var(--calendar-border-2) !important;
+    color: var(--calendar-text-2);
+}
+
+.event-company-3 {
+    background: var(--calendar-color-3) !important;
+    border-left-color: var(--calendar-border-3) !important;
+    color: var(--calendar-text-3);
+}
+
+.event-company-4 {
+    background: var(--calendar-color-4) !important;
+    border-left-color: var(--calendar-border-4) !important;
+    color: var(--calendar-text-4);
+}
+
+.event-company-5 {
+    background: var(--calendar-color-5) !important;
+    border-left-color: var(--calendar-border-5) !important;
+    color: var(--calendar-text-5);
+}
+
+.event-company-6 {
+    background: var(--calendar-color-6) !important;
+    border-left-color: var(--calendar-border-6) !important;
+    color: var(--calendar-text-6);
+}
+
+.event-company-7 {
+    background: var(--calendar-color-7) !important;
+    border-left-color: var(--calendar-border-7) !important;
+    color: var(--calendar-text-7);
+}
+
+.event-company-8 {
+    background: var(--calendar-color-8) !important;
+    border-left-color: var(--calendar-border-8) !important;
+    color: var(--calendar-text-8);
+}
+
+/* Month View Event Badge Colors */
+.calendar-day .event-badge {
+    border-left: 3px solid;
+    padding-left: 6px;
+}
+
+.calendar-day .event-badge.event-company-1 {
+    background: var(--calendar-color-1);
+    border-left-color: var(--calendar-border-1);
+    color: var(--calendar-text-1);
+}
+
+.calendar-day .event-badge.event-company-2 {
+    background: var(--calendar-color-2);
+    border-left-color: var(--calendar-border-2);
+    color: var(--calendar-text-2);
+}
+
+.calendar-day .event-badge.event-company-3 {
+    background: var(--calendar-color-3);
+    border-left-color: var(--calendar-border-3);
+    color: var(--calendar-text-3);
+}
+
+.calendar-day .event-badge.event-company-4 {
+    background: var(--calendar-color-4);
+    border-left-color: var(--calendar-border-4);
+    color: var(--calendar-text-4);
+}
+
+.calendar-day .event-badge.event-company-5 {
+    background: var(--calendar-color-5);
+    border-left-color: var(--calendar-border-5);
+    color: var(--calendar-text-5);
+}
+
+.calendar-day .event-badge.event-company-6 {
+    background: var(--calendar-color-6);
+    border-left-color: var(--calendar-border-6);
+    color: var(--calendar-text-6);
+}
+
+.calendar-day .event-badge.event-company-7 {
+    background: var(--calendar-color-7);
+    border-left-color: var(--calendar-border-7);
+    color: var(--calendar-text-7);
+}
+
+.calendar-day .event-badge.event-company-8 {
+    background: var(--calendar-color-8);
+    border-left-color: var(--calendar-border-8);
+    color: var(--calendar-text-8);
+}
+
+/* Week View Event Colors */
+.week-event {
+    border-left: 4px solid !important;
+}
+
+.week-event.event-company-1 {
+    background: var(--calendar-color-1) !important;
+    border-left-color: var(--calendar-border-1) !important;
+    color: var(--calendar-text-1) !important;
+}
+
+.week-event.event-company-2 {
+    background: var(--calendar-color-2) !important;
+    border-left-color: var(--calendar-border-2) !important;
+    color: var(--calendar-text-2) !important;
+}
+
+.week-event.event-company-3 {
+    background: var(--calendar-color-3) !important;
+    border-left-color: var(--calendar-border-3) !important;
+    color: var(--calendar-text-3) !important;
+}
+
+.week-event.event-company-4 {
+    background: var(--calendar-color-4) !important;
+    border-left-color: var(--calendar-border-4) !important;
+    color: var(--calendar-text-4) !important;
+}
+
+.week-event.event-company-5 {
+    background: var(--calendar-color-5) !important;
+    border-left-color: var(--calendar-border-5) !important;
+    color: var(--calendar-text-5) !important;
+}
+
+.week-event.event-company-6 {
+    background: var(--calendar-color-6) !important;
+    border-left-color: var(--calendar-border-6) !important;
+    color: var(--calendar-text-6) !important;
+}
+
+.week-event.event-company-7 {
+    background: var(--calendar-color-7) !important;
+    border-left-color: var(--calendar-border-7) !important;
+    color: var(--calendar-text-7) !important;
+}
+
+.week-event.event-company-8 {
+    background: var(--calendar-color-8) !important;
+    border-left-color: var(--calendar-border-8) !important;
+    color: var(--calendar-text-8) !important;
+}
+
+/* Day View Event Card Colors */
+.day-event {
+    border-left: 5px solid !important;
+}
+
+.day-event.event-company-1 {
+    background: var(--calendar-color-1) !important;
+    border-left-color: var(--calendar-border-1) !important;
+}
+
+.day-event.event-company-2 {
+    background: var(--calendar-color-2) !important;
+    border-left-color: var(--calendar-border-2) !important;
+}
+
+.day-event.event-company-3 {
+    background: var(--calendar-color-3) !important;
+    border-left-color: var(--calendar-border-3) !important;
+}
+
+.day-event.event-company-4 {
+    background: var(--calendar-color-4) !important;
+    border-left-color: var(--calendar-border-4) !important;
+}
+
+.day-event.event-company-5 {
+    background: var(--calendar-color-5) !important;
+    border-left-color: var(--calendar-border-5) !important;
+}
+
+.day-event.event-company-6 {
+    background: var(--calendar-color-6) !important;
+    border-left-color: var(--calendar-border-6) !important;
+}
+
+.day-event.event-company-7 {
+    background: var(--calendar-color-7) !important;
+    border-left-color: var(--calendar-border-7) !important;
+}
+
+.day-event.event-company-8 {
+    background: var(--calendar-color-8) !important;
+    border-left-color: var(--calendar-border-8) !important;
+}
+
+/* List View Event Card Colors */
+.event-card {
+    border-left: 5px solid !important;
+    position: relative;
+}
+
+.event-card.event-company-1 {
+    background: var(--calendar-color-1) !important;
+    border-left-color: var(--calendar-border-1) !important;
+}
+
+.event-card.event-company-2 {
+    background: var(--calendar-color-2) !important;
+    border-left-color: var(--calendar-border-2) !important;
+}
+
+.event-card.event-company-3 {
+    background: var(--calendar-color-3) !important;
+    border-left-color: var(--calendar-border-3) !important;
+}
+
+.event-card.event-company-4 {
+    background: var(--calendar-color-4) !important;
+    border-left-color: var(--calendar-border-4) !important;
+}
+
+.event-card.event-company-5 {
+    background: var(--calendar-color-5) !important;
+    border-left-color: var(--calendar-border-5) !important;
+}
+
+.event-card.event-company-6 {
+    background: var(--calendar-color-6) !important;
+    border-left-color: var(--calendar-border-6) !important;
+}
+
+.event-card.event-company-7 {
+    background: var(--calendar-color-7) !important;
+    border-left-color: var(--calendar-border-7) !important;
+}
+
+.event-card.event-company-8 {
+    background: var(--calendar-color-8) !important;
+    border-left-color: var(--calendar-border-8) !important;
+}
+
+/* ICS Import Indicator */
+.event-ics-import {
+    position: relative;
+}
+
+.event-ics-import::after {
+    content: "ICS";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: var(--ics-import-border);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Multi-calendar day indicator */
+.calendar-day.multi-calendar {
+    background: linear-gradient(
+        135deg, 
+        var(--calendar-color-1) 0%, 
+        var(--calendar-color-1) 25%,
+        var(--calendar-color-2) 25%, 
+        var(--calendar-color-2) 50%,
+        var(--calendar-color-3) 50%, 
+        var(--calendar-color-3) 75%,
+        var(--calendar-color-4) 75%, 
+        var(--calendar-color-4) 100%
+    );
+    opacity: 0.3;
+}
+
+/* Company Name Badge */
+.event-company-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid currentColor;
+    opacity: 0.9;
+}
+
+/* Hover States */
+.event-badge:hover,
+.week-event:hover,
+.day-event:hover,
+.event-card:hover {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+}
+
+/* Dark Mode Support (if needed) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --calendar-color-1: #1e3a5f;
+        --calendar-color-2: #4a1d3d;
+        --calendar-color-3: #1a3d2e;
+        --calendar-color-4: #4a2c1a;
+        --calendar-color-5: #2e1a4a;
+        --calendar-color-6: #3d3a1a;
+        --calendar-color-7: #1a3d3d;
+        --calendar-color-8: #4a1a1a;
+    }
+    
+    .calendar-legend {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    
+    .calendar-legend-title,
+    .legend-item {
+        color: #d1d5db;
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .calendar-legend {
+        padding: 12px;
+    }
+    
+    .calendar-legend-items {
+        gap: 10px;
+    }
+    
+    .legend-item {
+        font-size: 12px;
+    }
+    
+    .legend-color-box {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .event-company-1,
+    .event-company-2,
+    .event-company-3,
+    .event-company-4,
+    .event-company-5,
+    .event-company-6,
+    .event-company-7,
+    .event-company-8 {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+}

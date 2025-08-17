@@ -1,0 +1,581 @@
+/**
+ * TRANSITION FIX - Risolve l'effetto zoom durante il cambio pagina
+ * 
+ * PROBLEMA: Le transition generiche (transition: all) animano anche transform/scale
+ * causando effetti indesiderati quando il browser ripristina gli stati.
+ * 
+ * SOLUZIONE: Limitare le transition SOLO a proprietà specifiche escludendo transform.
+ */
+
+/* ========================================
+   OVERRIDE GLOBALE - Rimuove transform dalle transition
+   ======================================== */
+
+/* Disabilita transition su transform per TUTTI gli elementi */
+* {
+  transition-property: color, background-color, border-color, box-shadow, opacity, visibility !important;
+  transition-duration: 0.15s !important;
+  transition-timing-function: ease !important;
+}
+
+/* ========================================
+   BUTTONS - Fix specifico per pulsanti
+   ======================================== */
+
+.btn, 
+button,
+a.btn,
+input[type="submit"],
+input[type="button"],
+input[type="reset"],
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger,
+.btn-warning,
+.btn-info,
+.btn-light,
+.btn-dark,
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-success,
+.btn-outline-danger,
+.btn-outline-warning,
+.btn-outline-info,
+.btn-outline-light,
+.btn-outline-dark,
+.btn-icon,
+.btn-sm,
+.btn-lg,
+.btn-block {
+  transition: color 0.15s ease, 
+              background-color 0.15s ease, 
+              border-color 0.15s ease, 
+              box-shadow 0.15s ease,
+              opacity 0.15s ease !important;
+  /* Transform viene applicato istantaneamente senza animazione */
+}
+
+/* Hover states per pulsanti - NO transform animation */
+.btn:hover,
+.btn:focus,
+.btn:active,
+button:hover,
+button:focus,
+button:active {
+  transition-property: color, background-color, border-color, box-shadow, opacity !important;
+  transition-duration: 0.15s !important;
+}
+
+/* ========================================
+   CARDS - Fix per le card della dashboard
+   ======================================== */
+
+.card,
+.stat-card,
+.stat-card-modern,
+.info-card,
+.dashboard-card,
+.metric-card,
+.summary-card,
+.widget-card {
+  transition: box-shadow 0.2s ease, 
+              border-color 0.2s ease,
+              background-color 0.2s ease !important;
+  /* Transform e scale NON animati */
+}
+
+/* Hover states per cards */
+.card:hover,
+.stat-card:hover,
+.stat-card-modern:hover,
+.info-card:hover,
+.dashboard-card:hover {
+  transition-property: box-shadow, border-color, background-color !important;
+  transition-duration: 0.2s !important;
+}
+
+/* ========================================
+   SIDEBAR & NAVIGATION
+   ======================================== */
+
+.sidebar,
+.sidebar-menu,
+.sidebar-menu-item,
+.menu-item,
+.sidebar-footer,
+.user-info,
+.nav-item,
+.nav-link,
+.navbar-nav {
+  transition: background-color 0.15s ease, 
+              color 0.15s ease,
+              opacity 0.15s ease !important;
+}
+
+/* Menu items hover */
+.menu-item:hover,
+.nav-link:hover,
+.dropdown-item:hover,
+.sidebar-menu-item:hover {
+  transition-property: background-color, color !important;
+  transition-duration: 0.15s !important;
+}
+
+/* ========================================
+   LINKS & INTERACTIVE ELEMENTS
+   ======================================== */
+
+a,
+.link,
+.dropdown-item,
+.menu-link,
+.breadcrumb-item a,
+.pagination-link,
+.page-link {
+  transition: color 0.15s ease, 
+              background-color 0.15s ease,
+              opacity 0.15s ease !important;
+}
+
+/* ========================================
+   ICONS
+   ======================================== */
+
+i, 
+.icon,
+.fas,
+.far,
+.fab,
+.fa,
+.bi,
+.bx,
+.feather {
+  transition: color 0.15s ease,
+              opacity 0.15s ease !important;
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+
+.table tr,
+.table td,
+.table th,
+tbody tr,
+.data-table tr {
+  transition: background-color 0.15s ease,
+              color 0.15s ease !important;
+}
+
+/* Table hover */
+.table-hover tbody tr:hover,
+.table tbody tr:hover {
+  transition-property: background-color, color !important;
+  transition-duration: 0.15s !important;
+}
+
+/* ========================================
+   FORM ELEMENTS
+   ======================================== */
+
+input,
+textarea,
+select,
+.form-control,
+.form-select,
+.form-check-input,
+.custom-control-input {
+  transition: border-color 0.15s ease,
+              box-shadow 0.15s ease,
+              background-color 0.15s ease !important;
+}
+
+/* Form focus states */
+input:focus,
+textarea:focus,
+select:focus,
+.form-control:focus,
+.form-select:focus {
+  transition-property: border-color, box-shadow, background-color !important;
+  transition-duration: 0.15s !important;
+}
+
+/* ========================================
+   MODALS & OVERLAYS
+   ======================================== */
+
+.modal,
+.modal-content,
+.modal-backdrop,
+.offcanvas,
+.toast,
+.popover,
+.tooltip {
+  transition: opacity 0.15s ease,
+              visibility 0.15s ease !important;
+}
+
+/* ========================================
+   BADGES & CHIPS
+   ======================================== */
+
+.badge,
+.chip,
+.tag,
+.label {
+  transition: background-color 0.15s ease,
+              color 0.15s ease,
+              opacity 0.15s ease !important;
+}
+
+/* ========================================
+   PROGRESS BARS & LOADERS
+   ======================================== */
+
+.progress-bar,
+.spinner-border,
+.spinner-grow,
+.loader {
+  /* Questi elementi possono mantenere le animazioni transform */
+  transition: width 0.3s ease,
+              background-color 0.3s ease !important;
+}
+
+/* ========================================
+   ALERTS & NOTIFICATIONS
+   ======================================== */
+
+.alert,
+.notification,
+.toast,
+.message {
+  transition: opacity 0.15s ease,
+              background-color 0.15s ease,
+              border-color 0.15s ease !important;
+}
+
+/* ========================================
+   DROPDOWNS
+   ======================================== */
+
+.dropdown-menu,
+.dropdown-item {
+  transition: opacity 0.15s ease,
+              visibility 0.15s ease,
+              background-color 0.15s ease !important;
+}
+
+/* ========================================
+   TABS & PILLS
+   ======================================== */
+
+.nav-tabs .nav-link,
+.nav-pills .nav-link,
+.tab-pane {
+  transition: background-color 0.15s ease,
+              color 0.15s ease,
+              border-color 0.15s ease,
+              opacity 0.15s ease !important;
+}
+
+/* ========================================
+   ACCORDIONS & COLLAPSE
+   ======================================== */
+
+.accordion-button,
+.accordion-item,
+.collapse,
+.collapsing {
+  transition: background-color 0.15s ease,
+              color 0.15s ease,
+              height 0.35s ease !important;
+}
+
+/* ========================================
+   OVERRIDE SPECIFICI per elementi problematici
+   ======================================== */
+
+/* Override per elementi con transition: all */
+[style*="transition: all"],
+[style*="transition:all"] {
+  transition-property: color, background-color, border-color, box-shadow, opacity !important;
+}
+
+/* Fix per elementi che usano transform inline */
+[style*="transform"],
+[style*="scale"] {
+  transition-property: color, background-color, border-color, box-shadow, opacity !important;
+}
+
+/* ========================================
+   HOVER STATES GLOBALI - Assicura no animation su transform
+   ======================================== */
+
+*:hover,
+*:focus,
+*:active,
+*:focus-visible,
+*:focus-within {
+  transition-property: color, background-color, border-color, box-shadow, opacity, visibility !important;
+  transition-duration: 0.15s !important;
+}
+
+/* ========================================
+   ECCEZIONI - Elementi che DEVONO animare transform
+   ======================================== */
+
+/* Solo per elementi specifici che richiedono animazioni transform */
+.animate-transform,
+.needs-transform-animation,
+.carousel-item,
+.offcanvas.show,
+.offcanvas.showing,
+.modal.show,
+.modal.showing {
+  transition: all 0.3s ease !important;
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATION
+   ======================================== */
+
+/* Disabilita transition durante lo scroll per performance */
+body.is-scrolling * {
+  transition: none !important;
+}
+
+/* Disabilita transition durante resize */
+body.is-resizing * {
+  transition: none !important;
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+
+@media print {
+  * {
+    transition: none !important;
+  }
+}
+
+/* ========================================
+   REDUCED MOTION PREFERENCE
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ========================================
+   FIX FINALE - Forza override su elementi critici
+   ======================================== */
+
+/* Assicura che nessun elemento possa animare transform durante cambio pagina */
+html *,
+body * {
+  transition-property: color, background-color, border-color, box-shadow, opacity, visibility, width, height, padding, margin !important;
+  /* ESCLUDI: transform, scale, rotate, translate, skew */
+}
+
+/* Fix specifico per elementi Bootstrap che usano transition utilities */
+.transition,
+.transition-slow,
+.transition-fast {
+  transition-property: color, background-color, border-color, box-shadow, opacity !important;
+}
+
+/* ========================================
+   REGOLA UNIVERSALE DEFINITIVA - MASSIMA PRIORITÀ
+   ======================================== */
+
+/* OVERRIDE DEFINITIVO con massima specificità */
+.btn, .btn:hover, .btn:focus, .btn:active,
+.card, .card:hover,
+.stat-card, .stat-card:hover,
+.stat-card-modern, .stat-card-modern:hover,
+.menu-item, .menu-item:hover,
+.menu-item a, .menu-item a:hover,
+.sidebar, .sidebar *,
+button, button:hover,
+a, a:hover {
+  transition: none !important;
+  transform: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+/* Riattiva SOLO proprietà sicure */
+.btn:hover, 
+.card:hover,
+.menu-item:hover {
+  transition: background-color 0.15s ease, 
+              color 0.15s ease,
+              box-shadow 0.15s ease,
+              opacity 0.15s ease !important;
+}
+
+/* Disabilita ripple effects */
+.ripple, .ripple-effect,
+[data-ripple], [class*="ripple"] {
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Override inline styles */
+[style*="transform"],
+[style*="transition"],
+[style*="animation"] {
+  transition: none !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+/* Override TOTALE per TUTTI gli elementi */
+*, *::before, *::after {
+  transition-property: color, background-color, border-color, box-shadow, opacity, visibility !important;
+  transition-timing-function: ease !important;
+  transition-duration: 0.15s !important;
+  will-change: auto !important;
+}
+
+/* Reset completo su HTML e BODY */
+html, body {
+  transition: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* ========================================
+   PRELOAD STATE - Disabilita TUTTE le animazioni durante caricamento
+   ======================================== */
+
+/* Classe applicata durante il caricamento della pagina */
+.preload *,
+.preload *::before,
+.preload *::after {
+  transition: none !important;
+  animation: none !important;
+  animation-duration: 0s !important;
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
+}
+
+body.preload {
+  overflow-x: hidden !important;
+}
+
+/* ========================================
+   PAGE TRANSITION STATES
+   ======================================== */
+
+/* Durante il cambio pagina */
+body.page-transitioning * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* ========================================
+   ELEMENTI AGGIUNTIVI SPECIFICI
+   ======================================== */
+
+/* Input fields e form elements aggiuntivi */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+input[type="color"],
+input[type="range"],
+input[type="file"],
+.input-group,
+.input-group-text,
+.input-group-append,
+.input-group-prepend {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease !important;
+  transform: none !important;
+}
+
+/* Dialogs e overlays aggiuntivi */
+.dialog,
+.overlay,
+.backdrop,
+.modal-dialog,
+.modal-header,
+.modal-body,
+.modal-footer,
+.alert-dialog,
+.confirm-dialog {
+  transition: opacity 0.15s ease, visibility 0.15s ease !important;
+  transform: none !important;
+}
+
+/* Tooltips e popovers specifici */
+.tooltip-inner,
+.popover-header,
+.popover-body,
+.tippy-box,
+.tippy-content {
+  transition: opacity 0.15s ease !important;
+  transform: none !important;
+}
+
+/* Badges, labels e tags aggiuntivi */
+.pill,
+.status-badge,
+.count-badge,
+.notification-badge,
+.tag-item,
+.chip-item {
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+  transform: none !important;
+}
+
+/* ========================================
+   BOOTSTRAP SPECIFIC OVERRIDES
+   ======================================== */
+
+/* Bootstrap transitions */
+.fade,
+.collapsing,
+.carousel-item,
+.carousel-fade .carousel-item {
+  transition-property: opacity, height !important;
+  transition-duration: 0.15s !important;
+}
+
+/* Bootstrap utilities */
+[class*="transition-"] {
+  transition-property: color, background-color, border-color, box-shadow, opacity !important;
+}
+
+/* ========================================
+   FALLBACK RULES - MASSIMA SPECIFICITÀ
+   ======================================== */
+
+/* Override inline styles con !important */
+[style*="transition"] {
+  transition-property: color, background-color, border-color, box-shadow, opacity, visibility !important;
+}
+
+[style*="transform"] {
+  transition-property: none !important;
+}
+
+/* Fix per data attributes */
+[data-transition],
+[data-animation] {
+  transition-property: color, background-color, border-color, box-shadow, opacity !important;
+}

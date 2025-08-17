@@ -1,0 +1,253 @@
+/**
+ * TRANSITION EMERGENCY FIX
+ * Override di emergenza per eliminare COMPLETAMENTE gli effetti zoom
+ * Questo file ha la massima priorità e va caricato per ultimo
+ */
+
+/* ============================================
+   DISABLE ALL TRANSFORMS - MASSIMA SPECIFICITÀ
+   ============================================ */
+
+/* Reset totale transform su TUTTI gli elementi */
+*, 
+*::before, 
+*::after,
+html *,
+body *,
+#root *,
+.container *,
+.container-fluid *,
+.wrapper *,
+.main-wrapper * {
+  transform: none !important;
+  -webkit-transform: none !important;
+  -moz-transform: none !important;
+  -ms-transform: none !important;
+  -o-transform: none !important;
+  transform-origin: center !important;
+  perspective: none !important;
+  transform-style: flat !important;
+  backface-visibility: visible !important;
+  will-change: auto !important;
+}
+
+/* Disabilita TUTTE le animazioni che usano transform */
+@keyframes * {
+  transform: none !important;
+}
+
+/* Override specifico per elementi problematici */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-success,
+.btn-danger,
+.btn-warning,
+.btn-info,
+.btn-light,
+.btn-dark,
+.btn-link,
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-success,
+.btn-outline-danger,
+.btn-outline-warning,
+.btn-outline-info,
+.btn-outline-light,
+.btn-outline-dark,
+button,
+[type="button"],
+[type="submit"],
+[type="reset"],
+a.btn {
+  transform: none !important;
+  transition: background-color 0.15s ease, 
+              color 0.15s ease, 
+              border-color 0.15s ease, 
+              box-shadow 0.15s ease,
+              opacity 0.15s ease !important;
+}
+
+/* Stati hover, focus, active */
+.btn:hover,
+.btn:focus,
+.btn:active,
+.btn.active,
+.btn:focus-visible,
+button:hover,
+button:focus,
+button:active,
+a:hover,
+a:focus,
+a:active {
+  transform: none !important;
+  scale: none !important;
+}
+
+/* Cards e stat cards */
+.card,
+.stat-card,
+.stat-card-modern,
+.info-card,
+.dashboard-card {
+  transform: none !important;
+  transition: box-shadow 0.2s ease,
+              border-color 0.2s ease !important;
+}
+
+.card:hover,
+.stat-card:hover,
+.stat-card-modern:hover {
+  transform: none !important;
+  scale: none !important;
+}
+
+/* Menu items */
+.menu-item,
+.nav-link,
+.dropdown-item,
+.sidebar-menu-item {
+  transform: none !important;
+  transition: background-color 0.15s ease,
+              color 0.15s ease !important;
+}
+
+.menu-item:hover,
+.nav-link:hover,
+.dropdown-item:hover {
+  transform: none !important;
+}
+
+/* Disabilita ripple effects */
+.ripple,
+.ripple-effect,
+.ripple-container,
+[data-ripple],
+[class*="ripple"] {
+  display: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Override inline styles con transform */
+[style*="transform: scale"],
+[style*="transform:scale"],
+[style*="scale("],
+[style*="scale3d"],
+[style*="translateZ"],
+[style*="translate3d"],
+[style*="rotateX"],
+[style*="rotateY"],
+[style*="rotateZ"],
+[style*="rotate3d"],
+[style*="perspective"] {
+  transform: none !important;
+  -webkit-transform: none !important;
+  -moz-transform: none !important;
+  -ms-transform: none !important;
+  -o-transform: none !important;
+}
+
+/* Disabilita animation che potrebbero usare transform */
+[style*="animation"],
+[data-animation],
+[class*="animate-"],
+[class*="animated"] {
+  animation: none !important;
+  -webkit-animation: none !important;
+  -moz-animation: none !important;
+  -o-animation: none !important;
+}
+
+/* Stati di transizione pagina */
+.page-transitioning *,
+.preload *,
+body.page-transitioning *,
+body.preload * {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Disabilita pointer events durante transizione */
+body.page-transitioning {
+  pointer-events: none !important;
+}
+
+/* Fix per Bootstrap modals e tooltips */
+.modal.fade,
+.modal.show,
+.modal-backdrop,
+.tooltip,
+.popover {
+  transform: none !important;
+  transition: opacity 0.15s ease !important;
+}
+
+/* Fix per elementi che usano translateY per centratura */
+.modal-dialog-centered {
+  transform: none !important;
+  position: relative !important;
+  top: auto !important;
+}
+
+/* Override data attributes */
+[data-bs-toggle],
+[data-toggle],
+[data-transition] {
+  transform: none !important;
+}
+
+/* Fix specifico per icone */
+i,
+.icon,
+.fas,
+.far,
+.fab,
+.fa,
+.bi {
+  transform: none !important;
+  transition: color 0.15s ease !important;
+}
+
+/* Disabilita tutte le transition tranne quelle safe */
+* {
+  transition-property: background-color, color, border-color, box-shadow, opacity, visibility, width, height, padding, margin !important;
+  transition-duration: 0.15s !important;
+  transition-timing-function: ease !important;
+}
+
+/* REGOLA FINALE - OVERRIDE ASSOLUTO */
+*:not(.exception-transform) {
+  transform: none !important;
+  -webkit-transform: none !important;
+  scale: 1 !important;
+  rotate: 0 !important;
+  translate: 0 !important;
+}
+
+/* Media query per disabilitare anche su mobile */
+@media (max-width: 768px) {
+  * {
+    transform: none !important;
+    -webkit-transform: none !important;
+  }
+}
+
+/* Preferenza reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  * {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}

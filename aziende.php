@@ -804,102 +804,7 @@ require_once 'components/header.php';
         margin-bottom: 2rem;
     }
     
-    /* Stat card styles moved to dashboard-clean.css */
-    
-    .aziende-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 350px));
-        gap: 2rem;
-        margin-bottom: 3rem;
-        justify-content: center;
-    }
-    
-    .azienda-card {
-        background: white;
-        border-radius: 20px !important;
-        padding: 2rem !important;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
-        border: none !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-        max-width: 350px !important;
-        margin: 0 auto !important;
-    }
-    
-    .azienda-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #2563eb, #60a5fa);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .azienda-card:hover {
-        box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
-        transform: translateY(-8px);
-    }
-    
-    .azienda-card:hover::before {
-        opacity: 1;
-    }
-    
-    .azienda-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 2px solid #f1f5f9;
-    }
-    
-    .azienda-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 0.5rem;
-        letter-spacing: -0.025em;
-    }
-    
-    .azienda-stats {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-        margin-top: 1.5rem;
-        padding: 1.5rem;
-        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-        border-radius: 12px;
-    }
-    
-    .azienda-stat {
-        text-align: center;
-        padding: 0.75rem;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    .azienda-stat-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #2563eb, #60a5fa);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        line-height: 1.2;
-    }
-    
-    .azienda-stat-label {
-        font-size: 0.75rem;
-        color: #64748b;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-top: 0.25rem;
-    }
+    /* Card view styles removed - table view only */
     
     .users-grid {
         display: grid;
@@ -948,12 +853,253 @@ require_once 'components/header.php';
             grid-template-columns: 1fr;
         }
         
-        .aziende-grid {
-            grid-template-columns: 1fr;
-        }
+        /* Card grid responsive style removed */
         
         .stats-grid {
             grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    /* View toggle styles removed - table view only */
+    
+    /* Stili per la tabella */
+    .table-responsive {
+        overflow-x: auto;
+        margin-bottom: 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid var(--border-color);
+    }
+    
+    .aziende-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+    }
+    
+    .aziende-table thead {
+        background: var(--bg-primary);
+        border-bottom: 2px solid var(--border-color);
+    }
+    
+    .aziende-table thead th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+    
+    .aziende-table tbody tr {
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+    
+    .aziende-table tbody tr:hover {
+        background: #f8fafc;
+        transform: translateX(2px);
+    }
+    
+    .aziende-table tbody tr:nth-child(even) {
+        background: #fafbfc;
+    }
+    
+    .aziende-table tbody tr:nth-child(even):hover {
+        background: #f1f5f9;
+    }
+    
+    .aziende-table tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+    }
+    
+    .aziende-table .text-center {
+        text-align: center;
+    }
+    
+    /* Logo nella tabella */
+    .table-logo {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+    
+    .table-logo-placeholder {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin: 0 auto;
+    }
+    
+    /* Badge nella tabella */
+    .aziende-table .badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .aziende-table .badge-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .aziende-table .badge-warning {
+        background: #fed7aa;
+        color: #92400e;
+    }
+    
+    .aziende-table .badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    /* Statistiche nella tabella */
+    .table-stats {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .table-stats .stat-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        white-space: nowrap;
+    }
+    
+    .table-stats .stat-item i {
+        color: var(--primary-light);
+        font-size: 0.8rem;
+    }
+    
+    /* Pulsanti azione nella tabella */
+    .btn-group-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: white;
+        color: var(--text-secondary);
+        transition: all 0.2s ease;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-action.btn-view {
+        color: #3b82f6;
+        border-color: #dbeafe;
+    }
+    
+    .btn-action.btn-view:hover {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+    }
+    
+    .btn-action.btn-edit {
+        color: #f59e0b;
+        border-color: #fed7aa;
+    }
+    
+    .btn-action.btn-edit:hover {
+        background: #f59e0b;
+        color: white;
+        border-color: #f59e0b;
+    }
+    
+    .btn-action.btn-delete {
+        color: #ef4444;
+        border-color: #fecaca;
+    }
+    
+    .btn-action.btn-delete:hover {
+        background: #ef4444;
+        color: white;
+        border-color: #ef4444;
+    }
+    
+    /* Riga senza responsabile */
+    .azienda-row.no-responsabile {
+        background: #fef2f2 !important;
+    }
+    
+    .azienda-row.no-responsabile:hover {
+        background: #fee2e2 !important;
+    }
+    
+    /* Responsiveness per tabella */
+    @media (max-width: 1024px) {
+        .aziende-table {
+            font-size: 0.85rem;
+        }
+        
+        .aziende-table thead th,
+        .aziende-table tbody td {
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .table-stats {
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        /* View toggle responsive styles removed - table view only */
+        
+        /* Nascondi alcune colonne su mobile */
+        .aziende-table thead th:nth-child(3),
+        .aziende-table tbody td:nth-child(3) {
+            display: none;
+        }
+        
+        .aziende-table thead th:nth-child(5),
+        .aziende-table tbody td:nth-child(5) {
+            display: none;
+        }
+        
+        .table-stats .stat-item {
+            font-size: 0.75rem;
+        }
+        
+        .btn-group-actions {
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        
+        .btn-action {
+            width: 28px;
+            height: 28px;
+            font-size: 0.8rem;
         }
     }
 </style>
@@ -1090,8 +1236,8 @@ if ($action === 'nuovo' && !isset($azienda)) {
                 <?php if (isset($azienda['logo_path']) && !empty($azienda['logo_path'])): ?>
                     <div style="margin-top: 10px;">
                         <img src="<?php echo APP_PATH . htmlspecialchars($azienda['logo_path']); ?>" 
-                             alt="Logo attuale" style="max-width: 200px; max-height: 100px; border: 1px solid #ddd; border-radius: 4px;">
-                        <p style="font-size: 12px; color: #666; margin-top: 5px;">Logo attuale (verrà sostituito se carichi un nuovo file)</p>
+                             alt="Logo attuale" >
+                        <p >Logo attuale (verrà sostituito se carichi un nuovo file)</p>
                     </div>
                 <?php endif; ?>
             </div>
@@ -1152,7 +1298,7 @@ if ($action === 'nuovo' && !isset($azienda)) {
             <?php else: ?>
             <div class="form-row">
                 <div class="form-group">
-                    <div style="background: #fef3cd; border: 1px solid #fde68a; border-radius: 8px; padding: 10px; color: #92400e;">
+                    <div >
                         <i class="fas fa-info-circle"></i> <strong>Nota:</strong> Per abilitare la gestione dei responsabili azienda, esegui lo script <code>add-responsabile-column.php</code>
                     </div>
                 </div>
@@ -1176,7 +1322,7 @@ if ($action === 'nuovo' && !isset($azienda)) {
             <!-- Sezione Moduli Abilitati (solo per Super Admin) -->
             <div class="form-section" style="margin-top: 30px; padding: 20px; background: #f3f4f6; border-radius: 8px;">
                 <h3 style="margin-bottom: 15px;"><i class="fas fa-puzzle-piece"></i> Moduli Abilitati</h3>
-                <p style="color: #6b7280; margin-bottom: 20px;">Seleziona i moduli che saranno disponibili per questa azienda.</p>
+                <p >Seleziona i moduli che saranno disponibili per questa azienda.</p>
                 
                 <?php
                 // Carica solo i moduli che devono essere controllati manualmente
@@ -1205,13 +1351,13 @@ if ($action === 'nuovo' && !isset($azienda)) {
                     <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s;">
                         <input type="checkbox" name="moduli[]" value="<?php echo $modulo['id']; ?>" 
                                <?php echo in_array($modulo['id'], $moduli_attivi_ids) ? 'checked' : ''; ?>
-                               style="width: 18px; height: 18px;">
-                        <div style="background: #667eea; color: white; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                               >
+                        <div >
                             <i class="<?php echo $modulo['icona']; ?>"></i>
                         </div>
                         <div style="flex: 1;">
                             <div style="font-weight: 500;"><?php echo htmlspecialchars($modulo['nome']); ?></div>
-                            <div style="font-size: 12px; color: #6b7280;"><?php echo htmlspecialchars($modulo['descrizione']); ?></div>
+                            <div ><?php echo htmlspecialchars($modulo['descrizione']); ?></div>
                         </div>
                     </label>
                     <?php endforeach; ?>
@@ -1264,7 +1410,7 @@ if ($action === 'nuovo' && !isset($azienda)) {
                 <div style="text-align: right;">
                     <img src="<?php echo APP_PATH . htmlspecialchars($azienda['logo_path']); ?>" 
                          alt="Logo <?php echo htmlspecialchars($azienda['nome']); ?>" 
-                         style="max-width: 150px; max-height: 80px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                         >
                 </div>
             <?php endif; ?>
         </div>
@@ -1369,7 +1515,7 @@ if ($action === 'nuovo' && !isset($azienda)) {
             ?>
             <div class="info-item">
                 <div class="info-label">Responsabile</div>
-                <div class="info-value" style="color: #ef4444;">⚠️ Nessun responsabile assegnato - Azienda non utilizzabile</div>
+                <div class="info-value" >⚠️ Nessun responsabile assegnato - Azienda non utilizzabile</div>
             </div>
             <?php 
                 endif;
@@ -1381,56 +1527,56 @@ if ($action === 'nuovo' && !isset($azienda)) {
     <!-- Statistiche -->
     <div class="stats-grid" style="margin-top: 30px;">
         <div class="stat-card">
-            <div class="stat-icon" style="background: #dbeafe; color: #1e40af;">
+            <div class="stat-icon" >
                 <i class="fas fa-users"></i>
             </div>
-            <div class="stat-value" style="font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 5px;">
+            <div class="stat-value" >
                 <?php echo $stats['numero_utenti'] ?? 0; ?>
             </div>
-            <div class="stat-label" style="color: #718096; font-size: 14px;">Utenti Sistema</div>
+            <div class="stat-label" >Utenti Sistema</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon" style="background: #e9d5ff; color: #6b21a8;">
+            <div class="stat-icon" >
                 <i class="fas fa-building"></i>
             </div>
-            <div class="stat-value" style="font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 5px;">
+            <div class="stat-value" >
                 <?php 
                 $stmt_ref = db_query("SELECT COUNT(*) as count FROM referenti WHERE azienda_id = :id AND attivo = 1", ['id' => $azienda['id']]);
                 echo $stmt_ref->fetch()['count'] ?? 0;
                 ?>
             </div>
-            <div class="stat-label" style="color: #718096; font-size: 14px;">Referenti Azienda</div>
+            <div class="stat-label" >Referenti Azienda</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon" style="background: #d1fae5; color: #047857;">
+            <div class="stat-icon" >
                 <i class="fas fa-file-alt"></i>
             </div>
-            <div class="stat-value" style="font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 5px;">
+            <div class="stat-value" >
                 <?php echo $stats['numero_documenti'] ?? 0; ?>
             </div>
-            <div class="stat-label" style="color: #718096; font-size: 14px;">Documenti</div>
+            <div class="stat-label" >Documenti</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon" style="background: #fef3c7; color: #92400e;">
+            <div class="stat-icon" >
                 <i class="fas fa-calendar"></i>
             </div>
-            <div class="stat-value" style="font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 5px;">
+            <div class="stat-value" >
                 <?php echo $stats['numero_eventi'] ?? 0; ?>
             </div>
-            <div class="stat-label" style="color: #718096; font-size: 14px;">Eventi</div>
+            <div class="stat-label" >Eventi</div>
         </div>
         
         <div class="stat-card">
-            <div class="stat-icon" style="background: #fee2e2; color: #b91c1c;">
+            <div class="stat-icon" >
                 <i class="fas fa-ticket-alt"></i>
             </div>
-            <div class="stat-value" style="font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 5px;">
+            <div class="stat-value" >
                 <?php echo $stats['tickets_aperti'] ?? 0; ?>
             </div>
-            <div class="stat-label" style="color: #718096; font-size: 14px;">Tickets Aperti</div>
+            <div class="stat-label" >Tickets Aperti</div>
         </div>
     </div>
     
@@ -1464,18 +1610,18 @@ if ($action === 'nuovo' && !isset($azienda)) {
             <?php if ($modulo['abilitato']): ?>
             <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px;">
                 <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
-                    <div style="background: #dbeafe; color: #1e40af; width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                    <div >
                         <i class="<?php echo $modulo['icona']; ?>"></i>
                     </div>
                     <div style="flex: 1;">
-                        <h4 style="margin: 0; color: #1f2937;"><?php echo htmlspecialchars($modulo['nome']); ?></h4>
-                        <p style="margin: 5px 0 0 0; font-size: 13px; color: #6b7280;">
+                        <h4 ><?php echo htmlspecialchars($modulo['nome']); ?></h4>
+                        <p >
                             <?php echo htmlspecialchars($modulo['descrizione']); ?>
                         </p>
                     </div>
                 </div>
-                <div style="margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 6px; font-size: 12px; color: #4b5563;">
-                    <i class="fas fa-check-circle" style="color: #48bb78;"></i> Modulo abilitato
+                <div >
+                    <i class="fas fa-check-circle" ></i> Modulo abilitato
                 </div>
             </div>
             <?php endif; ?>
@@ -1493,15 +1639,15 @@ if ($action === 'nuovo' && !isset($azienda)) {
         
         if ($moduli_attivi_count == 0): ?>
         <div style="text-align: center; padding: 40px; background: #f9fafb; border-radius: 12px; border: 2px dashed #e5e7eb;">
-            <i class="fas fa-puzzle-piece" style="font-size: 48px; color: #d1d5db; margin-bottom: 15px;"></i>
-            <p style="color: #6b7280;">Nessun modulo attivo per questa azienda</p>
+            <i class="fas fa-puzzle-piece" ></i>
+            <p >Nessun modulo attivo per questa azienda</p>
         </div>
         <?php endif; ?>
         
         <!-- Form per aggiungere/rimuovere moduli - SOLO I 3 CONTROLLATI -->
         <div style="background: #f9fafb; border-radius: 12px; padding: 20px; margin-top: 20px;">
             <h4 style="margin: 0 0 15px 0;">Gestione Moduli</h4>
-            <p style="color: #6b7280; font-size: 14px; margin-bottom: 15px;">
+            <p >
                 Questi moduli richiedono abilitazione manuale. Il File Manager è sempre disponibile per tutte le aziende.
             </p>
             <form method="post" action="">
@@ -1511,13 +1657,13 @@ if ($action === 'nuovo' && !isset($azienda)) {
                     <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s;">
                         <input type="checkbox" name="moduli[]" value="<?php echo $modulo['id']; ?>" 
                                <?php echo in_array($modulo['id'], $moduli_attivi_ids) ? 'checked' : ''; ?>
-                               style="width: 18px; height: 18px;">
+                               >
                         <div style="background: <?php echo $modulo['colore']; ?>; color: white; width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px;">
                             <i class="<?php echo $modulo['icona']; ?>"></i>
                         </div>
                         <div style="flex: 1;">
                             <div style="font-weight: 500;"><?php echo htmlspecialchars($modulo['nome']); ?></div>
-                            <div style="font-size: 12px; color: #6b7280;"><?php echo htmlspecialchars($modulo['descrizione']); ?></div>
+                            <div ><?php echo htmlspecialchars($modulo['descrizione']); ?></div>
                         </div>
                     </label>
                     <?php endforeach; ?>
@@ -1587,7 +1733,7 @@ if ($action === 'nuovo' && !isset($azienda)) {
                 </div>
                 <div>
                     <strong>Ospiti:</strong> 
-                    <span style="color: #6b7280;">
+                    <span >
                         <?php echo $ruoli_count['ospite']; ?> (illimitati)
                     </span>
                 </div>
@@ -1598,10 +1744,10 @@ if ($action === 'nuovo' && !isset($azienda)) {
             <?php foreach ($utentiAzienda as $ua): ?>
             <div class="user-item">
                 <div>
-                    <div style="font-weight: 600; color: #2d3748;">
+                    <div >
                         <?php echo htmlspecialchars($ua['nome'] . ' ' . $ua['cognome']); ?>
                     </div>
-                    <div style="font-size: 13px; color: #718096;">
+                    <div >
                         <?php echo htmlspecialchars($ua['email']); ?> • 
                         <?php 
                         $ruoli = [
@@ -1718,6 +1864,7 @@ if ($action === 'nuovo' && !isset($azienda)) {
 <?php else: ?>
     <!-- Lista Aziende -->
     
+    <!-- Vista tabella unica -->
     
     <?php if (isset($_SESSION['success'])): ?>
         <div class="alert alert-success">
@@ -1741,118 +1888,121 @@ if ($action === 'nuovo' && !isset($azienda)) {
             </a>
         </div>
     <?php else: ?>
-        <div class="aziende-grid">
-            <?php foreach ($aziende as $azienda_item): 
-                // Use consistent variable naming to avoid conflicts with detail view
-                $current_azienda = $azienda_item;
-            ?>
-            <div class="azienda-card">
-                <div class="azienda-header">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <?php if (isset($current_azienda['logo_path']) && !empty($current_azienda['logo_path'])): ?>
-                            <img src="<?php echo APP_PATH . htmlspecialchars($current_azienda['logo_path']); ?>" 
-                                 alt="Logo <?php echo htmlspecialchars($current_azienda['nome']); ?>" 
-                                 style="width: 50px; height: 50px; object-fit: contain; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: white; padding: 8px;">
-                        <?php else: ?>
-                            <div style="width: 50px; height: 50px; border-radius: 12px; background: linear-gradient(135deg, #2563eb, #60a5fa); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.25rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
-                                <?php echo strtoupper(substr($current_azienda['nome'], 0, 1)); ?>
-                            </div>
-                        <?php endif; ?>
-                        <div>
-                            <div class="azienda-title"><?php echo htmlspecialchars($current_azienda['nome']); ?></div>
-                            <?php if (!empty($current_azienda['ragione_sociale'])): ?>
-                            <div style="font-size: 13px; color: #718096;">
-                                <?php echo htmlspecialchars($current_azienda['ragione_sociale']); ?>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <span class="badge <?php echo $current_azienda['stato'] === 'attiva' ? 'badge-success' : 'badge-warning'; ?>" style="padding: 0.5rem 1rem !important; border-radius: 20px !important; font-weight: 600 !important;">
-                        <?php echo $current_azienda['stato'] === 'attiva' ? '<i class="fas fa-check-circle"></i> ' : '<i class="fas fa-pause-circle"></i> '; ?>
-                        <?php echo ucfirst($current_azienda['stato']); ?>
-                    </span>
-                </div>
-                
-                <?php if (!empty($current_azienda['citta']) || !empty($current_azienda['provincia'])): ?>
-                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #64748b; margin-bottom: 1rem; padding: 0.75rem; background: #f8fafc; border-radius: 8px;">
-                    <i class="fas fa-map-marker-alt" style="color: #2563eb;"></i> 
-                    <?php 
-                    $location = [];
-                    if (!empty($current_azienda['citta'])) $location[] = $current_azienda['citta'];
-                    if (!empty($current_azienda['provincia'])) $location[] = '(' . $current_azienda['provincia'] . ')';
-                    echo htmlspecialchars(implode(' ', $location));
-                    ?>
-                </div>
-                <?php endif; ?>
-                
-                <div class="azienda-stats">
-                    <div class="azienda-stat">
-                        <div class="azienda-stat-value"><?php echo $current_azienda['numero_utenti'] ?? 0; ?></div>
-                        <div class="azienda-stat-label">Utenti</div>
-                    </div>
-                    <div class="azienda-stat">
-                        <div class="azienda-stat-value"><?php echo $current_azienda['numero_documenti'] ?? 0; ?></div>
-                        <div class="azienda-stat-label">Documenti</div>
-                    </div>
-                    <div class="azienda-stat">
-                        <div class="azienda-stat-value"><?php echo $current_azienda['numero_eventi'] ?? 0; ?></div>
-                        <div class="azienda-stat-label">Eventi</div>
-                    </div>
-                    <div class="azienda-stat">
-                        <div class="azienda-stat-value"><?php echo $current_azienda['tickets_aperti'] ?? 0; ?></div>
-                        <div class="azienda-stat-label">Tickets</div>
-                    </div>
-                </div>
-                
-                <?php
-                // Verifica se l'azienda ha un responsabile (solo se la colonna esiste)
-                $has_responsabile = false;
-                $is_super_admin = $auth->isSuperAdmin();
-                
-                // Use the $responsabile_column_exists variable already set
-                if ($responsabile_column_exists && isset($current_azienda['responsabile_id']) && $current_azienda['responsabile_id']) {
-                    try {
-                        $stmt_resp = db_query("SELECT id FROM utenti WHERE id = ? AND attivo = 1", [$current_azienda['responsabile_id']]);
-                        $has_responsabile = $stmt_resp->fetch() !== false;
-                    } catch (Exception $e) {
+        <!-- Vista Tabella -->
+        <div class="table-responsive">
+            <table class="table table-hover aziende-table">
+                <thead>
+                    <tr>
+                        <th width="50">Logo</th>
+                        <th>Nome Azienda</th>
+                        <th>Forma Giuridica</th>
+                        <th width="100">Stato</th>
+                        <th>Località</th>
+                        <th>Responsabile</th>
+                        <th width="200">Statistiche</th>
+                        <th width="150">Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($aziende as $azienda_item): 
+                        $current_azienda = $azienda_item;
+                        
+                        // Verifica responsabile
                         $has_responsabile = false;
-                    }
-                }
-                ?>
-                
-                <?php if (!$has_responsabile && !$is_super_admin): ?>
-                <div style="background: #fee2e2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px; margin: 15px 0; color: #991b1b;">
-                    <i class="fas fa-exclamation-triangle"></i> <strong>Azienda non utilizzabile</strong><br>
-                    <small>Nessun responsabile assegnato. Contatta l'amministratore.</small>
-                </div>
-                <?php elseif (!$has_responsabile): ?>
-                <div style="background: #fef3cd; border: 1px solid #fde68a; border-radius: 8px; padding: 10px; margin: 15px 0; color: #92400e;">
-                    <i class="fas fa-exclamation-triangle"></i> <strong>Attenzione:</strong> Nessun responsabile assegnato
-                </div>
-                <?php endif; ?>
-                
-                <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                    <a href="<?php echo APP_PATH; ?>/aziende.php?action=view&id=<?php echo $current_azienda['id']; ?>" 
-                       class="btn" 
-                       style="background: linear-gradient(135deg, #2563eb, #60a5fa) !important; color: white !important; padding: 0.75rem 1.25rem !important; border-radius: 10px !important; font-weight: 600 !important; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;">
-                        <i class="fas fa-eye"></i> Dettagli
-                    </a>
-                    <a href="<?php echo APP_PATH; ?>/aziende.php?action=edit&id=<?php echo $current_azienda['id']; ?>" 
-                       class="btn" 
-                       style="background: #f8fafc !important; color: #1e293b !important; padding: 0.75rem 1.25rem !important; border-radius: 10px !important; font-weight: 600 !important; box-shadow: inset 0 0 0 2px #e2e8f0 !important;">
-                        <i class="fas fa-edit"></i> Modifica
-                    </a>
-                    <?php if ($auth->isSuperAdmin()): ?>
-                    <button type="button" 
-                            class="btn" 
-                            style="background: linear-gradient(135deg, #ef4444, #f87171) !important; color: white !important; padding: 0.75rem 1.25rem !important; border-radius: 10px !important; font-weight: 600 !important; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;"
-                            onclick="confirmDeleteAzienda(<?php echo $current_azienda['id']; ?>, '<?php echo htmlspecialchars(addslashes($current_azienda['nome'])); ?>')">
-                        <i class="fas fa-trash"></i> Elimina
-                    </button>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <?php endforeach; ?>
+                        $responsabile_info = null;
+                        if ($responsabile_column_exists && isset($current_azienda['responsabile_id']) && $current_azienda['responsabile_id']) {
+                            try {
+                                $stmt_resp = db_query("SELECT nome, cognome FROM utenti WHERE id = ? AND attivo = 1", [$current_azienda['responsabile_id']]);
+                                $responsabile_info = $stmt_resp->fetch();
+                                $has_responsabile = $responsabile_info !== false;
+                            } catch (Exception $e) {
+                                $has_responsabile = false;
+                            }
+                        }
+                    ?>
+                    <tr class="azienda-row <?php echo !$has_responsabile ? 'no-responsabile' : ''; ?>">
+                        <td class="text-center">
+                            <?php if (isset($current_azienda['logo_path']) && !empty($current_azienda['logo_path'])): ?>
+                                <img src="<?php echo APP_PATH . htmlspecialchars($current_azienda['logo_path']); ?>" 
+                                     alt="Logo" 
+                                     class="table-logo">
+                            <?php else: ?>
+                                <div class="table-logo-placeholder">
+                                    <?php echo strtoupper(substr($current_azienda['nome'], 0, 1)); ?>
+                                </div>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <strong><?php echo htmlspecialchars($current_azienda['nome']); ?></strong>
+                        </td>
+                        <td>
+                            <?php echo htmlspecialchars($current_azienda['ragione_sociale'] ?? '-'); ?>
+                        </td>
+                        <td>
+                            <span class="badge <?php echo $current_azienda['stato'] === 'attiva' ? 'badge-success' : ($current_azienda['stato'] === 'sospesa' ? 'badge-warning' : 'badge-danger'); ?>">
+                                <?php echo ucfirst($current_azienda['stato']); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <?php 
+                            $location = [];
+                            if (!empty($current_azienda['citta'])) $location[] = $current_azienda['citta'];
+                            if (!empty($current_azienda['provincia'])) $location[] = '(' . $current_azienda['provincia'] . ')';
+                            echo htmlspecialchars(implode(' ', $location) ?: '-');
+                            ?>
+                        </td>
+                        <td>
+                            <?php if ($has_responsabile && $responsabile_info): ?>
+                                <span class="text-success">
+                                    <i class="fas fa-user-check"></i> 
+                                    <?php echo htmlspecialchars($responsabile_info['nome'] . ' ' . $responsabile_info['cognome']); ?>
+                                </span>
+                            <?php else: ?>
+                                <span class="text-danger">
+                                    <i class="fas fa-exclamation-triangle"></i> Non assegnato
+                                </span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <div class="table-stats">
+                                <span class="stat-item" title="Utenti">
+                                    <i class="fas fa-users"></i> <?php echo $current_azienda['numero_utenti'] ?? 0; ?>
+                                </span>
+                                <span class="stat-item" title="Documenti">
+                                    <i class="fas fa-file-alt"></i> <?php echo $current_azienda['numero_documenti'] ?? 0; ?>
+                                </span>
+                                <span class="stat-item" title="Eventi">
+                                    <i class="fas fa-calendar"></i> <?php echo $current_azienda['numero_eventi'] ?? 0; ?>
+                                </span>
+                                <span class="stat-item" title="Tickets Aperti">
+                                    <i class="fas fa-ticket-alt"></i> <?php echo $current_azienda['tickets_aperti'] ?? 0; ?>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group-actions">
+                                <a href="<?php echo APP_PATH; ?>/aziende.php?action=view&id=<?php echo $current_azienda['id']; ?>" 
+                                   class="btn-action btn-view" title="Dettagli">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="<?php echo APP_PATH; ?>/aziende.php?action=edit&id=<?php echo $current_azienda['id']; ?>" 
+                                   class="btn-action btn-edit" title="Modifica">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <?php if ($auth->isSuperAdmin()): ?>
+                                <button type="button" 
+                                        class="btn-action btn-delete" 
+                                        title="Elimina"
+                                        onclick="confirmDeleteAzienda(<?php echo $current_azienda['id']; ?>, '<?php echo htmlspecialchars(addslashes($current_azienda['nome'])); ?>')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <?php endif; ?>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     <?php endif; ?>
 <?php endif; ?>
@@ -1965,4 +2115,10 @@ async function executeDelete(aziendaId, aziendaNome) {
         alert('Errore di comunicazione con il server: ' + error.message);
     }
 }
+
+// View toggle removed - table view only
+document.addEventListener('DOMContentLoaded', function() {
+    // Clear any old view preference from localStorage
+    localStorage.removeItem('aziendeViewPreference');
+});
 </script> 

@@ -25,14 +25,35 @@ $isSuperAdmin = $auth->isSuperAdmin();
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="description" content="Nexio Mobile - Piattaforma collaborativa per la gestione documentale">
     <title>Nexio Mobile</title>
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/piattaforma-collaborativa/mobile/manifest.json">
     
-    <!-- Icons -->
-    <link rel="icon" type="image/svg+xml" href="../assets/images/nexio-icon.svg">
-    <link rel="apple-touch-icon" href="../assets/images/nexio-icon.svg">
+    <!-- Primary Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/piattaforma-collaborativa/mobile/icons/icon-72x72.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/piattaforma-collaborativa/mobile/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/piattaforma-collaborativa/mobile/icons/icon-512x512.png">
+    
+    <!-- Apple Touch Icons for iOS -->
+    <link rel="apple-touch-icon" href="/piattaforma-collaborativa/mobile/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/piattaforma-collaborativa/mobile/icons/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="/piattaforma-collaborativa/mobile/icons/icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="128x128" href="/piattaforma-collaborativa/mobile/icons/icon-128x128.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/piattaforma-collaborativa/mobile/icons/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/piattaforma-collaborativa/mobile/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/piattaforma-collaborativa/mobile/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="384x384" href="/piattaforma-collaborativa/mobile/icons/icon-384x384.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="/piattaforma-collaborativa/mobile/icons/icon-512x512.png">
+    
+    <!-- iOS specific PWA tags -->
+    <meta name="apple-mobile-web-app-title" content="Nexio">
+    <link rel="apple-touch-startup-image" href="/piattaforma-collaborativa/mobile/icons/icon-512x512.png">
+    
+    <!-- Microsoft Tiles -->
+    <meta name="msapplication-TileColor" content="#2563eb">
+    <meta name="msapplication-TileImage" content="/piattaforma-collaborativa/mobile/icons/icon-144x144.png">
     
     <!-- Styles -->
     <style>
@@ -369,6 +390,28 @@ $isSuperAdmin = $auth->isSuperAdmin();
             to { transform: rotate(360deg); }
         }
         
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+        
         /* Responsive */
         @media (min-width: 768px) {
             .dashboard-grid {
@@ -644,9 +687,154 @@ $isSuperAdmin = $auth->isSuperAdmin();
             loadPage('dashboard');
         });
         
-        // Register service worker for PWA
+        // Register service worker for PWA with better error handling
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(console.error);
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/piattaforma-collaborativa/mobile/sw.js', {
+                    scope: '/piattaforma-collaborativa/'
+                })
+                    .then(registration => {
+                        console.log('ServiceWorker registered:', registration);
+                        
+                        // Check for updates periodically
+                        setInterval(() => {
+                            registration.update();
+                        }, 60000); // Check every minute
+                        
+                        // Handle updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New service worker available
+                                    if (confirm('Nuova versione disponibile! Vuoi aggiornare?')) {
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('ServiceWorker registration failed:', error);
+                    });
+            });
+            
+            // Handle online/offline status
+            window.addEventListener('online', () => {
+                console.log('Back online');
+                showNotification('Connessione ripristinata', 'success');
+            });
+            
+            window.addEventListener('offline', () => {
+                console.log('Gone offline');
+                showNotification('Modalità offline', 'warning');
+            });
+        }
+        
+        // PWA Install prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install button
+            showInstallPrompt();
+        });
+        
+        function showInstallPrompt() {
+            // Create install banner if not exists
+            if (!document.getElementById('installBanner')) {
+                const banner = document.createElement('div');
+                banner.id = 'installBanner';
+                banner.innerHTML = `
+                    <div style="
+                        position: fixed;
+                        bottom: 70px;
+                        left: 10px;
+                        right: 10px;
+                        background: var(--primary);
+                        color: white;
+                        padding: 12px;
+                        border-radius: 8px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        z-index: 999;
+                        animation: slideUp 0.3s ease-out;
+                    ">
+                        <div>
+                            <div style="font-weight: 600;">Installa Nexio Mobile</div>
+                            <div style="font-size: 12px; opacity: 0.9;">Accedi rapidamente dalla home</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="installPWA()" style="
+                                background: white;
+                                color: var(--primary);
+                                border: none;
+                                padding: 8px 16px;
+                                border-radius: 4px;
+                                font-weight: 600;
+                                cursor: pointer;
+                            ">Installa</button>
+                            <button onclick="dismissInstall()" style="
+                                background: transparent;
+                                color: white;
+                                border: 1px solid rgba(255,255,255,0.3);
+                                padding: 8px 16px;
+                                border-radius: 4px;
+                                cursor: pointer;
+                            ">Dopo</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(banner);
+            }
+        }
+        
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                    dismissInstall();
+                });
+            }
+        }
+        
+        function dismissInstall() {
+            const banner = document.getElementById('installBanner');
+            if (banner) {
+                banner.remove();
+            }
+        }
+        
+        // Show notification helper
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 70px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : '#2563eb'};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 9999;
+                animation: slideDown 0.3s ease-out;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
         }
     </script>
 </body>

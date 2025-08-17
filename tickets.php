@@ -343,7 +343,7 @@ include 'components/header.php';
     
     <div class="action-bar">
         <?php if ($isSuperAdmin && count($aziende_list) > 1): ?>
-        <select class="form-control" style="max-width: 250px;" onchange="filterByAzienda(this.value)">
+        <select class="form-control"  onchange="filterByAzienda(this.value)">
             <option value="">Tutte le aziende</option>
             <?php foreach ($aziende_list as $azienda): ?>
                 <option value="<?php echo $azienda['id']; ?>" 
@@ -361,14 +361,14 @@ include 'components/header.php';
             
             <div class="filters-section">
                 <div class="action-bar">
-                    <select class="form-control" style="max-width: 200px;" onchange="filterTickets(this.value, 'stato')">
+                    <select class="form-control"  onchange="filterTickets(this.value, 'stato')">
                         <option value="">Tutti gli stati</option>
                         <option value="aperto">Aperti</option>
                         <option value="in-lavorazione">In lavorazione</option>
                         <option value="chiuso">Chiusi</option>
                     </select>
                     
-                    <select class="form-control" style="max-width: 200px;" onchange="filterTickets(this.value, 'priorita')">
+                    <select class="form-control"  onchange="filterTickets(this.value, 'priorita')">
                         <option value="">Tutte le priorità</option>
                         <option value="alta">Alta</option>
                         <option value="media">Media</option>

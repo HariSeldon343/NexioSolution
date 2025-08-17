@@ -128,10 +128,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Fade out and remove row
-                row.style.transition = 'opacity 0.3s';
-                row.style.opacity = '0';
-                setTimeout(() => row.remove(), 300);
+                // Remove row immediately - no animation
+                // row.style.transition = 'opacity 0.3s';
+                // row.style.opacity = '0';
+                // setTimeout(() => row.remove(), 300);
+                row.remove();
                 
                 // Show success message
                 showNotification('Ticket eliminato con successo', 'success');
@@ -211,16 +212,17 @@ document.addEventListener('DOMContentLoaded', function() {
             padding: 1rem 1.5rem;
             border-radius: 4px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            animation: slideIn 0.3s ease-out;
+            /* animation: slideIn 0.3s ease-out; */ /* DISABILITATO */
             max-width: 400px;
         `;
         
         document.body.appendChild(notification);
         
-        // Auto-remove after 5 seconds
+        // Auto-remove after 5 seconds - no animation
         setTimeout(() => {
-            notification.style.animation = 'slideOut 0.3s ease-out';
-            setTimeout(() => notification.remove(), 300);
+            // notification.style.animation = 'slideOut 0.3s ease-out'; // DISABILITATO
+            // setTimeout(() => notification.remove(), 300);
+            notification.remove();
         }, 5000);
     }
     
@@ -232,6 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const style = document.createElement('style');
         style.id = 'nexio-ui-animations';
         style.textContent = `
+            /* ANIMAZIONI DISABILITATE
             @keyframes slideIn {
                 from {
                     transform: translateX(100%);
@@ -253,6 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     opacity: 0;
                 }
             }
+            */
             
             .log-details-row {
                 background-color: #f9fafb;
@@ -260,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             .log-details-row.expanded .log-details {
                 display: block !important;
-                animation: fadeIn 0.3s ease-out;
+                /* animation: fadeIn 0.3s ease-out; */ /* DISABILITATO */
             }
             
             .log-details-row:not(.expanded) {
@@ -303,11 +307,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ============================================
-    // 7. USER INFO MULTI-LINE FIX
+    // 7. USER INFO MULTI-LINE FIX - DISABILITATO
     // ============================================
     
+    // COMPLETAMENTE DISABILITATO - Il nuovo layout della sidebar gestisce già la user-info
+    // Non modificare gli stili inline della user-info nel sidebar-footer
+    /*
     const userInfoElements = document.querySelectorAll('.user-info, .header-user-info, #user-info, .user-name');
     userInfoElements.forEach(elem => {
+        // SALTA gli elementi nel sidebar-footer
+        if (elem.closest('.sidebar-footer')) return;
+        
         elem.style.whiteSpace = 'normal';
         elem.style.wordWrap = 'break-word';
         elem.style.lineHeight = '1.3';
@@ -315,6 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
             elem.style.maxWidth = '150px';
         }
     });
+    */
     
 });
 

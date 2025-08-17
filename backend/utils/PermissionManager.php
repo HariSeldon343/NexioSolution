@@ -658,6 +658,15 @@ class PermissionManager {
     }
     
     /**
+     * Verifica se un utente può modificare un documento
+     * Metodo semplificato per compatibilità con TinyMCE Editor
+     */
+    public function canEditDocument($userId, $documentId) {
+        // Usa il metodo esistente checkDocumentAccess
+        return $this->checkDocumentAccess($documentId, 'document_edit', $userId);
+    }
+    
+    /**
      * Ottieni elenco di tutti i permessi disponibili
      */
     public function getAvailablePermissions() {

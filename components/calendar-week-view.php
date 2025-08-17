@@ -5,11 +5,19 @@
 
 // Include calendar helper
 require_once 'backend/utils/CalendarHelper.php';
+require_once 'backend/utils/CalendarColorHelper.php';
 
 // Calcola date della settimana
 $currentDate = strtotime($date);
 $startWeek = strtotime('monday this week', $currentDate);
 $endWeek = strtotime('sunday this week', $currentDate);
+
+// Initialize color mappings for consistent colors across the view
+if (isset($eventi) && isset($aziende)) {
+    CalendarColorHelper::initializeColorMappings($eventi, $aziende);
+} elseif (isset($eventi)) {
+    CalendarColorHelper::initializeColorMappings($eventi);
+}
 
 // Organizza eventi per data e ora
 $eventiPerData = [];
@@ -53,6 +61,15 @@ for ($i = 0; $i < 7; $i++) {
 
 // Ore del giorno (8:00 - 20:00)
 $ore = range(8, 20);
+?>
+
+<!-- Include Calendar Color CSS -->
+<link rel="stylesheet" href="<?= APP_PATH ?>/assets/css/calendar-colors.css">
+
+<!-- Calendar Legend -->
+<?php 
+$showIcsIndicator = true; // Show ICS import indicator in legend
+include 'components/calendar-legend.php'; 
 ?>
 
 <div class="calendar-week-view">
@@ -119,8 +136,10 @@ $ore = range(8, 20);
                         $duration = $evento['data_fine'] ? 
                             (strtotime($evento['data_fine']) - strtotime($evento['data_inizio'])) / 3600 : 1;
                         $height = max(30, $duration * 50); // Min 30px, 50px per ora
+                        $colorClass = CalendarColorHelper::getEventColorClass($evento);
+                        $sourceClass = CalendarColorHelper::getSourceIndicatorClass($evento);
                     ?>
-                    <div class="week-event event-type-<?= $evento['tipo'] ?>" 
+                    <div class="week-event event-type-<?= $evento['tipo'] ?> <?= $colorClass ?> <?= $sourceClass ?>" 
                          style="height: <?= $height ?>px;"
                          title="<?= htmlspecialchars($evento['titolo']) ?>"
                          data-event-id="<?= $evento['id'] ?>">

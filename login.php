@@ -419,7 +419,7 @@ if (isset($_GET['expired'])) {
     <div class="login-container">
         <div class="login-header">
             <div class="logo">
-                <img src="<?php echo APP_PATH; ?>/assets/images/nexio-icon.svg" alt="Nexio Logo">
+                <img src="<?php echo APP_PATH; ?>/assets/images/nexio-icon.svg?v=<?php echo @filemtime(__DIR__ . '/assets/images/nexio-icon.svg'); ?>" alt="Nexio Logo">
             </div>
             <h1>Nexio</h1>
             <p>Accedi al tuo account</p>

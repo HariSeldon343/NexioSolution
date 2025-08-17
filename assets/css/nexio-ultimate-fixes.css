@@ -82,7 +82,7 @@ i.fa-bars::before, i.fas.fa-bars::before { content: "\f0c9" !important; }
 .badge-primary,
 .bg-primary.badge,
 .role-super_admin,
-.user-role:has(.fa-shield-alt) {
+.user-role:has(.fa-shield-alt), .sidebar-footer .user-role .badge {
     background-color: #0d6efd !important;
     color: #ffffff !important;
     border: none !important;

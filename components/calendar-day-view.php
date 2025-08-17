@@ -11,6 +11,14 @@ if (!isset($csrf)) {
 
 // Include calendar helper
 require_once 'backend/utils/CalendarHelper.php';
+require_once 'backend/utils/CalendarColorHelper.php';
+
+// Initialize color mappings for consistent colors across the view
+if (isset($eventi) && isset($aziende)) {
+    CalendarColorHelper::initializeColorMappings($eventi, $aziende);
+} elseif (isset($eventi)) {
+    CalendarColorHelper::initializeColorMappings($eventi);
+}
 
 // Gli eventi sono già filtrati da getEventsForView
 $eventiGiorno = $eventi;
@@ -47,6 +55,15 @@ foreach ($eventiGiorno as $evento) {
     }
     $eventiPerOra[$oraEvento][] = $evento;
 }
+?>
+
+<!-- Include Calendar Color CSS -->
+<link rel="stylesheet" href="<?= APP_PATH ?>/assets/css/calendar-colors.css">
+
+<!-- Calendar Legend -->
+<?php 
+$showIcsIndicator = true; // Show ICS import indicator in legend
+include 'components/calendar-legend.php'; 
 ?>
 
 <div class="calendar-day-view">
@@ -140,8 +157,10 @@ foreach ($eventiGiorno as $evento) {
                                         }
                                         
                                         $canEdit = $auth->canManageEvents() && ($auth->canViewAllEvents() || $evento['creato_da'] == $user['id']);
+                                        $colorClass = CalendarColorHelper::getEventColorClass($evento);
+                                        $sourceClass = CalendarColorHelper::getSourceIndicatorClass($evento);
                                     ?>
-                                    <div class="day-event event-type-<?= $evento['tipo'] ?>" 
+                                    <div class="day-event event-type-<?= $evento['tipo'] ?> <?= $colorClass ?> <?= $sourceClass ?>" 
                                          data-event-id="<?= $evento['id'] ?>"
                                          data-duration="<?= $durationMinutes ?>">
                                         <div class="event-header">

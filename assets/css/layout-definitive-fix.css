@@ -1,0 +1,268 @@
+/* LAYOUT DEFINITIVE FIX - Soluzione completa per problemi di scroll e visualizzazione */
+
+/* =================================
+   RESET DEFINITIVO
+   ================================= */
+
+/* HTML - altezza base */
+html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* BODY - DEVE poter scrollare */
+body {
+  min-height: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-y: auto !important; /* FORZA scroll verticale */
+  overflow-x: hidden !important;
+  position: relative !important; /* MAI fixed */
+}
+
+/* =================================
+   RIMUOVI BLOCCHI ALLO SCROLL
+   ================================= */
+
+/* Rimuovi qualsiasi height: 100vh dai container */
+.app-container,
+.main-content,
+.content,
+.page-content,
+.container,
+.container-fluid {
+  height: auto !important; /* MAI height fissa */
+  min-height: 100vh !important; /* Solo min-height */
+  overflow: visible !important; /* MAI hidden sul contenuto */
+}
+
+/* =================================
+   MAIN CONTENT
+   ================================= */
+
+/* Main content specifico */
+.main-content {
+  margin-left: 260px !important;
+  padding: 0 !important; /* Reset padding */
+  min-height: 100vh !important;
+  height: auto !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+  position: relative !important;
+}
+
+/* =================================
+   PAGE HEADER
+   ================================= */
+
+/* Page header sempre visibile */
+.page-header {
+  position: relative !important; /* MAI fixed */
+  z-index: 10 !important;
+  background: #4285f4 !important;
+  color: white !important;
+  padding: 1.5rem !important;
+  margin: 0 !important;
+  width: 100% !important;
+  display: block !important; /* Forza visibilità */
+}
+
+.page-header h1,
+.page-header h2,
+.page-header h3,
+.page-header h4,
+.page-header h5,
+.page-header h6 {
+  color: white !important;
+  margin: 0 !important;
+}
+
+/* =================================
+   CONTENUTO DOPO HEADER
+   ================================= */
+
+/* Contenuto dopo header */
+.content-wrapper,
+.page-body {
+  padding: 20px !important;
+  overflow: visible !important;
+}
+
+/* =================================
+   SIDEBAR - UNICO ELEMENTO FISSO
+   ================================= */
+
+/* SIDEBAR - unico elemento con height 100vh */
+.sidebar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 260px !important;
+  height: 100vh !important; /* OK solo per sidebar */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #1a1a2e !important;
+}
+
+/* Sidebar content scrollabile */
+.sidebar-content {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Sidebar footer con spazio per badge */
+.sidebar-footer {
+  margin-top: auto !important;
+  padding: 0.75rem !important;
+  padding-bottom: 20px !important; /* PIÙ spazio in basso */
+  min-height: auto !important;
+  flex-shrink: 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* =================================
+   BADGE FIX DEFINITIVO
+   ================================= */
+
+/* Badge fix definitivo */
+.sidebar-footer .badge {
+  display: flex !important;
+  width: 100% !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 0.35rem 0.75rem !important;
+  margin-bottom: 5px !important; /* Spazio dal bordo */
+  white-space: nowrap !important;
+  overflow: visible !important;
+  line-height: 1.2 !important;
+}
+
+/* Icona nel badge */
+.sidebar-footer .badge i {
+  margin-right: 0.25rem !important;
+}
+
+/* =================================
+   TABELLE E CARD
+   ================================= */
+
+/* Fix per tabelle e card */
+.table-responsive {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  max-width: 100% !important;
+}
+
+.card {
+  overflow: visible !important;
+}
+
+.card-body {
+  overflow: visible !important;
+}
+
+/* =================================
+   MOBILE RESPONSIVE
+   ================================= */
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.active {
+    transform: translateX(0);
+  }
+  
+  .page-header {
+    padding: 1rem !important;
+  }
+  
+  .content-wrapper,
+  .page-body {
+    padding: 15px !important;
+  }
+}
+
+/* =================================
+   FORZA SCROLL GLOBALE
+   ================================= */
+
+/* Forza scroll su tutto */
+* {
+  max-height: none !important; /* Rimuovi limiti di altezza */
+}
+
+/* Eccezione solo per elementi che devono avere altezza fissa */
+.sidebar,
+.modal,
+.dropdown-menu {
+  max-height: 100vh !important;
+}
+
+/* =================================
+   FIX SPECIFICI PER FILESYSTEM
+   ================================= */
+
+/* Filesystem page specific */
+.filesystem-container {
+  height: auto !important;
+  min-height: calc(100vh - 100px) !important;
+  overflow: visible !important;
+}
+
+.file-explorer {
+  height: auto !important;
+  min-height: 500px !important;
+  overflow: visible !important;
+}
+
+.folder-tree {
+  max-height: 600px !important;
+  overflow-y: auto !important;
+}
+
+/* =================================
+   UTILITIES
+   ================================= */
+
+/* Classe per forzare scroll */
+.force-scroll {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Classe per contenuto visibile */
+.content-visible {
+  overflow: visible !important;
+  height: auto !important;
+}
+
+/* =================================
+   PRINT STYLES
+   ================================= */
+
+@media print {
+  body {
+    overflow: visible !important;
+  }
+  
+  .sidebar {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+  }
+}

@@ -7,6 +7,11 @@
 (function() {
     'use strict';
     
+    // Guard: only run on log-attivita page
+    if (!document.body || !document.body.classList.contains('log-attivita-page')) {
+        return; // do nothing on other pages
+    }
+    
     function resetAndFixTable() {
         console.log('Starting complete table reset...');
         

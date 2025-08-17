@@ -1,0 +1,689 @@
+/**
+ * NEXIO CONSOLIDATED CSS
+ * 
+ * This file consolidates all essential styles from the 30+ CSS files
+ * into a single, organized stylesheet to improve performance and reduce conflicts.
+ * 
+ * Structure:
+ * 1. CSS Variables & Root Settings
+ * 2. Base & Reset Styles
+ * 3. Layout Components
+ * 4. UI Components
+ * 5. Utilities
+ * 6. Responsive Design
+ */
+
+/* ============================================
+   1. CSS VARIABLES & ROOT SETTINGS
+   ============================================ */
+:root {
+    /* Brand Colors */
+    --nexio-primary: #2d5a9f;
+    --nexio-primary-dark: #1e3d6f;
+    --nexio-primary-light: #4a7bc7;
+    --nexio-secondary: #6c757d;
+    --nexio-success: #28a745;
+    --nexio-danger: #dc3545;
+    --nexio-warning: #ffc107;
+    --nexio-info: #17a2b8;
+    
+    /* Neutral Colors */
+    --nexio-white: #ffffff;
+    --nexio-gray-100: #f8f9fa;
+    --nexio-gray-200: #e9ecef;
+    --nexio-gray-300: #dee2e6;
+    --nexio-gray-400: #ced4da;
+    --nexio-gray-500: #adb5bd;
+    --nexio-gray-600: #6c757d;
+    --nexio-gray-700: #495057;
+    --nexio-gray-800: #343a40;
+    --nexio-gray-900: #212529;
+    --nexio-black: #000000;
+    
+    /* Typography */
+    --nexio-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --nexio-font-size-base: 14px;
+    --nexio-line-height-base: 1.5;
+    
+    /* Spacing */
+    --nexio-spacing-xs: 0.25rem;
+    --nexio-spacing-sm: 0.5rem;
+    --nexio-spacing-md: 1rem;
+    --nexio-spacing-lg: 1.5rem;
+    --nexio-spacing-xl: 2rem;
+    --nexio-spacing-xxl: 3rem;
+    
+    /* Layout */
+    --nexio-sidebar-width: 260px;
+    --nexio-sidebar-collapsed-width: 60px;
+    --nexio-header-height: 60px;
+    
+    /* Borders */
+    --nexio-border-radius: 4px;
+    --nexio-border-color: var(--nexio-gray-300);
+    
+    /* Shadows */
+    --nexio-shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --nexio-shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --nexio-shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    
+    /* Z-Index */
+    --nexio-zindex-dropdown: 1000;
+    --nexio-zindex-sticky: 1020;
+    --nexio-zindex-fixed: 1030;
+    --nexio-zindex-modal-backdrop: 1040;
+    --nexio-zindex-modal: 1050;
+    --nexio-zindex-popover: 1060;
+    --nexio-zindex-tooltip: 1070;
+}
+
+/* ============================================
+   2. BASE & RESET STYLES
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: var(--nexio-font-size-base);
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--nexio-font-family);
+    font-size: var(--nexio-font-size-base);
+    line-height: var(--nexio-line-height-base);
+    color: var(--nexio-gray-900);
+    background-color: var(--nexio-gray-100);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Links */
+a {
+    color: var(--nexio-primary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+a:hover {
+    color: var(--nexio-primary-dark);
+    text-decoration: none;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+    margin-bottom: var(--nexio-spacing-sm);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--nexio-gray-900);
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.25rem; }
+h5 { font-size: 1.125rem; }
+h6 { font-size: 1rem; }
+
+/* ============================================
+   3. LAYOUT COMPONENTS
+   ============================================ */
+
+/* Main Layout Structure */
+.app-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex: 1;
+    padding: var(--nexio-spacing-lg);
+    margin-left: var(--nexio-sidebar-width);
+    margin-top: var(--nexio-header-height);
+    background-color: var(--nexio-gray-100);
+    min-height: calc(100vh - var(--nexio-header-height));
+}
+
+/* Sidebar */
+.sidebar {
+    position: fixed;
+    top: var(--nexio-header-height);
+    left: 0;
+    width: var(--nexio-sidebar-width);
+    height: calc(100vh - var(--nexio-header-height));
+    background: var(--nexio-white);
+    border-right: 1px solid var(--nexio-border-color);
+    overflow-y: auto;
+    z-index: var(--nexio-zindex-fixed);
+}
+
+/* Header */
+.navbar-custom {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--nexio-header-height);
+    background: var(--nexio-white);
+    border-bottom: 1px solid var(--nexio-border-color);
+    z-index: var(--nexio-zindex-fixed);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--nexio-spacing-lg);
+}
+
+/* Page Header */
+.page-header {
+    margin-bottom: var(--nexio-spacing-xl);
+    padding-bottom: var(--nexio-spacing-md);
+    border-bottom: 1px solid var(--nexio-border-color);
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--nexio-gray-900);
+    margin-bottom: var(--nexio-spacing-xs);
+}
+
+/* ============================================
+   4. UI COMPONENTS
+   ============================================ */
+
+/* Cards */
+.card {
+    background: var(--nexio-white);
+    border: 1px solid var(--nexio-border-color);
+    border-radius: var(--nexio-border-radius);
+    box-shadow: var(--nexio-shadow-sm);
+    margin-bottom: var(--nexio-spacing-lg);
+}
+
+.card-header {
+    padding: var(--nexio-spacing-md) var(--nexio-spacing-lg);
+    background: var(--nexio-gray-100);
+    border-bottom: 1px solid var(--nexio-border-color);
+    border-radius: var(--nexio-border-radius) var(--nexio-border-radius) 0 0;
+}
+
+.card-body {
+    padding: var(--nexio-spacing-lg);
+}
+
+.card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--nexio-gray-900);
+    margin-bottom: 0;
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--nexio-spacing-xs);
+    padding: var(--nexio-spacing-sm) var(--nexio-spacing-md);
+    font-size: var(--nexio-font-size-base);
+    font-weight: 500;
+    line-height: 1.5;
+    border-radius: var(--nexio-border-radius);
+    border: 1px solid transparent;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: var(--nexio-primary);
+    border-color: var(--nexio-primary);
+    color: var(--nexio-white) !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--nexio-primary-dark);
+    border-color: var(--nexio-primary-dark);
+    color: var(--nexio-white) !important;
+}
+
+.btn-secondary {
+    background-color: var(--nexio-gray-600);
+    border-color: var(--nexio-gray-600);
+    color: var(--nexio-white) !important;
+}
+
+.btn-success {
+    background-color: var(--nexio-success);
+    border-color: var(--nexio-success);
+    color: var(--nexio-white) !important;
+}
+
+.btn-danger {
+    background-color: var(--nexio-danger);
+    border-color: var(--nexio-danger);
+    color: var(--nexio-white) !important;
+}
+
+.btn-sm {
+    padding: var(--nexio-spacing-xs) var(--nexio-spacing-sm);
+    font-size: 0.875rem;
+}
+
+.btn-lg {
+    padding: var(--nexio-spacing-md) var(--nexio-spacing-lg);
+    font-size: 1.125rem;
+}
+
+/* Forms */
+.form-control {
+    display: block;
+    width: 100%;
+    padding: var(--nexio-spacing-sm) var(--nexio-spacing-md);
+    font-size: var(--nexio-font-size-base);
+    line-height: 1.5;
+    color: var(--nexio-gray-700);
+    background-color: var(--nexio-white);
+    border: 1px solid var(--nexio-gray-400);
+    border-radius: var(--nexio-border-radius);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus {
+    color: var(--nexio-gray-700);
+    background-color: var(--nexio-white);
+    border-color: var(--nexio-primary);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(45, 90, 159, 0.25);
+}
+
+.form-label {
+    display: inline-block;
+    margin-bottom: var(--nexio-spacing-xs);
+    font-weight: 500;
+    color: var(--nexio-gray-700);
+}
+
+/* Tables */
+.table {
+    width: 100%;
+    margin-bottom: var(--nexio-spacing-md);
+    color: var(--nexio-gray-900);
+    background-color: var(--nexio-white);
+    border-collapse: collapse;
+}
+
+.table th {
+    padding: var(--nexio-spacing-md);
+    background-color: var(--nexio-gray-100);
+    border-bottom: 2px solid var(--nexio-border-color);
+    font-weight: 600;
+    text-align: left;
+    color: var(--nexio-gray-700);
+}
+
+.table td {
+    padding: var(--nexio-spacing-md);
+    border-bottom: 1px solid var(--nexio-border-color);
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: var(--nexio-gray-100);
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: var(--nexio-spacing-xs) var(--nexio-spacing-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: var(--nexio-border-radius);
+}
+
+.badge-primary {
+    background-color: var(--nexio-primary);
+    color: var(--nexio-white);
+}
+
+.badge-success {
+    background-color: var(--nexio-success);
+    color: var(--nexio-white);
+}
+
+.badge-danger {
+    background-color: var(--nexio-danger);
+    color: var(--nexio-white);
+}
+
+.badge-warning {
+    background-color: var(--nexio-warning);
+    color: var(--nexio-gray-900);
+}
+
+/* Alerts */
+.alert {
+    position: relative;
+    padding: var(--nexio-spacing-md) var(--nexio-spacing-lg);
+    margin-bottom: var(--nexio-spacing-md);
+    border: 1px solid transparent;
+    border-radius: var(--nexio-border-radius);
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.alert-warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
+.alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+/* ============================================
+   5. UTILITIES
+   ============================================ */
+
+/* Display */
+.d-none { display: none !important; }
+.d-block { display: block !important; }
+.d-inline-block { display: inline-block !important; }
+.d-flex { display: flex !important; }
+.d-inline-flex { display: inline-flex !important; }
+
+/* Flexbox */
+.flex-row { flex-direction: row !important; }
+.flex-column { flex-direction: column !important; }
+.justify-content-start { justify-content: flex-start !important; }
+.justify-content-center { justify-content: center !important; }
+.justify-content-end { justify-content: flex-end !important; }
+.justify-content-between { justify-content: space-between !important; }
+.align-items-start { align-items: flex-start !important; }
+.align-items-center { align-items: center !important; }
+.align-items-end { align-items: flex-end !important; }
+.flex-grow-1 { flex-grow: 1 !important; }
+.flex-shrink-0 { flex-shrink: 0 !important; }
+
+/* Spacing */
+.m-0 { margin: 0 !important; }
+.m-1 { margin: var(--nexio-spacing-xs) !important; }
+.m-2 { margin: var(--nexio-spacing-sm) !important; }
+.m-3 { margin: var(--nexio-spacing-md) !important; }
+.m-4 { margin: var(--nexio-spacing-lg) !important; }
+.m-5 { margin: var(--nexio-spacing-xl) !important; }
+
+.mt-0 { margin-top: 0 !important; }
+.mt-1 { margin-top: var(--nexio-spacing-xs) !important; }
+.mt-2 { margin-top: var(--nexio-spacing-sm) !important; }
+.mt-3 { margin-top: var(--nexio-spacing-md) !important; }
+.mt-4 { margin-top: var(--nexio-spacing-lg) !important; }
+.mt-5 { margin-top: var(--nexio-spacing-xl) !important; }
+
+.mb-0 { margin-bottom: 0 !important; }
+.mb-1 { margin-bottom: var(--nexio-spacing-xs) !important; }
+.mb-2 { margin-bottom: var(--nexio-spacing-sm) !important; }
+.mb-3 { margin-bottom: var(--nexio-spacing-md) !important; }
+.mb-4 { margin-bottom: var(--nexio-spacing-lg) !important; }
+.mb-5 { margin-bottom: var(--nexio-spacing-xl) !important; }
+
+.ms-0 { margin-left: 0 !important; }
+.ms-1 { margin-left: var(--nexio-spacing-xs) !important; }
+.ms-2 { margin-left: var(--nexio-spacing-sm) !important; }
+.ms-3 { margin-left: var(--nexio-spacing-md) !important; }
+.ms-4 { margin-left: var(--nexio-spacing-lg) !important; }
+.ms-5 { margin-left: var(--nexio-spacing-xl) !important; }
+
+.me-0 { margin-right: 0 !important; }
+.me-1 { margin-right: var(--nexio-spacing-xs) !important; }
+.me-2 { margin-right: var(--nexio-spacing-sm) !important; }
+.me-3 { margin-right: var(--nexio-spacing-md) !important; }
+.me-4 { margin-right: var(--nexio-spacing-lg) !important; }
+.me-5 { margin-right: var(--nexio-spacing-xl) !important; }
+
+.p-0 { padding: 0 !important; }
+.p-1 { padding: var(--nexio-spacing-xs) !important; }
+.p-2 { padding: var(--nexio-spacing-sm) !important; }
+.p-3 { padding: var(--nexio-spacing-md) !important; }
+.p-4 { padding: var(--nexio-spacing-lg) !important; }
+.p-5 { padding: var(--nexio-spacing-xl) !important; }
+
+/* Text */
+.text-start { text-align: left !important; }
+.text-center { text-align: center !important; }
+.text-end { text-align: right !important; }
+.text-justify { text-align: justify !important; }
+
+.text-primary { color: var(--nexio-primary) !important; }
+.text-secondary { color: var(--nexio-secondary) !important; }
+.text-success { color: var(--nexio-success) !important; }
+.text-danger { color: var(--nexio-danger) !important; }
+.text-warning { color: var(--nexio-warning) !important; }
+.text-info { color: var(--nexio-info) !important; }
+.text-muted { color: var(--nexio-gray-600) !important; }
+.text-white { color: var(--nexio-white) !important; }
+
+.text-uppercase { text-transform: uppercase !important; }
+.text-lowercase { text-transform: lowercase !important; }
+.text-capitalize { text-transform: capitalize !important; }
+
+.fw-normal { font-weight: 400 !important; }
+.fw-medium { font-weight: 500 !important; }
+.fw-semibold { font-weight: 600 !important; }
+.fw-bold { font-weight: 700 !important; }
+
+/* Background */
+.bg-primary { background-color: var(--nexio-primary) !important; }
+.bg-secondary { background-color: var(--nexio-secondary) !important; }
+.bg-success { background-color: var(--nexio-success) !important; }
+.bg-danger { background-color: var(--nexio-danger) !important; }
+.bg-warning { background-color: var(--nexio-warning) !important; }
+.bg-info { background-color: var(--nexio-info) !important; }
+.bg-light { background-color: var(--nexio-gray-100) !important; }
+.bg-dark { background-color: var(--nexio-gray-800) !important; }
+.bg-white { background-color: var(--nexio-white) !important; }
+
+/* Borders */
+.border { border: 1px solid var(--nexio-border-color) !important; }
+.border-0 { border: 0 !important; }
+.border-top { border-top: 1px solid var(--nexio-border-color) !important; }
+.border-end { border-right: 1px solid var(--nexio-border-color) !important; }
+.border-bottom { border-bottom: 1px solid var(--nexio-border-color) !important; }
+.border-start { border-left: 1px solid var(--nexio-border-color) !important; }
+
+.rounded { border-radius: var(--nexio-border-radius) !important; }
+.rounded-0 { border-radius: 0 !important; }
+.rounded-circle { border-radius: 50% !important; }
+
+/* Shadows */
+.shadow-none { box-shadow: none !important; }
+.shadow-sm { box-shadow: var(--nexio-shadow-sm) !important; }
+.shadow { box-shadow: var(--nexio-shadow-md) !important; }
+.shadow-lg { box-shadow: var(--nexio-shadow-lg) !important; }
+
+/* Width & Height */
+.w-25 { width: 25% !important; }
+.w-50 { width: 50% !important; }
+.w-75 { width: 75% !important; }
+.w-100 { width: 100% !important; }
+.w-auto { width: auto !important; }
+
+.h-25 { height: 25% !important; }
+.h-50 { height: 50% !important; }
+.h-75 { height: 75% !important; }
+.h-100 { height: 100% !important; }
+.h-auto { height: auto !important; }
+
+/* Position */
+.position-static { position: static !important; }
+.position-relative { position: relative !important; }
+.position-absolute { position: absolute !important; }
+.position-fixed { position: fixed !important; }
+.position-sticky { position: sticky !important; }
+
+/* Overflow */
+.overflow-auto { overflow: auto !important; }
+.overflow-hidden { overflow: hidden !important; }
+.overflow-visible { overflow: visible !important; }
+.overflow-scroll { overflow: scroll !important; }
+
+/* ============================================
+   6. RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .main-content {
+        margin-left: var(--nexio-sidebar-collapsed-width);
+    }
+    
+    .sidebar {
+        width: var(--nexio-sidebar-collapsed-width);
+    }
+    
+    .sidebar .nav-link span {
+        display: none;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    :root {
+        --nexio-font-size-base: 13px;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: var(--nexio-spacing-md);
+    }
+    
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    
+    .card {
+        margin-bottom: var(--nexio-spacing-md);
+    }
+    
+    .table {
+        font-size: 0.875rem;
+    }
+    
+    .btn {
+        padding: var(--nexio-spacing-xs) var(--nexio-spacing-sm);
+        font-size: 0.875rem;
+    }
+    
+    /* Hide desktop-only elements */
+    .d-md-none {
+        display: none !important;
+    }
+    
+    /* Show mobile-only elements */
+    .d-md-block {
+        display: block !important;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+    .page-title {
+        font-size: 1.25rem;
+    }
+    
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.25rem; }
+    h3 { font-size: 1.125rem; }
+    h4 { font-size: 1rem; }
+    h5 { font-size: 0.875rem; }
+    h6 { font-size: 0.875rem; }
+}
+
+/* ============================================
+   CRITICAL OVERRIDES
+   ============================================ */
+
+/* Ensure button text is always white on colored buttons */
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-success,
+.btn-success:hover,
+.btn-success:focus,
+.btn-danger,
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-info,
+.btn-info:hover,
+.btn-info:focus {
+    color: var(--nexio-white) !important;
+}
+
+/* Ensure tables are always visible */
+.table,
+.table th,
+.table td {
+    color: var(--nexio-gray-900) !important;
+    background-color: var(--nexio-white) !important;
+}
+
+.table th {
+    background-color: var(--nexio-gray-100) !important;
+}
+
+/* Remove all animations for performance */
+* {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Only allow specific smooth transitions */
+a,
+.btn,
+.form-control {
+    transition: all 0.15s ease !important;
+}
+
+/* Print styles */
+@media print {
+    .sidebar,
+    .navbar-custom,
+    .btn,
+    .no-print {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+}

@@ -59,14 +59,14 @@
                 btn.style.letterSpacing = '0.05em';
                 btn.style.fontWeight = '500';
                 
-                // Add hover effect
-                btn.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-1px)';
-                });
-                
-                btn.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                });
+                // DISABILITATO - Nessun effetto hover con transform
+                // btn.addEventListener('mouseenter', function() {
+                //     this.style.transform = 'translateY(-1px)';
+                // });
+                // 
+                // btn.addEventListener('mouseleave', function() {
+                //     this.style.transform = 'translateY(0)';
+                // });
             });
         }
         
@@ -75,6 +75,11 @@
             const badges = document.querySelectorAll('.badge, [class*="badge-"], .role-badge, [class*="role-"]');
             
             badges.forEach(function(badge) {
+                // SALTA COMPLETAMENTE GLI ELEMENTI NEL SIDEBAR-FOOTER
+                if (badge.closest('.sidebar-footer')) return;
+                if (badge.closest('.user-info')) return;
+                if (badge.closest('.user-role')) return;
+                
                 badge.style.display = 'inline-block';
                 badge.style.padding = '0.35rem 0.75rem';
                 badge.style.fontSize = '0.8rem';
@@ -111,9 +116,14 @@
         
         // Force sidebar icon visibility
         function forceSidebarIcons() {
-            const sidebarIcons = document.querySelectorAll('.sidebar .menu-item i, .sidebar-footer i');
+            // Modificato per escludere COMPLETAMENTE il footer della sidebar
+            // Applica solo agli elementi del menu, NON al footer
+            const sidebarIcons = document.querySelectorAll('.sidebar .sidebar-menu .menu-item i');
             
             sidebarIcons.forEach(function(icon) {
+                // NON modificare icone nel sidebar-footer
+                if (icon.closest('.sidebar-footer')) return;
+                
                 icon.style.display = 'inline-block';
                 icon.style.width = '20px';
                 icon.style.marginRight = '10px';
@@ -157,29 +167,9 @@
         
         // Fix Super Admin badge in sidebar specifically
         function fixSuperAdminBadge() {
-            const userRole = document.querySelector('.sidebar .user-role');
-            if (userRole && userRole.textContent.includes('Super Admin')) {
-                // Create a proper badge element if needed
-                const badge = document.createElement('span');
-                badge.className = 'badge badge-primary';
-                badge.style.backgroundColor = '#0d6efd';
-                badge.style.color = '#ffffff';
-                badge.style.padding = '0.25rem 0.5rem';
-                badge.style.borderRadius = '0.375rem';
-                badge.style.fontSize = '0.75rem';
-                badge.style.fontWeight = '600';
-                badge.style.display = 'inline-block';
-                badge.style.marginLeft = '4px';
-                badge.textContent = 'Super Admin';
-                
-                // Clear and rebuild the user role
-                const icon = userRole.querySelector('i');
-                if (icon) {
-                    userRole.innerHTML = '';
-                    userRole.appendChild(icon);
-                    userRole.appendChild(badge);
-                }
-            }
+            // COMPLETAMENTE DISABILITATO - NON MODIFICARE IL LAYOUT DELLA SIDEBAR
+            // Il nuovo layout HTML gestisce già correttamente i badge e le icone
+            return;
         }
         
         // Apply all fixes

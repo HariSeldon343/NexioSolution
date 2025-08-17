@@ -1,21 +1,112 @@
 {
-  "name": "Nexio Platform",
+  "name": "Nexio Mobile",
   "short_name": "Nexio",
-  "description": "Piattaforma Collaborativa Mobile",
+  "description": "Piattaforma Collaborativa Mobile - Gestione documenti, eventi e attività",
   "start_url": "/piattaforma-collaborativa/mobile/",
+  "scope": "/piattaforma-collaborativa/",
   "display": "standalone",
-  "background_color": "#f8fafc",
+  "background_color": "#ffffff",
   "theme_color": "#2563eb",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "../assets/images/nexio-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/piattaforma-collaborativa/mobile/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/piattaforma-collaborativa/mobile/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/piattaforma-collaborativa/mobile/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/piattaforma-collaborativa/mobile/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/piattaforma-collaborativa/mobile/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/piattaforma-collaborativa/mobile/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/piattaforma-collaborativa/mobile/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/piattaforma-collaborativa/mobile/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/piattaforma-collaborativa/mobile/icons/icon-512x512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/piattaforma-collaborativa/mobile/screenshots/dashboard.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "label": "Dashboard principale"
+    },
+    {
+      "src": "/piattaforma-collaborativa/mobile/screenshots/documents.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "label": "Gestione documenti"
     }
   ],
   "categories": ["business", "productivity"],
   "lang": "it-IT",
-  "dir": "ltr"
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Vai alla dashboard",
+      "url": "/piattaforma-collaborativa/mobile/?page=dashboard",
+      "icons": [{ "src": "/piattaforma-collaborativa/mobile/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Documenti",
+      "short_name": "Documenti",
+      "description": "Gestione documenti",
+      "url": "/piattaforma-collaborativa/mobile/documenti.php",
+      "icons": [{ "src": "/piattaforma-collaborativa/mobile/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Calendario",
+      "short_name": "Calendario",
+      "description": "Visualizza calendario",
+      "url": "/piattaforma-collaborativa/mobile/?page=calendario",
+      "icons": [{ "src": "/piattaforma-collaborativa/mobile/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }

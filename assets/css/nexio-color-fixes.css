@@ -425,6 +425,8 @@ label,
     background-image: none !important;
     border-radius: calc(var(--border-radius) - 4px) !important;
     font-weight: 500 !important;
+    display: inline-flex !important; /* shrink to content */
+    width: auto !important;
 }
 
 .badge-primary { background-color: var(--color-primary) !important; color: white !important; }

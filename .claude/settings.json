@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/mnt/c/xampp/php/php.exe*)",
+      "Bash(/mnt/c/xampp/mysql/bin/mysql.exe*)",
+      "Bash(/mnt/c/xampp/xampp*)",
+      "Bash(composer*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)"
+    ]
+  }
+}

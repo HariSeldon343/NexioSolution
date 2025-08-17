@@ -875,7 +875,7 @@ $calendarActions = [
         'icon' => 'fas fa-file-import',
         'href' => '#',
         'class' => 'unified-btn unified-btn-success',
-        'onclick' => 'return openICSImportModal()'
+        'onclick' => 'openICSImportModal(); return false;'
     ],
     [
         'text' => 'Esporta Calendario',
@@ -900,7 +900,7 @@ renderPageHeader('Calendario Eventi', 'Visualizza e gestisci gli eventi', 'calen
 
 <div class="action-bar">
     <?php if ($isSuperAdmin && count($aziende_list) > 1): ?>
-    <select class="form-control" style="max-width: 250px;" onchange="filterByAzienda(this.value)">
+    <select class="form-control"  onchange="filterByAzienda(this.value)">
         <option value="">Tutte le aziende</option>
         <?php foreach ($aziende_list as $azienda): ?>
             <option value="<?php echo $azienda['id']; ?>" 
@@ -911,21 +911,25 @@ renderPageHeader('Calendario Eventi', 'Visualizza e gestisci gli eventi', 'calen
     </select>
     <?php endif; ?>
     
+    <button class="btn btn-success" onclick="openICSImportModal(); return false;" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+        <i class="fas fa-file-import"></i> Importa ICS
+    </button>
+    
     <div class="export-dropdown" style="position: relative;">
         <button class="btn btn-secondary dropdown-toggle" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;" onclick="toggleExportDropdown()">
             <i class="fas fa-download"></i> Esporta ICS
         </button>
-        <div class="dropdown-menu" id="exportDropdown" style="position: absolute; top: 100%; right: 0; margin-top: 4px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; min-width: 200px;">
-            <a href="esporta-calendario.php?tipo=calendario&periodo=mese" class="dropdown-item" style="display: block; padding: 10px 16px; text-decoration: none; color: #374151; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">
+        <div class="dropdown-menu" id="exportDropdown" >
+            <a href="esporta-calendario.php?tipo=calendario&periodo=mese" class="dropdown-item"  onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">
                 <i class="fas fa-calendar"></i> Questo mese
             </a>
-            <a href="esporta-calendario.php?tipo=calendario&periodo=trimestre" class="dropdown-item" style="display: block; padding: 10px 16px; text-decoration: none; color: #374151; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">
+            <a href="esporta-calendario.php?tipo=calendario&periodo=trimestre" class="dropdown-item"  onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">
                 <i class="fas fa-calendar-alt"></i> Questo trimestre
             </a>
-            <a href="esporta-calendario.php?tipo=calendario&periodo=anno" class="dropdown-item" style="display: block; padding: 10px 16px; text-decoration: none; color: #374151; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">
+            <a href="esporta-calendario.php?tipo=calendario&periodo=anno" class="dropdown-item"  onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">
                 <i class="fas fa-calendar-check"></i> Questo anno
             </a>
-            <a href="esporta-calendario.php?tipo=calendario&periodo=tutto" class="dropdown-item" style="display: block; padding: 10px 16px; text-decoration: none; color: #374151; transition: background 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">
+            <a href="esporta-calendario.php?tipo=calendario&periodo=tutto" class="dropdown-item"  onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='transparent'">
                 <i class="fas fa-download"></i> Tutti gli eventi
             </a>
         </div>
@@ -962,11 +966,11 @@ renderPageHeader('Calendario Eventi', 'Visualizza e gestisci gli eventi', 'calen
         ?>
         <div class="stat-card">
             <div class="stat-icon" style="background: #dbeafe;">
-                <i class="fas fa-tasks" style="color: #2d5a9f;"></i>
+                <i class="fas fa-tasks" ></i>
             </div>
             <div class="stat-label"><?= htmlspecialchars($counter['attivita']) ?></div>
             <div class="stat-value"><?= number_format($counter['totale_giornate'], 1, ',', '.') ?> gg</div>
-            <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">
+            <div >
                 <div style="margin-bottom: 4px;"><span class="badge badge-success">Completate: <?= number_format($counter['giornate_completate'], 1, ',', '.') ?></span></div>
                 <div><span class="badge badge-info">Pianificate: <?= number_format($counter['giornate_pianificate'], 1, ',', '.') ?></span></div>
             </div>
@@ -1594,6 +1598,122 @@ renderPageHeader('Calendario Eventi', 'Visualizza e gestisci gli eventi', 'calen
     border-bottom: none;
 }
 
+/* Fix per garantire che i pulsanti siano sempre cliccabili */
+.action-bar {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.action-bar .btn,
+.calendar-controls .btn {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto !important;
+}
+
+/* Modal Styles - Fixed to not block page when hidden */
+.modal:not(.show) {
+    display: none !important;
+    z-index: -1 !important;
+    pointer-events: none !important;
+}
+
+.modal.show {
+    display: block !important;
+    z-index: 1050 !important;
+    pointer-events: auto !important;
+}
+
+/* Specific modal fixes */
+#icsImportModal:not(.show),
+#eventDetailsModal:not(.show) {
+    display: none !important;
+    z-index: -1 !important;
+    pointer-events: none !important;
+}
+
+#icsImportModal.show,
+#eventDetailsModal.show {
+    display: block !important;
+    z-index: 1050 !important;
+    pointer-events: auto !important;
+}
+
+.modal-backdrop {
+    z-index: 1040;
+}
+
+/* Ensure modal content doesn't block clicks when hidden */
+.modal[aria-hidden="true"] {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+#icsImportModal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom: none;
+}
+
+#icsImportModal .modal-header .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+}
+
+#icsImportModal .modal-header .btn-close:hover {
+    opacity: 1;
+}
+
+#icsImportModal .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+#icsImportModal .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+#icsImportModal .btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd7 0%, #693f8f 100%);
+}
+
+.btn-success {
+    background: #48bb78;
+    border: none;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    background: #38a169;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(72, 187, 120, 0.3);
+}
+
+/* File upload styling */
+.form-control[type="file"] {
+    padding: 0.75rem;
+    border: 2px dashed #cbd5e0;
+    background: #f7fafc;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.form-control[type="file"]:hover {
+    border-color: #667eea;
+    background: #edf2f7;
+}
+
+.form-control[type="file"]:focus {
+    border-style: solid;
+}
+
 @media (max-width: 768px) {
     .workday-table {
         font-size: 12px;
@@ -1606,6 +1726,10 @@ renderPageHeader('Calendario Eventi', 'Visualizza e gestisci gli eventi', 'calen
     
     .activity-badge {
         font-size: 10px;
+    }
+    
+    #icsImportModal .modal-dialog {
+        margin: 1rem;
     }
 }
 </style>
@@ -1750,44 +1874,60 @@ function sendTaskCancellationNotification($task, $utente, $cancellatore) {
 }
 ?>
 
-<!-- ICS Import Modal - Hidden by default, opens only on button click -->
+<!-- ICS Import Modal -->
 <div class="modal fade" id="icsImportModal" tabindex="-1" aria-labelledby="icsImportModalLabel" aria-hidden="true" style="display: none;">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                 <h5 class="modal-title" id="icsImportModalLabel">
                     <i class="fas fa-file-import"></i> Importa Eventi da File ICS
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
             <form id="icsImportForm" enctype="multipart/form-data">
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="icsFile" class="form-label">Seleziona file ICS/iCal</label>
-                        <input type="file" class="form-control" id="icsFile" name="ics_file" accept=".ics,.ical,.ifb,.icalendar" required>
+                    <div class="mb-4">
+                        <label for="icsFile" class="form-label fw-bold">
+                            <i class="fas fa-file-upload"></i> Seleziona file ICS/iCal
+                        </label>
+                        <input type="file" class="form-control form-control-lg" id="icsFile" name="ics_file" accept=".ics,.ical,.ifb,.icalendar" required>
                         <div class="form-text">
-                            Formati supportati: .ics, .ical, .ifb, .icalendar
+                            <i class="fas fa-info-circle"></i> Formati supportati: .ics, .ical, .ifb, .icalendar (max 5MB)
                         </div>
                     </div>
                     
                     <?php if ($isSuperAdmin && count($aziende_list) > 0): ?>
                     <div class="mb-3">
-                        <label for="importAzienda" class="form-label">Importa per azienda</label>
+                        <label for="importAzienda" class="form-label">
+                            <i class="fas fa-building"></i> Associa ad azienda (opzionale)
+                        </label>
                         <select class="form-select" id="importAzienda" name="azienda_id">
-                            <option value="">Seleziona azienda...</option>
+                            <option value="">🗓️ Nessuna azienda / Calendario personale</option>
+                            <option value="" disabled>────────────────────────</option>
                             <?php foreach ($aziende_list as $azienda): ?>
                                 <option value="<?php echo $azienda['id']; ?>">
                                     <?php echo htmlspecialchars($azienda['nome']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i> Gli eventi senza azienda appariranno con un colore neutro nel calendario
+                        </div>
                     </div>
                     <?php endif; ?>
                     
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Nota:</strong> Gli eventi duplicati verranno saltati automaticamente.
-                        I partecipanti verranno aggiunti solo se trovati nel sistema.
+                    <div class="alert alert-info d-flex align-items-start">
+                        <i class="fas fa-info-circle me-2 mt-1"></i>
+                        <div>
+                            <strong>Come funziona l'importazione:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Supporta eventi singoli e ricorrenti</li>
+                                <li>Gestisce automaticamente i fusi orari</li>
+                                <li>Gli eventi duplicati vengono saltati</li>
+                                <li>I partecipanti vengono aggiunti se trovati nel sistema</li>
+                                <li>Puoi importare da Google Calendar, Outlook, Apple Calendar, etc.</li>
+                            </ul>
+                        </div>
                     </div>
                     
                     <div id="importProgress" style="display: none;">
@@ -1811,30 +1951,9 @@ function sendTaskCancellationNotification($task, $utente, $cancellatore) {
 </div>
 
 <script>
-// Ensure modal is properly initialized and doesn't auto-open
-document.addEventListener('DOMContentLoaded', function() {
-    // Ensure modal is hidden on page load
-    const modalElement = document.getElementById('icsImportModal');
-    if (modalElement) {
-        modalElement.style.display = 'none';
-        modalElement.classList.remove('show');
-        modalElement.setAttribute('aria-hidden', 'true');
-        
-        // Remove any existing backdrop
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
-    }
-});
-
 // ICS Import functionality
 function openICSImportModal() {
     try {
-        // Prevent any default action
-        if (typeof event !== 'undefined') {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        
         // Check if Bootstrap is loaded
         if (typeof bootstrap === 'undefined') {
             alert('Bootstrap non è caricato. Ricarica la pagina.');
@@ -1847,21 +1966,19 @@ function openICSImportModal() {
             return false;
         }
         
-        // Remove inline display none before showing
+        // Ensure modal is properly set up before showing
         modalElement.style.display = '';
+        modalElement.removeAttribute('aria-hidden');
         
-        // Close any existing modal instance first
-        const existingModal = bootstrap.Modal.getInstance(modalElement);
-        if (existingModal) {
-            existingModal.dispose();
+        // Get or create modal instance
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        if (!modal) {
+            modal = new bootstrap.Modal(modalElement, {
+                backdrop: true,
+                keyboard: true,
+                focus: true
+            });
         }
-        
-        // Create new modal instance with backdrop
-        const modal = new bootstrap.Modal(modalElement, {
-            backdrop: true,
-            keyboard: true,
-            focus: true
-        });
         
         // Reset form when modal opens
         const form = document.getElementById('icsImportForm');
@@ -1869,20 +1986,26 @@ function openICSImportModal() {
             form.reset();
             const progressEl = document.getElementById('importProgress');
             const resultEl = document.getElementById('importResult');
+            
             if (progressEl) progressEl.style.display = 'none';
             if (resultEl) {
                 resultEl.style.display = 'none';
                 resultEl.innerHTML = '';
             }
+            
+            // Reset file input label
+            const fileInput = document.getElementById('icsFile');
+            if (fileInput) {
+                fileInput.value = '';
+                const label = fileInput.nextElementSibling;
+                if (label && label.classList.contains('form-text')) {
+                    label.innerHTML = '<i class="fas fa-info-circle"></i> Formati supportati: .ics, .ical, .ifb, .icalendar (max 5MB)';
+                }
+            }
         }
         
         // Show modal
         modal.show();
-        
-        // Add event listener to hide on close
-        modalElement.addEventListener('hidden.bs.modal', function () {
-            modalElement.style.display = 'none';
-        }, { once: true });
         
     } catch (error) {
         console.error('Error opening modal:', error);
@@ -1892,112 +2015,207 @@ function openICSImportModal() {
     return false;
 }
 
-document.getElementById('icsImportForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+// Update file input label with selected filename
+function updateFileLabel(input) {
+    const file = input.files[0];
+    const label = input.nextElementSibling;
+    if (file && label && label.classList.contains('form-text')) {
+        const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+        label.innerHTML = `<i class="fas fa-check-circle text-success"></i> File selezionato: <strong>${file.name}</strong> (${sizeInMB} MB)`;
+    }
+}
+
+// Add file input change listener and ensure modal works correctly
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Calendario eventi DOM loaded');
     
+    // Ensure ICS import modal is properly hidden at start
+    const icsModalElement = document.getElementById('icsImportModal');
+    if (icsModalElement) {
+        // Force hide the modal at page load
+        icsModalElement.style.display = 'none';
+        icsModalElement.classList.remove('show');
+        icsModalElement.setAttribute('aria-hidden', 'true');
+        
+        // Setup event listeners for proper modal behavior
+        icsModalElement.addEventListener('hidden.bs.modal', function () {
+            icsModalElement.style.display = 'none';
+            icsModalElement.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+            
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        });
+        
+        icsModalElement.addEventListener('show.bs.modal', function () {
+            icsModalElement.style.display = 'block';
+            icsModalElement.removeAttribute('aria-hidden');
+        });
+        
+        icsModalElement.addEventListener('shown.bs.modal', function () {
+            const firstInput = icsModalElement.querySelector('input:not([type="hidden"])');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        });
+    }
+    
+    // Clean up any leftover modal states at page load
+    const allBackdrops = document.querySelectorAll('.modal-backdrop');
+    allBackdrops.forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    
+    // Initialize file input listener
     const fileInput = document.getElementById('icsFile');
-    const file = fileInput.files[0];
-    
-    if (!file) {
-        alert('Seleziona un file ICS da importare');
-        return;
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            updateFileLabel(this);
+        });
     }
     
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        alert('Il file è troppo grande. Dimensione massima: 5MB');
-        return;
-    }
-    
-    // Show progress
-    document.getElementById('importProgress').style.display = 'block';
-    document.getElementById('importResult').style.display = 'none';
-    document.getElementById('importBtn').disabled = true;
-    
-    // Prepare form data
-    const formData = new FormData();
-    formData.append('ics_file', file);
-    
-    // Add azienda_id if super admin
-    <?php if ($isSuperAdmin): ?>
-    const aziendaSelect = document.getElementById('importAzienda');
-    if (aziendaSelect && aziendaSelect.value) {
-        formData.append('azienda_id', aziendaSelect.value);
-    }
-    <?php endif; ?>
-    
-    // Get CSRF token
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    
-    // Send request
-    fetch('<?php echo APP_PATH; ?>/backend/api/import-ics.php', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-Token': csrfToken
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('importProgress').style.display = 'none';
-        document.getElementById('importBtn').disabled = false;
-        
-        const resultDiv = document.getElementById('importResult');
-        resultDiv.style.display = 'block';
-        
-        if (data.success) {
-            let resultHtml = `
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
-                    <strong>Importazione completata!</strong><br>
-                    Eventi importati: ${data.imported}<br>
-                    Eventi saltati (duplicati): ${data.skipped}<br>
-                    Totale eventi nel file: ${data.total}
-                </div>
-            `;
+    console.log('Calendario eventi inizializzato correttamente');
+});
+
+// ICS Import form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const icsForm = document.getElementById('icsImportForm');
+    if (icsForm) {
+        icsForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            if (data.warnings && data.warnings.length > 0) {
-                resultHtml += `
-                    <div class="alert alert-warning">
-                        <strong>Avvisi:</strong>
-                        <ul class="mb-0">
-                            ${data.warnings.map(w => `<li>${w}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
+            const fileInput = document.getElementById('icsFile');
+            if (!fileInput) {
+                console.error('File input icsFile non trovato');
+                return;
             }
             
-            resultDiv.innerHTML = resultHtml;
+            const file = fileInput.files[0];
             
-            // Reload page after 3 seconds to show new events
-            if (data.imported > 0) {
-                setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
+            if (!file) {
+                alert('Seleziona un file ICS da importare');
+                return;
             }
-        } else {
-            resultDiv.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Errore durante l'importazione:</strong><br>
-                    ${data.error || 'Errore sconosciuto'}
-                </div>
-            `;
-        }
-    })
-    .catch(error => {
-        document.getElementById('importProgress').style.display = 'none';
-        document.getElementById('importBtn').disabled = false;
-        
-        document.getElementById('importResult').innerHTML = `
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>Errore di rete:</strong><br>
-                ${error.message || 'Impossibile completare l\'importazione'}
-            </div>
-        `;
-        document.getElementById('importResult').style.display = 'block';
-    });
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Il file è troppo grande. Dimensione massima: 5MB');
+                return;
+            }
+            
+            // Show progress
+            const progressEl = document.getElementById('importProgress');
+            const resultEl = document.getElementById('importResult');
+            const importBtn = document.getElementById('importBtn');
+            
+            if (progressEl) progressEl.style.display = 'block';
+            if (resultEl) resultEl.style.display = 'none';
+            if (importBtn) importBtn.disabled = true;
+            
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('ics_file', file);
+            
+            // Add azienda_id if super admin
+            <?php if ($isSuperAdmin): ?>
+            const aziendaSelect = document.getElementById('importAzienda');
+            if (aziendaSelect && aziendaSelect.value) {
+                formData.append('azienda_id', aziendaSelect.value);
+            }
+            <?php endif; ?>
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            // Send request
+            fetch('<?php echo APP_PATH; ?>/backend/api/import-ics.php', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-Token': csrfToken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Use safe element access
+                const progressEl = document.getElementById('importProgress');
+                const importBtn = document.getElementById('importBtn');
+                const resultDiv = document.getElementById('importResult');
+                
+                if (progressEl) progressEl.style.display = 'none';
+                if (importBtn) importBtn.disabled = false;
+                
+                if (resultDiv) {
+                    resultDiv.style.display = 'block';
+                    
+                    if (data.success) {
+                        let resultHtml = `
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <strong>Importazione completata!</strong><br>
+                                Eventi importati: ${data.imported}<br>
+                                Eventi saltati (duplicati): ${data.skipped}<br>
+                                Totale eventi nel file: ${data.total}
+                            </div>
+                        `;
+                        
+                        if (data.warnings && data.warnings.length > 0) {
+                            resultHtml += `
+                                <div class="alert alert-warning">
+                                    <strong>Avvisi:</strong>
+                                    <ul class="mb-0">
+                                        ${data.warnings.map(w => `<li>${w}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            `;
+                        }
+                        
+                        resultDiv.innerHTML = resultHtml;
+                        
+                        // Reload page after 3 seconds to show new events
+                        if (data.imported > 0) {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 3000);
+                        }
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>Errore durante l'importazione:</strong><br>
+                                ${data.error || 'Errore sconosciuto'}
+                            </div>
+                        `;
+                    }
+                }
+            })
+            .catch(error => {
+                // Use safe element access for error handling
+                const progressEl = document.getElementById('importProgress');
+                const importBtn = document.getElementById('importBtn');
+                const resultDiv = document.getElementById('importResult');
+                
+                if (progressEl) progressEl.style.display = 'none';
+                if (importBtn) importBtn.disabled = false;
+                
+                if (resultDiv) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Errore di rete:</strong><br>
+                            ${error.message || 'Impossibile completare l\'importazione'}
+                        </div>
+                    `;
+                    resultDiv.style.display = 'block';
+                }
+            });
+        });
+    }
 });
 </script>
 

@@ -1,0 +1,251 @@
+/* 
+ * SCROLL FIX CORRETTO - Soluzione definitiva per problemi di scroll
+ * Principio: Solo sidebar usa height: 100vh (è fixed), tutto il resto usa min-height
+ * Data: 2025-08-12
+ */
+
+/* ===========================
+   HTML e BODY - Base corretta
+   =========================== */
+html {
+  height: 100%; /* OK per html */
+  overflow-y: auto !important; /* Permetti scroll verticale */
+  overflow-x: hidden !important; /* Previeni scroll orizzontale */
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh !important; /* MIN-HEIGHT, non height fissa */
+  height: auto !important; /* Può crescere oltre viewport */
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-y: auto !important; /* SEMPRE scroll verticale permesso */
+  overflow-x: hidden !important; /* Previeni scroll orizzontale */
+  position: relative !important; /* MAI fixed per body */
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* ===========================
+   App Container - Crescita libera
+   =========================== */
+.app-container {
+  min-height: 100vh !important; /* MIN-HEIGHT per crescere */
+  height: auto !important; /* Altezza automatica */
+  display: flex !important;
+  flex: 1 !important;
+  overflow: visible !important; /* MAI hidden sul container principale */
+  position: relative !important;
+}
+
+/* ===========================
+   Main Content - Area scrollabile
+   =========================== */
+.main-content {
+  margin-left: 260px !important; /* Spazio per sidebar */
+  min-height: 100vh !important; /* MIN-HEIGHT */
+  height: auto !important; /* Crescita libera */
+  flex: 1 !important;
+  padding: 20px !important;
+  overflow: visible !important; /* Contenuto può espandersi */
+  position: relative !important;
+  background: #f4f6f9;
+}
+
+/* Contenuto interno può crescere */
+.main-content > * {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* ===========================
+   SIDEBAR - Unico elemento con height fissa
+   =========================== */
+.sidebar {
+  position: fixed !important; /* Fixed positioning */
+  top: 0 !important;
+  left: 0 !important;
+  width: 260px !important;
+  height: 100vh !important; /* OK: height fissa per sidebar fixed */
+  overflow-y: auto !important; /* Scroll interno se necessario */
+  overflow-x: hidden !important;
+  z-index: 1000 !important;
+  background: #2c3e50;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+/* ===========================
+   Content Wrappers - Rimuovi restrizioni
+   =========================== */
+.wrapper,
+.content-wrapper,
+.page-wrapper,
+.container,
+.container-fluid,
+.content-area,
+.page-content {
+  overflow: visible !important; /* Permetti overflow */
+  height: auto !important; /* Altezza automatica */
+  min-height: auto !important; /* Nessun min-height forzato */
+  max-height: none !important; /* Nessun limite massimo */
+  position: relative !important; /* MAI fixed */
+}
+
+/* ===========================
+   Pagine specifiche - Assicura scrollabilità
+   =========================== */
+.dashboard-content,
+.log-container,
+.tickets-container,
+.calendar-container,
+.documents-container,
+.users-container {
+  height: auto !important;
+  min-height: auto !important;
+  overflow: visible !important;
+}
+
+/* Tabelle - devono poter crescere */
+.table-responsive {
+  overflow-x: auto !important; /* Solo scroll orizzontale per tabelle larghe */
+  overflow-y: visible !important; /* Verticale libero */
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Card e pannelli */
+.card,
+.panel,
+.box {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* ===========================
+   Mobile Responsive
+   =========================== */
+@media (max-width: 768px) {
+  /* Reset per mobile */
+  body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Main content senza margine sidebar */
+  .main-content {
+    margin-left: 0 !important;
+    min-height: 100vh !important;
+    padding: 15px !important;
+  }
+  
+  /* Sidebar mobile overlay */
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.active {
+    transform: translateX(0);
+  }
+  
+  /* Mobile menu toggle visibile */
+  .mobile-menu-toggle {
+    display: block !important;
+    position: fixed !important;
+    top: 15px !important;
+    left: 15px !important;
+    z-index: 1001 !important;
+  }
+}
+
+/* ===========================
+   Fix per elementi problematici specifici
+   =========================== */
+
+/* Rimuovi position fixed da elementi non-sidebar */
+body > *:not(.sidebar) {
+  position: relative !important;
+}
+
+/* Fix per modali - devono rimanere fixed */
+.modal,
+.modal-backdrop,
+.dropdown-menu,
+.tooltip,
+.popover {
+  position: fixed !important; /* OK per overlay */
+}
+
+/* Fix per elementi sticky */
+.sticky-top {
+  position: sticky !important;
+  top: 0;
+  z-index: 100;
+}
+
+/* ===========================
+   Debug helpers (rimuovere in produzione)
+   =========================== */
+/* Evidenzia elementi con overflow hidden */
+/*
+[style*="overflow: hidden"]:not(.sidebar):not(.modal) {
+  border: 2px solid red !important;
+}
+*/
+
+/* ===========================
+   Reset selettivo per overflow hidden errati
+   =========================== */
+/* Rimosso reset aggressivo - potrebbe causare problemi con elementi specifici */
+
+/* Eccezioni specifiche che necessitano overflow control */
+.text-truncate,
+.ellipsis {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Code blocks e pre */
+pre,
+code {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+/* ===========================
+   Smooth scrolling
+   =========================== */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* ===========================
+   IMPORTANTE: Override finale
+   =========================== */
+html body {
+  overflow-y: auto !important; /* Forza scroll su body */
+}
+
+html body .main-content {
+  overflow: visible !important; /* Content può espandersi */
+}

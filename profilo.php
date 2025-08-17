@@ -197,7 +197,7 @@ require_once 'components/header.php';
             <div class="form-group">
                 <label for="password_nuova">Nuova Password <span class="required">*</span></label>
                 <input type="password" id="password_nuova" name="password_nuova" class="form-control" required>
-                <small style="color: #718096;">Minimo 6 caratteri</small>
+                <small >Minimo 6 caratteri</small>
             </div>
             
             <div class="form-group">
@@ -212,10 +212,10 @@ require_once 'components/header.php';
         
         <?php if ($auth->isSuperAdmin() || $auth->hasRoleInAzienda('proprietario')): ?>
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-            <h3 style="font-size: 16px; margin-bottom: 10px; color: #4a5568;">
+            <h3 >
                 <i class="fas fa-shield-alt"></i> Opzioni Sicurezza
             </h3>
-            <p style="color: #718096; font-size: 14px;">Funzionalità avanzate di sicurezza</p>
+            <p >Funzionalità avanzate di sicurezza</p>
             <div style="margin-top: 15px;">
                 <button class="btn btn-secondary" disabled>
                     <i class="fas fa-mobile-alt"></i> Abilita 2FA (Prossimamente)

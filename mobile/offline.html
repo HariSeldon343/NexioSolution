@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <title>Nexio - Offline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .offline-container {
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .offline-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .retry-button {
+            background: white;
+            color: #2563eb;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .retry-button:active {
+            transform: scale(0.98);
+        }
+        
+        .retry-button:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .status-indicator {
+            margin-top: 30px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .status-indicator.online {
+            display: block;
+            background: rgba(16, 185, 129, 0.2);
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        .checking {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">
+            📡
+        </div>
+        <h1>Sei Offline</h1>
+        <p>
+            Non è possibile connettersi a Nexio in questo momento. 
+            Controlla la tua connessione internet e riprova.
+        </p>
+        <button class="retry-button" onclick="checkConnection()">
+            Riprova
+        </button>
+        <div class="status-indicator" id="statusIndicator">
+            Connessione ripristinata! Reindirizzamento...
+        </div>
+    </div>
+    
+    <script>
+        // Controlla la connessione
+        function checkConnection() {
+            const button = document.querySelector('.retry-button');
+            const icon = document.querySelector('.offline-icon');
+            const indicator = document.getElementById('statusIndicator');
+            
+            button.textContent = 'Controllo...';
+            button.disabled = true;
+            icon.classList.add('checking');
+            
+            // Prova a fare una richiesta
+            fetch('/piattaforma-collaborativa/mobile/manifest.json', {
+                method: 'HEAD',
+                cache: 'no-cache'
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Online! Ricarica la pagina
+                    indicator.classList.add('online');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error('Still offline');
+                }
+            })
+            .catch(() => {
+                // Ancora offline
+                button.textContent = 'Riprova';
+                button.disabled = false;
+                icon.classList.remove('checking');
+            });
+        }
+        
+        // Controlla automaticamente quando torna online
+        window.addEventListener('online', () => {
+            checkConnection();
+        });
+        
+        // Controlla periodicamente
+        setInterval(() => {
+            if (navigator.onLine) {
+                checkConnection();
+            }
+        }, 30000); // Ogni 30 secondi
+    </script>
+</body>
+</html>

@@ -101,29 +101,36 @@ try {
 }
 
 // Funzioni di utilità per il database
-function db_query($sql, $params = []) {
-    global $pdo;
-    try {
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt;
-    } catch (PDOException $e) {
-        error_log("Errore query database: " . $e->getMessage() . " - SQL: " . $sql);
-        throw $e;
+if (!function_exists('db_query')) {
+    function db_query($sql, $params = []) {
+        global $pdo;
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt;
+        } catch (PDOException $e) {
+            error_log("Errore query database: " . $e->getMessage() . " - SQL: " . $sql);
+            throw $e;
+        }
     }
 }
 
-function db_fetch($sql, $params = []) {
-    $stmt = db_query($sql, $params);
-    return $stmt->fetch();
+if (!function_exists('db_fetch')) {
+    function db_fetch($sql, $params = []) {
+        $stmt = db_query($sql, $params);
+        return $stmt->fetch();
+    }
 }
 
-function db_fetch_all($sql, $params = []) {
-    $stmt = db_query($sql, $params);
-    return $stmt->fetchAll();
+if (!function_exists('db_fetch_all')) {
+    function db_fetch_all($sql, $params = []) {
+        $stmt = db_query($sql, $params);
+        return $stmt->fetchAll();
+    }
 }
 
-function db_insert($table, $data) {
+if (!function_exists('db_insert')) {
+    function db_insert($table, $data) {
     global $pdo;
     $fields = array_keys($data);
     $placeholders = ':' . implode(', :', $fields);
@@ -135,9 +142,11 @@ function db_insert($table, $data) {
     }
     $stmt->execute();
     return $pdo->lastInsertId();
+    }
 }
 
-function db_update($table, $data, $where, $whereParams = []) {
+if (!function_exists('db_update')) {
+    function db_update($table, $data, $where, $whereParams = []) {
     global $pdo;
     $setParts = [];
     $allParams = [];
@@ -171,9 +180,11 @@ function db_update($table, $data, $where, $whereParams = []) {
     
     $stmt->execute();
     return $stmt->rowCount();
+    }
 }
 
-function db_delete($table, $where, $whereParams = []) {
+if (!function_exists('db_delete')) {
+    function db_delete($table, $where, $whereParams = []) {
     global $pdo;
     $sql = "DELETE FROM {$table} WHERE {$where}";
     
@@ -196,22 +207,28 @@ function db_delete($table, $where, $whereParams = []) {
     
     $stmt->execute();
     return $stmt->rowCount();
+    }
 }
 
-function db_exists($table, $where, $whereParams = []) {
+if (!function_exists('db_exists')) {
+    function db_exists($table, $where, $whereParams = []) {
     $sql = "SELECT 1 FROM {$table} WHERE {$where} LIMIT 1";
     $stmt = db_query($sql, $whereParams);
     return $stmt->fetch() !== false;
+    }
 }
 
-function db_count($table, $where = '1=1', $whereParams = []) {
+if (!function_exists('db_count')) {
+    function db_count($table, $where = '1=1', $whereParams = []) {
     $sql = "SELECT COUNT(*) as count FROM {$table} WHERE {$where}";
     $result = db_fetch($sql, $whereParams);
     return (int)$result['count'];
+    }
 }
 
 // Funzioni per la gestione delle transazioni
-function db_begin_transaction() {
+if (!function_exists('db_begin_transaction')) {
+    function db_begin_transaction() {
     global $pdo;
     try {
         return $pdo->beginTransaction();
@@ -219,9 +236,11 @@ function db_begin_transaction() {
         error_log("Errore avvio transazione: " . $e->getMessage());
         throw $e;
     }
+    }
 }
 
-function db_commit() {
+if (!function_exists('db_commit')) {
+    function db_commit() {
     global $pdo;
     try {
         return $pdo->commit();
@@ -229,9 +248,11 @@ function db_commit() {
         error_log("Errore commit transazione: " . $e->getMessage());
         throw $e;
     }
+    }
 }
 
-function db_rollback() {
+if (!function_exists('db_rollback')) {
+    function db_rollback() {
     global $pdo;
     try {
         return $pdo->rollBack();
@@ -239,21 +260,26 @@ function db_rollback() {
         error_log("Errore rollback transazione: " . $e->getMessage());
         throw $e;
     }
+    }
 }
 
-function db_in_transaction() {
+if (!function_exists('db_in_transaction')) {
+    function db_in_transaction() {
     global $pdo;
     return $pdo->inTransaction();
+    }
 }
 
 // Funzione per testare la connessione
-function test_db_connection() {
+if (!function_exists('test_db_connection')) {
+    function test_db_connection() {
     global $pdo;
     try {
         $stmt = $pdo->query("SELECT 1");
         return true;
     } catch (PDOException $e) {
         return false;
+    }
     }
 }
 
@@ -264,7 +290,8 @@ function test_db_connection() {
  * @param string $tableName Nome della tabella da verificare
  * @return bool True se la tabella esiste, false altrimenti
  */
-function db_table_exists($tableName) {
+if (!function_exists('db_table_exists')) {
+    function db_table_exists($tableName) {
     try {
         $result = db_query(
             "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES 
@@ -276,6 +303,7 @@ function db_table_exists($tableName) {
         error_log("Errore verifica esistenza tabella '$tableName': " . $e->getMessage());
         return false;
     }
+    }
 }
 
 /**
@@ -285,7 +313,8 @@ function db_table_exists($tableName) {
  * @param string $columnName Nome della colonna
  * @return bool True se la colonna esiste, false altrimenti
  */
-function db_column_exists($tableName, $columnName) {
+if (!function_exists('db_column_exists')) {
+    function db_column_exists($tableName, $columnName) {
     try {
         $result = db_query(
             "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
@@ -297,6 +326,7 @@ function db_column_exists($tableName, $columnName) {
         error_log("Errore verifica esistenza colonna '$columnName' in tabella '$tableName': " . $e->getMessage());
         return false;
     }
+    }
 }
 
 /**
@@ -304,7 +334,8 @@ function db_column_exists($tableName, $columnName) {
  * 
  * @return array Array di nomi delle tabelle
  */
-function db_get_tables() {
+if (!function_exists('db_get_tables')) {
+    function db_get_tables() {
     try {
         $result = db_query(
             "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES 
@@ -315,5 +346,6 @@ function db_get_tables() {
     } catch (Exception $e) {
         error_log("Errore recupero lista tabelle: " . $e->getMessage());
         return [];
+    }
     }
 } 

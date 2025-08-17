@@ -31,10 +31,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="description" content="Accedi a Nexio Mobile - Piattaforma collaborativa">
     <title>Nexio - Login</title>
     
-    <link rel="icon" type="image/svg+xml" href="../assets/images/nexio-icon.svg">
-    <link rel="apple-touch-icon" href="../assets/images/nexio-icon.svg">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="icons/icon-192x192.svg">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.svg">
+    
+    <!-- iOS specific -->
+    <meta name="apple-mobile-web-app-title" content="Nexio">
+    <link rel="apple-touch-startup-image" href="icons/icon-512x512.svg">
     
     <style>
         * {
@@ -251,7 +262,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-container">
         <div class="logo-container">
             <div class="logo">
-                <img src="../assets/images/nexio-icon.svg" alt="Nexio" onerror="this.style.display='none'; this.parentElement.innerHTML='N';">
+                <img src="../assets/images/nexio-icon.svg?v=<?php echo @filemtime(dirname(__DIR__) . '/assets/images/nexio-icon.svg'); ?>" alt="Nexio" onerror="this.style.display='none'; this.parentElement.innerHTML='N';">
             </div>
             <h1 class="app-name">Nexio</h1>
             <p class="app-tagline">Piattaforma Collaborativa Mobile</p>

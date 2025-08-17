@@ -1,0 +1,15 @@
+/* Sidebar gutter: add 10px right padding and maintain main-content offset */
+.sidebar {
+  padding-right: 10px !important;
+}
+
+/* Keep main-content starting at 260px + gutter only visually; margin-left stays 260px because gutter is internal to sidebar */
+.main-content {
+  /* no change to margin-left here to avoid layout shifts */
+}
+
+/* Ensure menu items do not touch gutter visually */
+.sidebar-menu .menu-item { padding-right: calc(1.5rem + 10px) !important; }
+
+/* Keep footer content away from the gutter */
+.sidebar-footer { padding-right: calc(1rem + 10px) !important; } 

@@ -79,37 +79,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ========================================
-    // SIDEBAR - Minify/Expand animation
-    // ========================================
-    
-    const sidebar = document.querySelector('.sidebar');
-    const toggleBtn = document.createElement('button');
-    toggleBtn.className = 'sidebar-toggle';
-    toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
-    
-    if (sidebar) {
-        sidebar.appendChild(toggleBtn);
-        
-        toggleBtn.addEventListener('click', function() {
-            sidebar.classList.toggle('minified');
-            
-            // Save state
-            localStorage.setItem('sidebar-minified', sidebar.classList.contains('minified'));
-            
-            // Animate icon
-            this.querySelector('i').style.transform = 'rotate(180deg)';
-            setTimeout(() => {
-                this.querySelector('i').style.transform = 'rotate(0)';
-            }, 300);
-        });
-        
-        // Restore saved state
-        if (localStorage.getItem('sidebar-minified') === 'true') {
-            sidebar.classList.add('minified');
-        }
-    }
-    
-    // ========================================
     // SEARCH BAR - Expand animation
     // ========================================
     

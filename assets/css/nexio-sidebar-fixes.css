@@ -38,13 +38,7 @@
     margin-top: -4px !important;
 }
 
-/* 2. USER INFO - Layout migliorato */
-.sidebar-footer {
-    position: relative !important;
-    padding: 0.75rem !important;
-    background: rgba(0, 0, 0, 0.15) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
+/* 2. USER INFO - Layout migliorato (struttura in sidebar-structure-fix.css) */
 
 .sidebar-footer .user-info {
     display: grid !important;
@@ -56,6 +50,7 @@
     border-radius: 8px !important;
     position: relative !important;
     min-height: 56px !important; /* ensure space when text wraps */
+    overflow: visible !important; /* Ensure badge never clips at right edge */
 }
 
 /* Avatar */
@@ -75,7 +70,7 @@
 /* User details */
 .sidebar-footer .user-details {
     min-width: 0 !important; /* Permette text truncation */
-    overflow: hidden !important;
+    overflow: visible !important; /* allow badge to render fully */
     padding-right: 40px !important; /* avoid overlap with dropdown */
 }
 
@@ -100,10 +95,11 @@
     align-items: center !important;
     gap: 0.25rem !important;
     white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
     max-width: 100% !important;
 }
+.sidebar-footer .user-role .badge { display: inline-flex !important; width: auto !important; transform: none !important; text-transform: uppercase !important; }
 
 .sidebar-footer .user-role i {
     font-size: 0.625rem !important;
@@ -296,3 +292,7 @@
 .sidebar::-webkit-scrollbar-thumb:hover {
     background-color: rgba(255, 255, 255, 0.3) !important;
 }
+
+/* Do not stretch badge row */
+.sidebar-footer .user-controls-row { width: auto !important; }
+.sidebar-footer .user-controls-row .badge { width: auto !important; display: inline-flex !important; }

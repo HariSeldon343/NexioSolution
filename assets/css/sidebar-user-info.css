@@ -1,0 +1,173 @@
+/* Sidebar User Info - Layout semplificato senza menu dropdown */
+.sidebar-footer {
+  margin-top: auto !important; /* Spinge il footer in basso */
+  padding: 0.4rem 0.6rem !important; /* Padding ancora più ridotto */
+  padding-bottom: 12px !important; /* Spazio garantito dal fondo */
+  border-top: 1px solid rgba(255,255,255,0.1) !important;
+  min-height: 70px !important; /* Altezza minima fissa */
+  height: auto !important; /* Permette espansione */
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.1) 100%); /* Sfondo gradiente sottile */
+  flex-shrink: 0; /* Non permettere compressione */
+  overflow: visible !important; /* Mostra tutto il contenuto */
+}
+
+.sidebar-footer .user-info {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  color: white;
+  gap: 0.2rem; /* Gap molto ridotto */
+  padding: 0; /* Nessun padding aggiuntivo */
+  min-height: auto; /* Altezza automatica */
+}
+
+/* Prima riga - Nome utente */
+.user-name-row { 
+  display: flex; 
+  gap: 0.5rem; /* Spazio ridotto */
+  align-items: center;
+  min-height: 28px; /* Altezza minima ridotta */
+  flex-shrink: 0; /* Non comprimere */
+  margin-bottom: 0; /* Rimosso margin, usiamo gap nel parent */
+}
+
+.user-avatar-compact {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: white;
+  text-transform: uppercase;
+}
+
+.user-name { 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  white-space: nowrap; 
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Seconda riga - Solo badge centrato */
+.user-controls-row { 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  min-height: 26px; /* Altezza minima ridotta */
+  flex-shrink: 0; /* Non comprimere */
+  margin-top: 0.25rem; /* Spazio ridotto sopra */
+  margin-bottom: 0; /* Nessun margine inferiore */
+  padding: 0;
+  width: 100% !important; /* Occupa tutta la larghezza */
+}
+
+.user-controls-row .badge {
+  background: linear-gradient(135deg, #0d6efd 0%, #0056d3 100%);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(13, 110, 253, 0.3);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  display: flex !important; /* Cambiato da inline-flex a flex */
+  align-items: center;
+  gap: 0.25rem;
+  line-height: 1;
+  width: 100% !important; /* Badge occupa tutta la larghezza */
+  flex-grow: 1 !important; /* Si espande per riempire lo spazio */
+  justify-content: center !important; /* Centra il contenuto */
+}
+
+/* Padding aggiuntivo per il testo del badge */
+.user-controls-row .badge span {
+  padding-left: 5px;
+}
+
+.user-controls-row .badge i {
+  font-size: 0.75rem;
+}
+
+/* Badge per ruoli diversi */
+.user-controls-row .badge.role-utente {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+.user-controls-row .badge.role-utente_speciale {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+  color: #212529;
+}
+
+/* Menu trigger */
+.btn-icon.user-menu-trigger {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 0.25rem 0.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.btn-icon.user-menu-trigger:hover { 
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-icon.user-menu-trigger i {
+  font-size: 14px;
+}
+
+/* Dropdown menu styling */
+.sidebar-footer .dropdown-menu {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-footer .dropdown-item {
+  padding: 0.5rem 1rem;
+  color: #212529;
+  transition: background-color 0.15s ease;
+}
+
+.sidebar-footer .dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.sidebar-footer .dropdown-item i {
+  width: 20px;
+  margin-right: 8px;
+  color: #6c757d;
+}
+
+.sidebar-footer .dropdown-item.text-danger i {
+  color: #dc3545;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar-footer .user-info {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .user-name {
+    font-size: 0.85rem;
+  }
+  
+  .user-controls-row .badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+}

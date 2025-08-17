@@ -1,0 +1,368 @@
+/**
+ * Nexio UI Fixes 2025
+ * CSS Centralizzato per risolvere tutti i problemi UI
+ * 
+ * Questo file risolve:
+ * 1. Sidebar footer standardizzato
+ * 2. Nome utente sempre bianco nella sidebar
+ * 3. Rimozione scroll inutile dalla sidebar
+ * 4. Badge style consistente tra dashboard e calendario
+ * 5. Colori più vivaci per log-attivita
+ */
+
+/* ===========================================
+   1. SIDEBAR FOOTER STANDARDIZZATO
+   =========================================== */
+
+/* Struttura sidebar migliorata - rimuove scroll inutile */
+.sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    overflow: hidden !important; /* Previene scroll sulla sidebar stessa */
+}
+
+.sidebar-header {
+    flex: 0 0 auto !important;
+}
+
+.sidebar-menu {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important; /* Solo il menu scrolla se necessario */
+    overflow-x: hidden !important;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+
+.sidebar-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* Sidebar Footer - Standardizzato */
+.sidebar-footer {
+    flex: 0 0 auto !important;
+    padding: 1rem !important;
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    margin-top: auto !important;
+}
+
+/* ===========================================
+   2. USER NAME SEMPRE BIANCO
+   =========================================== */
+
+.sidebar-footer .user-name {
+    color: #ffffff !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    opacity: 1 !important;
+}
+
+.sidebar-footer .user-info {
+    color: #ffffff !important;
+}
+
+.sidebar-footer .user-avatar-compact {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    flex-shrink: 0 !important;
+}
+
+/* Badge in sidebar footer */
+.sidebar-footer .badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 6px 12px !important;
+    border-radius: 20px !important;
+}
+
+/* ===========================================
+   3. BADGE STYLE CONSISTENTE
+   =========================================== */
+
+/* Badge per i ruoli utente - stile unificato */
+.badge-info,
+.role-badge.role-super_admin {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4) !important;
+}
+
+.badge-success,
+.role-badge.role-utente_speciale {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4) !important;
+}
+
+.badge-warning,
+.role-badge.role-admin {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4) !important;
+}
+
+.badge-secondary,
+.role-badge.role-utente,
+.role-badge:not([class*="role-"]) {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    box-shadow: 0 2px 8px rgba(100, 116, 139, 0.4) !important;
+}
+
+/* ===========================================
+   4. LOG ATTIVITA - COLORI PIÙ VIVACI
+   =========================================== */
+
+/* Entity Type - Colori più vivaci e distintivi */
+.entity-type {
+    display: inline-block !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+.entity-type.documento {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+    color: #ffffff !important;
+}
+
+.entity-type.utente {
+    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%) !important;
+    color: #ffffff !important;
+}
+
+.entity-type.azienda {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+    color: #ffffff !important;
+}
+
+.entity-type.sistema {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+}
+
+.entity-type.cartella {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    color: #ffffff !important;
+}
+
+.entity-type.evento {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+}
+
+.entity-type.ticket {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    color: #ffffff !important;
+}
+
+/* Action Badge - Colori più vivaci e appropriati */
+.action-badge {
+    display: inline-block !important;
+    padding: 6px 16px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-transform: capitalize !important;
+    letter-spacing: 0.3px !important;
+    border: 2px solid transparent !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+.action-badge.creazione,
+.action-badge.create,
+.action-badge.insert {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    border-color: #059669 !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
+}
+
+.action-badge.modifica,
+.action-badge.update,
+.action-badge.edit {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+}
+
+.action-badge.eliminazione,
+.action-badge.delete,
+.action-badge.remove {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    color: #ffffff !important;
+    border-color: #dc2626 !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
+}
+
+.action-badge.download,
+.action-badge.export {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    color: #ffffff !important;
+    border-color: #d97706 !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+}
+
+.action-badge.login,
+.action-badge.logout,
+.action-badge.auth {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+    color: #ffffff !important;
+    border-color: #7c3aed !important;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3) !important;
+}
+
+.action-badge.view,
+.action-badge.visualizza {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+    color: #ffffff !important;
+    border-color: #0891b2 !important;
+    box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3) !important;
+}
+
+.action-badge.upload,
+.action-badge.import {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    border-color: #059669 !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* ===========================================
+   5. HOVER EFFECTS
+   =========================================== */
+
+.entity-type:hover,
+.action-badge:hover,
+.badge:hover,
+.role-badge:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* ===========================================
+   6. RESPONSIVE FIXES
+   =========================================== */
+
+@media (max-width: 768px) {
+    .sidebar {
+        overflow-y: auto !important; /* Su mobile la sidebar può scrollare */
+    }
+    
+    .sidebar-menu {
+        overflow-y: visible !important;
+    }
+    
+    .sidebar-footer {
+        position: sticky !important;
+        bottom: 0 !important;
+        background: rgba(0, 0, 0, 0.3) !important;
+    }
+}
+
+/* ===========================================
+   7. FORCED OVERRIDES (Alta specificità)
+   =========================================== */
+
+/* Forza il testo bianco nella sidebar con alta specificità */
+body .sidebar .sidebar-footer .user-name,
+body .sidebar .sidebar-footer .user-info .user-name {
+    color: #ffffff !important;
+}
+
+/* Rimuove qualsiasi overflow non necessario */
+body .sidebar:not(.mobile-active) {
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+}
+
+/* Fix per tabelle log-attivita - mantiene visibilità */
+.log-table tbody td {
+    background: #ffffff !important;
+}
+
+.log-table tbody tr:hover td {
+    background: #f8f9fa !important;
+}
+
+/* Assicura che i badge siano sempre ben visibili */
+.badge,
+.role-badge,
+.entity-type,
+.action-badge {
+    min-width: fit-content !important;
+    white-space: nowrap !important;
+}

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Test PWA Installability - Nexio</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icons/icon-192x192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #1e293b;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .test-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #2563eb;
+        }
+        
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .test-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        .status.pass {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status.fail {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .status.warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .status.loading {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .test-label {
+            flex: 1;
+        }
+        
+        .test-value {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .install-button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .install-button:hover {
+            background: #1d4ed8;
+        }
+        
+        .install-button:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+        }
+        
+        .console-log {
+            background: #1e293b;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+        }
+        
+        .log-time {
+            color: #6b7280;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 PWA Installability Test</h1>
+    
+    <div class="test-section">
+        <div class="test-title">📋 Requisiti Base</div>
+        <div id="basicTests"></div>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">📱 Manifest</div>
+        <div id="manifestTests"></div>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">🖼️ Icone</div>
+        <div id="iconTests"></div>
+    </div>
+    
+    <div class="test-section">
+        <div class="test-title">⚙️ Service Worker</div>
+        <div id="swTests"></div>
+    </div>
+    
+    <button id="installButton" class="install-button" onclick="installApp()">
+        Installa App
+    </button>
+    
+    <div class="console-log" id="console"></div>
+    
+    <script>
+        let deferredPrompt;
+        const logs = [];
+        
+        function log(message, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            logs.push({ time, message, type });
+            const consoleEl = document.getElementById('console');
+            consoleEl.innerHTML = logs.map(log => 
+                `<div class="log-entry">
+                    <span class="log-time">[${log.time}]</span>
+                    <span>${log.message}</span>
+                </div>`
+            ).join('');
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+        
+        function addTest(container, label, status, value = '') {
+            const div = document.createElement('div');
+            div.className = 'test-item';
+            div.innerHTML = `
+                <div class="status ${status}">
+                    ${status === 'pass' ? '✓' : status === 'fail' ? '✗' : status === 'warning' ? '!' : '...'}
+                </div>
+                <div class="test-label">${label}</div>
+                ${value ? `<div class="test-value">${value}</div>` : ''}
+            `;
+            document.getElementById(container).appendChild(div);
+        }
+        
+        async function runTests() {
+            log('Avvio test PWA...');
+            
+            // Test Base
+            const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+            addTest('basicTests', 'HTTPS o localhost', isSecure ? 'pass' : 'fail', location.protocol + '//' + location.hostname);
+            
+            // Test Manifest
+            try {
+                const manifestLink = document.querySelector('link[rel="manifest"]');
+                addTest('manifestTests', 'Link manifest presente', manifestLink ? 'pass' : 'fail', manifestLink?.href || 'Non trovato');
+                
+                if (manifestLink) {
+                    const response = await fetch(manifestLink.href);
+                    const manifest = await response.json();
+                    
+                    addTest('manifestTests', 'Manifest valido', 'pass', 'JSON parseable');
+                    addTest('manifestTests', 'name', manifest.name ? 'pass' : 'fail', manifest.name || 'Mancante');
+                    addTest('manifestTests', 'short_name', manifest.short_name ? 'pass' : 'fail', manifest.short_name || 'Mancante');
+                    addTest('manifestTests', 'start_url', manifest.start_url ? 'pass' : 'fail', manifest.start_url || 'Mancante');
+                    addTest('manifestTests', 'display', manifest.display === 'standalone' || manifest.display === 'fullscreen' ? 'pass' : 'warning', manifest.display || 'Mancante');
+                    addTest('manifestTests', 'theme_color', manifest.theme_color ? 'pass' : 'warning', manifest.theme_color || 'Mancante');
+                    addTest('manifestTests', 'background_color', manifest.background_color ? 'pass' : 'warning', manifest.background_color || 'Mancante');
+                    
+                    // Test Icone
+                    if (manifest.icons && manifest.icons.length > 0) {
+                        addTest('iconTests', 'Icone presenti', 'pass', `${manifest.icons.length} icone`);
+                        
+                        const has192 = manifest.icons.some(icon => icon.sizes?.includes('192'));
+                        const has512 = manifest.icons.some(icon => icon.sizes?.includes('512'));
+                        const hasPng = manifest.icons.some(icon => icon.type === 'image/png');
+                        const hasMaskable = manifest.icons.some(icon => icon.purpose?.includes('maskable'));
+                        
+                        addTest('iconTests', 'Icona 192x192', has192 ? 'pass' : 'fail');
+                        addTest('iconTests', 'Icona 512x512', has512 ? 'pass' : 'fail');
+                        addTest('iconTests', 'Formato PNG', hasPng ? 'pass' : 'fail');
+                        addTest('iconTests', 'Icona maskable', hasMaskable ? 'pass' : 'warning');
+                        
+                        // Verifica che le icone siano accessibili
+                        for (const icon of manifest.icons.slice(0, 3)) { // Test prime 3 icone
+                            try {
+                                const iconUrl = new URL(icon.src, manifestLink.href).href;
+                                const iconResponse = await fetch(iconUrl, { method: 'HEAD' });
+                                addTest('iconTests', `${icon.sizes} accessibile`, iconResponse.ok ? 'pass' : 'fail', icon.src);
+                            } catch (e) {
+                                addTest('iconTests', `${icon.sizes} accessibile`, 'fail', 'Errore: ' + e.message);
+                            }
+                        }
+                    } else {
+                        addTest('iconTests', 'Icone presenti', 'fail', 'Nessuna icona');
+                    }
+                    
+                    log('Manifest caricato e verificato');
+                }
+            } catch (e) {
+                addTest('manifestTests', 'Errore caricamento manifest', 'fail', e.message);
+                log('Errore manifest: ' + e.message, 'error');
+            }
+            
+            // Test Service Worker
+            if ('serviceWorker' in navigator) {
+                addTest('swTests', 'API ServiceWorker disponibile', 'pass');
+                
+                try {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    if (registrations.length > 0) {
+                        addTest('swTests', 'Service Worker registrato', 'pass', registrations[0].scope);
+                        
+                        const sw = registrations[0].active || registrations[0].waiting || registrations[0].installing;
+                        if (sw) {
+                            addTest('swTests', 'Service Worker attivo', 'pass', sw.state);
+                            
+                            // Verifica offline.html
+                            try {
+                                const offlineResponse = await fetch('/piattaforma-collaborativa/mobile/offline.html', { method: 'HEAD' });
+                                addTest('swTests', 'Pagina offline disponibile', offlineResponse.ok ? 'pass' : 'fail');
+                            } catch (e) {
+                                addTest('swTests', 'Pagina offline disponibile', 'fail');
+                            }
+                        } else {
+                            addTest('swTests', 'Service Worker attivo', 'warning', 'In installazione');
+                        }
+                    } else {
+                        addTest('swTests', 'Service Worker registrato', 'fail', 'Non registrato');
+                        
+                        // Prova a registrare
+                        log('Tentativo registrazione Service Worker...');
+                        try {
+                            const reg = await navigator.serviceWorker.register('sw.js');
+                            addTest('swTests', 'Registrazione SW', 'pass', 'Registrato ora');
+                            log('Service Worker registrato con successo');
+                        } catch (e) {
+                            addTest('swTests', 'Registrazione SW', 'fail', e.message);
+                            log('Errore registrazione SW: ' + e.message, 'error');
+                        }
+                    }
+                } catch (e) {
+                    addTest('swTests', 'Errore Service Worker', 'fail', e.message);
+                    log('Errore SW: ' + e.message, 'error');
+                }
+            } else {
+                addTest('swTests', 'API ServiceWorker disponibile', 'fail');
+            }
+            
+            log('Test completati');
+        }
+        
+        // Install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installButton').style.display = 'block';
+            log('App installabile! Pulsante install abilitato', 'success');
+            
+            // Mostra criterio soddisfatto
+            const div = document.createElement('div');
+            div.className = 'test-section';
+            div.style.background = '#10b981';
+            div.style.color = 'white';
+            div.innerHTML = '<div class="test-title">✅ APP INSTALLABILE!</div>';
+            document.body.insertBefore(div, document.querySelector('.console-log'));
+        });
+        
+        window.addEventListener('appinstalled', () => {
+            log('App installata con successo!', 'success');
+            document.getElementById('installButton').style.display = 'none';
+        });
+        
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        log('Utente ha accettato l\'installazione', 'success');
+                    } else {
+                        log('Utente ha rifiutato l\'installazione', 'warning');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+        
+        // Run tests on load
+        window.addEventListener('load', () => {
+            runTests();
+        });
+    </script>
+</body>
+</html>

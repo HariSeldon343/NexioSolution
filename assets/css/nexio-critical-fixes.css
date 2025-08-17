@@ -69,6 +69,16 @@ span[class*="badge"] {
     color: white !important;
 }
 
+/* Ensure flex badges shrink to content width */
+.badge.d-flex {
+    display: inline-flex !important;
+    width: auto !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+}
+.badge.d-flex i { flex: 0 0 auto !important; }
+.badge.d-flex span { flex: 0 1 auto !important; }
+
 /* 2. USER INFO SIDEBAR - LAYOUT OTTIMIZZATO */
 .sidebar-footer {
     padding: 1rem !important;
@@ -157,7 +167,7 @@ span[class*="badge"] {
     align-items: center !important;
     justify-content: center !important;
     border-radius: 8px !important;
-    transition: all 0.2s ease !important;
+    transition: none !important;
     cursor: pointer !important;
 }
 
@@ -196,14 +206,14 @@ span[class*="badge"] {
     display: flex !important;
     align-items: center !important;
     gap: 0.625rem !important;
-    transition: all 0.15s ease !important;
+    transition: none !important;
     font-weight: 500 !important;
 }
 
 .sidebar-footer .dropdown-item:hover {
     background: #f3f4f6 !important;
     color: #111827 !important;
-    transform: translateX(2px) !important;
+    transform: none !important;
 }
 
 .sidebar-footer .dropdown-item.text-danger {
@@ -293,9 +303,9 @@ span[class*="badge"] {
 .sidebar-logo .logo-wrapper {
     width: 56px !important;
     height: 56px !important;
-    background: white !important;
+    background: transparent !important;
     border-radius: 12px !important;
-    padding: 8px !important;
+    padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -304,7 +314,7 @@ span[class*="badge"] {
 .sidebar-logo .logo-wrapper img {
     width: 100% !important;
     height: 100% !important;
-    filter: none !important;
+    filter: brightness(0) invert(1) !important;
 }
 
 /* Testo NEXIO e motto */
@@ -429,5 +439,5 @@ span[class*="badge"] {
 }
 
 .sidebar-footer .dropdown-menu.show {
-    animation: slideIn 0.2s ease !important;
+    animation: none !important;
 }

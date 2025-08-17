@@ -51,101 +51,118 @@ if (session_status() === PHP_SESSION_NONE) {
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ini_set('log_errors', 1);
-// Verifica che BASE_PATH sia definita prima di usarla
-if (defined('BASE_PATH')) {
-    ini_set('error_log', BASE_PATH . '/logs/error.log');
-} else {
-    ini_set('error_log', dirname(dirname(__DIR__)) . '/logs/error.log');
-}
-
-// Carica configurazione database
-require_once __DIR__ . '/database.php';
+ini_set('error_log', ROOT_PATH . '/logs/error.log');
 
 // Autoloader
 spl_autoload_register(function ($class) {
-    $basePath = defined('BASE_PATH') ? BASE_PATH : dirname(dirname(__DIR__));
     $paths = [
-        $basePath . '/backend/models/' . $class . '.php',
-        $basePath . '/backend/controllers/' . $class . '.php',
-        $basePath . '/backend/middleware/' . $class . '.php',
-        $basePath . '/backend/utils/' . $class . '.php'
+        ROOT_PATH . '/backend/models/',
+        ROOT_PATH . '/backend/utils/',
+        ROOT_PATH . '/backend/middleware/',
+        ROOT_PATH . '/backend/services/'
     ];
     
     foreach ($paths as $path) {
-        if (file_exists($path)) {
-            require_once $path;
+        $file = $path . $class . '.php';
+        if (file_exists($file)) {
+            require_once $file;
             return;
         }
     }
 });
 
-// Funzione wrapper per compatibilità
-function db_connection() {
-    global $pdo;
+// Database connection function
+function db_connect() {
+    static $pdo = null;
+    
+    if ($pdo === null) {
+        try {
+            $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
+            $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+            ]);
+        } catch (PDOException $e) {
+            error_log("Database connection failed: " . $e->getMessage());
+            die("Errore di connessione al database");
+        }
+    }
+    
     return $pdo;
 }
 
-// Funzioni helper
-function redirect($path) {
-    header('Location: ' . $path);
-    exit;
+// Alias for backward compatibility
+function db_connection() {
+    return db_connect();
 }
 
-function get_client_ip() {
-    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-        return $_SERVER['HTTP_CLIENT_IP'];
-    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        return $_SERVER['HTTP_X_FORWARDED_FOR'];
-    } else {
-        return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-    }
+// Query helper function
+function db_query($sql, $params = []) {
+    $pdo = db_connect();
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return $stmt;
 }
 
-function format_datetime($datetime) {
-    if (empty($datetime)) {
-        return '-';
+// Insert helper function
+function db_insert($table, $data) {
+    $columns = array_keys($data);
+    $placeholders = array_map(function($col) { return ":$col"; }, $columns);
+    
+    $sql = "INSERT INTO $table (" . implode(", ", $columns) . ") VALUES (" . implode(", ", $placeholders) . ")";
+    
+    $stmt = db_query($sql, $data);
+    return db_connect()->lastInsertId();
+}
+
+// Update helper function
+function db_update($table, $data, $where, $whereParams = []) {
+    $setParts = [];
+    $params = [];
+    
+    foreach ($data as $key => $value) {
+        $setParts[] = "$key = :set_$key";
+        $params["set_$key"] = $value;
     }
     
-    try {
-        $date = new DateTime($datetime);
-        return $date->format('d/m/Y H:i');
-    } catch (Exception $e) {
-        return '-';
-    }
-}
-
-function format_date($date) {
-    if (empty($date)) {
-        return '-';
+    // Add where parameters with prefixes to avoid conflicts
+    $whereIndex = 0;
+    foreach ($whereParams as $value) {
+        $params["where_$whereIndex"] = $value;
+        $whereIndex++;
     }
     
-    try {
-        $dateObj = new DateTime($date);
-        return $dateObj->format('d/m/Y');
-    } catch (Exception $e) {
-        return '-';
-    }
-}
-
-function isLoggedIn() {
-    return isset($_SESSION['user_id']);
-}
-
-/**
- * Sanitizza input utente
- */
-function sanitize_input($input) {
-    return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
-}
-
-/**
- * Genera password casuale
- */
-function generateRandomPassword($length = 8) {
-    // Assicura almeno 8 caratteri
-    if ($length < 8) $length = 8;
+    // Replace ? with named parameters in where clause
+    $whereIndex = 0;
+    $where = preg_replace_callback('/\?/', function() use (&$whereIndex) {
+        return ":where_" . ($whereIndex++);
+    }, $where);
     
-    // Gruppi di caratteri
+    $sql = "UPDATE $table SET " . implode(", ", $setParts) . " WHERE $where";
+    
+    $stmt = db_query($sql, $params);
+    return $stmt->rowCount();
+}
+
+// Helper JSON response function
+function json_response($data) {
+    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+
+// Include Auth middleware
+if (file_exists(ROOT_PATH . '/backend/middleware/Auth.php')) {
+    require_once ROOT_PATH . '/backend/middleware/Auth.php';
+}
+
+// Include Database compatibility class
+if (file_exists(__DIR__ . '/database-compat.php')) {
+    require_once __DIR__ . '/database-compat.php';
+}
+
+// Funzione per generare password
+function generate_secure_password($length = 12) {
     $lowercase = 'abcdefghijklmnopqrstuvwxyz';
     $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     $numbers = '0123456789';

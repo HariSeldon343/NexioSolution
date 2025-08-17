@@ -1,0 +1,79 @@
+/**
+ * SCROLL FIX EMERGENCY - PULITO
+ * Versione pulita senza forzature eccessive
+ * Aggiornato: 2025-08-12
+ */
+
+/* Reset altezze - solo min-height, nessun height fisso */
+html {
+    min-height: 100%;
+    overflow-x: hidden;
+    /* overflow-y auto per permettere scroll naturale */
+}
+
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    /* Nessuna position fissa o overflow-y forzato */
+}
+
+/* Main content deve poter crescere naturalmente */
+.main-content,
+.content,
+.page-content {
+    min-height: calc(100vh - 40px); /* Considera padding */
+    /* Nessun height o overflow forzato */
+}
+
+/* Container Bootstrap - non forzare altezze */
+.container,
+.container-fluid {
+    /* Lascia comportamento Bootstrap di default */
+}
+
+/* Wrapper con altezza minima ma non forzata */
+.app-container,
+.wrapper,
+.content-wrapper,
+.page-wrapper {
+    min-height: 100vh;
+    /* Nessun overflow o height forzato */
+}
+
+/* Sidebar resta fissa ma scrollabile internamente */
+.sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    overflow-y: auto !important; /* Scroll interno sidebar */
+    overflow-x: hidden !important;
+}
+
+/* Assicura che le tabelle e card possano espandersi */
+.table-responsive,
+.card,
+.card-body {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    max-height: none !important;
+    height: auto !important;
+}
+
+/* Fix per modali che potrebbero bloccare scroll */
+.modal-open {
+    overflow-y: auto !important;
+    padding-right: 0 !important;
+}
+
+/* Non forzare overflow su elementi Bootstrap */
+/* Rimosso - lascia comportamento di default */
+
+/* Rimosso - non più necessario */
+
+/* Scroll behavior smooth per UX migliore */
+@media screen {
+    html {
+        scroll-behavior: smooth;
+    }
+}

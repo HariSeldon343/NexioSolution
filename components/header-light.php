@@ -25,6 +25,9 @@
     <!-- BUTTON WHITE TEXT FIX - Forces white text on all primary buttons - Added 2025-08-11 -->
     <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/nexio-button-white-text.css?v=<?php echo time(); ?>">
     
+    <!-- Priority Overrides (load last) -->
+    <link rel="stylesheet" href="<?php echo APP_PATH; ?>/assets/css/nexio-priority-override.css?v=<?php echo time(); ?>">
+    
     <!-- Script per mobile menu -->
     <script>
         function toggleMobileMenu() {

@@ -1,0 +1,82 @@
+/* REMOVE CONFLICTS - Rimuove tutti i possibili conflitti con altri CSS */
+
+/* Disabilita completamente app-layout-fix.css che potrebbe bloccare lo scroll */
+.app-container {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* Override di scroll-final-solution.css se causa problemi */
+html, body {
+  overflow-y: auto !important;
+  height: auto !important;
+  min-height: 100% !important;
+}
+
+/* Rimuovi qualsiasi position: fixed dal main content */
+.main-content,
+.content-wrapper,
+.page-content,
+.page-body {
+  position: relative !important;
+  overflow: visible !important;
+  height: auto !important;
+}
+
+/* Assicura che nessun container abbia overflow: hidden */
+.container,
+.container-fluid,
+.row,
+.col,
+[class*="col-"] {
+  overflow: visible !important;
+}
+
+/* Rimuovi eventuali height: 100vh dai container principali */
+.dashboard-container,
+.filesystem-container,
+.file-explorer,
+.content {
+  height: auto !important;
+  min-height: auto !important;
+  overflow: visible !important;
+}
+
+/* Fix per le card che potrebbero limitare il contenuto */
+.card {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.card-body {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Assicura che le tabelle siano scrollabili orizzontalmente ma non verticalmente */
+.table-responsive {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  max-height: none !important;
+}
+
+/* Override di qualsiasi max-height globale */
+* {
+  max-height: none !important;
+}
+
+/* Eccezioni solo per elementi che DEVONO avere limiti */
+.dropdown-menu {
+  max-height: 400px !important;
+  overflow-y: auto !important;
+}
+
+.modal-body {
+  max-height: 70vh !important;
+  overflow-y: auto !important;
+}
+
+.sidebar {
+  max-height: 100vh !important;
+}

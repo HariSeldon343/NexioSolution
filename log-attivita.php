@@ -482,7 +482,7 @@ require_once 'components/header.php';
             <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
                 <i class="fas fa-trash"></i> Elimina Log
             </button>
-            <small style="margin-left: 10px; color: #666; display: inline-block;">
+            <small >
                 <i class="fas fa-info-circle"></i> I log di eliminazione non possono essere cancellati
             </small>
             <?php endif; ?>
@@ -506,9 +506,9 @@ require_once 'components/header.php';
                     <th>Utente</th>
                     <th>Tipo</th>
                     <th>Azione</th>
-                    <th style="max-width: 300px;">Dettagli</th>
+                    <th >Dettagli</th>
                     <?php if ($auth->isSuperAdmin() && !$currentAzienda): ?>
-                        <th style="min-width: 120px;">Azienda</th>
+                        <th >Azienda</th>
                     <?php endif; ?>
                 </tr>
             </thead>
@@ -626,7 +626,7 @@ require_once 'components/header.php';
 <div id="deleteModal" class="modal" style="display:none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h2><i class="fas fa-exclamation-triangle" style="color: #dc2626;"></i> Elimina Log Attività</h2>
+            <h2><i class="fas fa-exclamation-triangle" ></i> Elimina Log Attività</h2>
             <button type="button" class="close-modal" onclick="closeDeleteModal()">×</button>
         </div>
         
@@ -639,7 +639,7 @@ require_once 'components/header.php';
                     <strong>ATTENZIONE:</strong> Questa operazione è irreversibile!
                 </div>
                 
-                <div style="background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; padding: 12px; margin-top: 10px; color: #1565c0;">
+                <div >
                     <i class="fas fa-info-circle"></i>
                     <strong>Nota:</strong> I log protetti (marcati come non eliminabili) e i log delle eliminazioni precedenti vengono sempre conservati per motivi di sicurezza e audit.
                 </div>

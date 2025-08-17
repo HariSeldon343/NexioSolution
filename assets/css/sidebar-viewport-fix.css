@@ -1,0 +1,101 @@
+/* Fix per evitare che la sidebar vada oltre la viewport */
+
+.sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important; /* Esattamente l'altezza della viewport */
+    max-height: 100vh !important; /* Mai più alta della viewport */
+    overflow-y: auto !important; /* Scroll se necessario */
+    overflow-x: hidden !important; /* Nessun scroll orizzontale */
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Assicura che il menu sia scrollabile */
+.sidebar-menu {
+    flex: 1 1 auto !important; /* Occupa lo spazio disponibile */
+    overflow-y: auto !important; /* Scroll indipendente */
+    overflow-x: hidden !important;
+    min-height: 0 !important; /* Importante per flexbox */
+}
+
+/* Footer sempre visibile in fondo */
+.sidebar-footer {
+    flex: 0 0 auto !important; /* Non si espande né si comprime */
+    margin-top: auto !important;
+    padding: 0.5rem 0.75rem !important; /* Padding uniforme */
+    padding-bottom: 15px !important; /* Più spazio dal fondo */
+    max-height: 95px !important; /* Altezza massima ridotta */
+    overflow: visible !important; /* Permetti visibilità completa */
+    margin-bottom: 0 !important; /* Nessun margine inferiore */
+}
+
+/* Rimuovi margin bottom dalla seconda riga */
+.user-controls-row {
+    margin-bottom: 0 !important; /* Rimuovi margine inferiore */
+    padding-bottom: 5px !important; /* Usa padding invece */
+}
+
+/* Badge con limiti di dimensione */
+.user-controls-row .badge {
+    max-width: 90% !important; /* Non oltre il 90% della larghezza */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Reset di eventuali padding/margin aggiunti da Bootstrap */
+.sidebar-footer .user-info.p-2 {
+    padding: 0.25rem 0 !important;
+}
+
+/* Assicura che nulla vada oltre i bordi */
+.sidebar * {
+    box-sizing: border-box !important;
+}
+
+/* Sidebar viewport fix: full height and non-clipping on desktop */
+.sidebar {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.sidebar-menu {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+.sidebar-footer {
+  position: sticky !important;
+  bottom: 0 !important;
+}
+@media (max-width: 768px) {
+  .sidebar { height: auto !important; max-height: none !important; }
+  .sidebar-menu { max-height: none !important; }
+}
+
+/* Media query per schermi piccoli */
+@media (max-height: 768px) {
+    .sidebar-footer {
+        padding: 0.25rem 0.5rem !important;
+        padding-bottom: 5px !important;
+    }
+    
+    .user-controls-row .badge {
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    .user-avatar-compact {
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        font-size: 0.7rem !important;
+    }
+    
+    .user-name {
+        font-size: 0.85rem !important;
+    }
+}

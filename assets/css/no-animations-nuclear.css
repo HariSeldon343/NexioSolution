@@ -1,0 +1,187 @@
+/**
+ * NO ANIMATIONS NUCLEAR CSS
+ * Disabilita COMPLETAMENTE tutte le animazioni e transizioni
+ * MASSIMA PRIORITÀ - Deve essere caricato per ultimo
+ * Created: 2025-08-12
+ */
+
+/* NUCLEAR OPTION - Disabilita TUTTO */
+*, *::before, *::after,
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video,
+button, input, select, textarea,
+.btn, .card, .sidebar, .menu-item,
+.sidebar *, .menu-item *, .dropdown-menu *,
+.modal, .modal-dialog, .modal-content,
+.alert, .toast, .collapse, .accordion,
+.nav, .nav-item, .nav-link, .tab-pane,
+.form-control, .form-select, .form-check,
+.badge, .progress, .spinner,
+[class*="col-"], [class*="row"],
+[class*="animate"], [class*="transition"],
+[class*="transform"], [class*="fade"] {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+}
+
+/* Rimuovi TUTTE le animazioni CSS */
+@keyframes * {
+    from, to { 
+        transition: none !important;
+        animation: none !important;
+        transform: none !important;
+    }
+}
+
+/* Disabilita completamente transform su hover/focus/active */
+*:hover, *:focus, *:active,
+*:focus-visible, *:focus-within,
+.btn:hover, .btn:focus, .btn:active,
+.menu-item:hover, .menu-item:focus,
+.sidebar:hover, .sidebar *:hover,
+.dropdown-menu:hover, .dropdown-toggle:hover,
+button:hover, button:focus, button:active,
+a:hover, a:focus, a:active,
+input:hover, input:focus, input:active,
+select:hover, select:focus, select:active,
+textarea:hover, textarea:focus, textarea:active {
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Permetti SOLO opacity e visibility per transizioni essenziali */
+.modal.show,
+.dropdown-menu.show,
+.collapse.show,
+.toast.show {
+    transition-property: opacity, visibility !important;
+    transition-duration: 0.1s !important;
+    transition-delay: 0s !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Disabilita animazioni Bootstrap */
+.fade {
+    transition: none !important;
+}
+
+.collapsing {
+    transition: none !important;
+    animation: none !important;
+}
+
+.carousel-item {
+    transition: none !important;
+}
+
+/* Disabilita animazioni custom Nexio */
+.nexio-transition,
+.nexio-animation,
+.nexio-transform,
+[class*="nexio-animate"] {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Fix per sidebar - nessuna animazione */
+.sidebar,
+.sidebar.collapsed,
+.sidebar.active,
+.sidebar-menu,
+.sidebar-footer,
+.sidebar * {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Fix per bottoni - nessuna animazione */
+.btn,
+button,
+[type="button"],
+[type="submit"],
+[type="reset"] {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Previeni l'effetto zoom durante il caricamento */
+body {
+    transform: scale(1) !important;
+    zoom: 1 !important;
+    transition: none !important;
+    animation: none !important;
+}
+
+html {
+    scroll-behavior: auto !important;
+}
+
+/* Disabilita animazioni nei modali */
+.modal,
+.modal-backdrop,
+.modal-dialog,
+.modal-content {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Disabilita animazioni nei dropdown */
+.dropdown-menu,
+.dropdown-toggle,
+.dropdown-item {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+/* Override per pseudo-elementi */
+*::before,
+*::after {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+/* IMPORTANTE: Override finale con !important su tutto */
+* {
+    -webkit-transition: none !important;
+    -moz-transition: none !important;
+    -o-transition: none !important;
+    -ms-transition: none !important;
+    transition: none !important;
+    
+    -webkit-animation: none !important;
+    -moz-animation: none !important;
+    -o-animation: none !important;
+    -ms-animation: none !important;
+    animation: none !important;
+    
+    -webkit-transform: none !important;
+    -moz-transform: none !important;
+    -o-transform: none !important;
+    -ms-transform: none !important;
+    transform: none !important;
+}

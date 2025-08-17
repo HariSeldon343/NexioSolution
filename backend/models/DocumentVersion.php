@@ -1,475 +1,250 @@
 <?php
-namespace Nexio\Models;
-
-use PDO;
-use Exception;
-use Nexio\Utils\Database;
-use Nexio\Utils\ActivityLogger;
-
 /**
- * Modello per gestione avanzata del versionamento documenti
- * Include workflow, metadati ISO e gestione revisioni
+ * Modello per gestione versioni documenti
+ * Integrato con TinyMCE Editor e sistema di versionamento
  */
+
+require_once __DIR__ . '/../config/config.php';
+
 class DocumentVersion {
-    private static $instance = null;
     private $db;
-    private $logger;
-    private $uploadPath;
     
-    private function __construct() {
-        $this->db = Database::getInstance();
-        $this->logger = ActivityLogger::getInstance();
-        $this->uploadPath = __DIR__ . '/../../uploads/documenti/';
-    }
-    
-    public static function getInstance() {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+    public function __construct() {
+        $this->db = db_connection();
     }
     
     /**
-     * Crea nuovo documento con prima versione
+     * Crea una nuova versione del documento
      */
-    public function createDocument($data, $fileData = null) {
+    public function addVersion($documentId, $contentHtml, $filePath = null, $userId = null, $userName = null, $isMajor = false, $notes = '') {
         try {
-            $this->db->beginTransaction();
+            // Ottieni il numero di versione successivo
+            $stmt = db_query(
+                "SELECT MAX(version_number) as max_version FROM document_versions WHERE document_id = ?",
+                [$documentId]
+            );
+            $result = $stmt->fetch();
+            $newVersionNumber = ($result['max_version'] ?? 0) + 1;
             
-            // Validazione base
-            if (empty($data['nome']) || empty($data['id_cartella'])) {
-                throw new Exception('Dati documento mancanti');
-            }
+            // Disattiva versione corrente precedente
+            db_query(
+                "UPDATE document_versions SET is_current = 0 WHERE document_id = ? AND is_current = 1",
+                [$documentId]
+            );
             
-            // Verifica unicità nome nella cartella
-            $check = $this->db->prepare("
-                SELECT COUNT(*) FROM documenti 
-                WHERE id_cartella = ? AND nome = ? AND eliminato = 0
-            ");
-            $check->execute([$data['id_cartella'], $data['nome']]);
+            // Genera ID univoco per la versione
+            $versionId = 'ver_' . uniqid() . '_' . time();
             
-            if ($check->fetchColumn() > 0) {
-                throw new Exception('Esiste già un documento con questo nome nella cartella');
-            }
+            // Calcola hash del contenuto per deduplicazione
+            $hashFile = sha1($contentHtml);
             
-            // Crea documento
-            $stmt = $this->db->prepare("
-                INSERT INTO documenti (
-                    id_cartella, nome, descrizione, tipo_documento,
-                    dimensione_file, creato_da
-                ) VALUES (?, ?, ?, ?, ?, ?)
-            ");
-            
-            $stmt->execute([
-                $data['id_cartella'],
-                $data['nome'],
-                $data['descrizione'] ?? null,
-                $data['tipo_documento'] ?? 'documento',
-                $fileData['size'] ?? 0,
-                $data['creato_da']
-            ]);
-            
-            $documentoId = $this->db->lastInsertId();
-            
-            // Crea metadati ISO se necessario
-            if (!empty($data['metadati_iso'])) {
-                $this->createISOMetadata($documentoId, $data['metadati_iso']);
-            }
-            
-            // Se c'è un file, crea prima versione
-            if ($fileData) {
-                $versionData = [
-                    'id_documento' => $documentoId,
-                    'numero_versione' => '1.0',
-                    'file_data' => $fileData,
-                    'note_versione' => 'Versione iniziale',
-                    'stato_workflow' => $data['stato_workflow'] ?? 'bozza',
-                    'caricato_da' => $data['creato_da']
-                ];
-                
-                if (!empty($data['responsabile_revisione'])) {
-                    $versionData['responsabile_revisione'] = $data['responsabile_revisione'];
-                }
-                
-                $this->addVersion($versionData);
-            }
-            
-            // Log attività
-            $this->logger->log('documento_creato', 'documenti', $documentoId, [
-                'nome' => $data['nome'],
-                'cartella' => $data['id_cartella']
-            ]);
-            
-            $this->db->commit();
-            return $documentoId;
-            
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
-    }
-    
-    /**
-     * Crea metadati ISO per documento
-     */
-    private function createISOMetadata($documentoId, $metadati) {
-        // Genera codice documento se non fornito
-        if (empty($metadati['codice_documento'])) {
-            $metadati['codice_documento'] = $this->generateDocumentCode($documentoId, $metadati);
-        }
-        
-        // Calcola prossima revisione
-        if (!empty($metadati['frequenza_revisione'])) {
-            $metadati['prossima_revisione'] = date('Y-m-d', strtotime("+{$metadati['frequenza_revisione']} days"));
-        }
-        
-        $stmt = $this->db->prepare("
-            INSERT INTO documenti_metadati_iso (
-                id_documento, codice_documento, tipo_documento,
-                livello_distribuzione, responsabile_documento,
-                frequenza_revisione, ultima_revisione, prossima_revisione,
-                riferimenti_normativi, parole_chiave, processo_correlato
-            ) VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?, ?, ?, ?)
-        ");
-        
-        $stmt->execute([
-            $documentoId,
-            $metadati['codice_documento'],
-            $metadati['tipo_documento'],
-            $metadati['livello_distribuzione'] ?? 'interno',
-            $metadati['responsabile_documento'] ?? null,
-            $metadati['frequenza_revisione'] ?? null,
-            $metadati['prossima_revisione'] ?? null,
-            $metadati['riferimenti_normativi'] ?? null,
-            $metadati['parole_chiave'] ?? null,
-            $metadati['processo_correlato'] ?? null
-        ]);
-    }
-    
-    /**
-     * Genera codice documento univoco
-     */
-    private function generateDocumentCode($documentoId, $metadati) {
-        $prefix = '';
-        
-        // Prefisso basato su tipo documento
-        switch ($metadati['tipo_documento']) {
-            case 'procedura':
-                $prefix = 'PRO';
-                break;
-            case 'modulo':
-                $prefix = 'MOD';
-                break;
-            case 'manuale':
-                $prefix = 'MAN';
-                break;
-            case 'politica':
-                $prefix = 'POL';
-                break;
-            case 'registrazione':
-                $prefix = 'REG';
-                break;
-            default:
-                $prefix = 'DOC';
-        }
-        
-        // Aggiungi anno e numero progressivo
-        $year = date('Y');
-        $code = sprintf('%s-%s-%04d', $prefix, $year, $documentoId);
-        
-        return $code;
-    }
-    
-    /**
-     * Aggiunge nuova versione a documento esistente
-     */
-    public function addVersion($data) {
-        try {
-            $this->db->beginTransaction();
-            
-            // Gestisci upload file
-            $filePath = null;
-            $fileHash = null;
-            $fileSize = 0;
-            
-            if (!empty($data['file_data'])) {
-                $fileInfo = $this->handleFileUpload($data['file_data'], $data['id_documento']);
-                $filePath = $fileInfo['path'];
-                $fileHash = $fileInfo['hash'];
-                $fileSize = $fileInfo['size'];
-            }
-            
-            // Inserisci versione
-            $stmt = $this->db->prepare("
-                INSERT INTO documenti_versioni_extended (
-                    id_documento, numero_versione, file_path, dimensione_file,
-                    hash_file, responsabile_revisione, data_revisione,
-                    prossima_revisione, stato_workflow, approvato_da,
-                    data_approvazione, note_versione, metadati, caricato_da
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ");
-            
-            $stmt->execute([
-                $data['id_documento'],
-                $data['numero_versione'],
-                $filePath,
-                $fileSize,
-                $fileHash,
-                $data['responsabile_revisione'] ?? null,
-                $data['data_revisione'] ?? date('Y-m-d'),
-                $data['prossima_revisione'] ?? null,
-                $data['stato_workflow'] ?? 'bozza',
-                $data['approvato_da'] ?? null,
-                $data['data_approvazione'] ?? null,
-                $data['note_versione'] ?? null,
-                isset($data['metadati']) ? json_encode($data['metadati']) : null,
-                $data['caricato_da']
-            ]);
-            
-            $versioneId = $this->db->lastInsertId();
+            // Inserisci nuova versione
+            $stmt = db_query(
+                "INSERT INTO document_versions 
+                 (id, document_id, version_number, contenuto_html, file_path, 
+                  created_by, created_by_name, created_at, is_major, notes, 
+                  is_current, hash_file, file_size) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, 1, ?, ?)",
+                [
+                    $versionId,
+                    $documentId,
+                    $newVersionNumber,
+                    $contentHtml,
+                    $filePath,
+                    $userId,
+                    $userName,
+                    $isMajor ? 1 : 0,
+                    $notes,
+                    $hashFile,
+                    strlen($contentHtml)
+                ]
+            );
             
             // Aggiorna documento principale
-            $stmt = $this->db->prepare("
-                UPDATE documenti 
-                SET ultima_modifica = NOW(), dimensione_file = ?
-                WHERE id = ?
-            ");
-            $stmt->execute([$fileSize, $data['id_documento']]);
+            db_query(
+                "UPDATE documenti 
+                 SET contenuto_html = ?, 
+                     data_modifica = NOW(), 
+                     modificato_da = ?,
+                     current_version_id = ?
+                 WHERE id = ?",
+                [$contentHtml, $userId, $versionId, $documentId]
+            );
             
-            // Aggiorna metadati ISO se necessario
-            if ($data['stato_workflow'] === 'approvato' && !empty($data['prossima_revisione'])) {
-                $stmt = $this->db->prepare("
-                    UPDATE documenti_metadati_iso 
-                    SET ultima_revisione = CURDATE(), prossima_revisione = ?
-                    WHERE id_documento = ?
-                ");
-                $stmt->execute([$data['prossima_revisione'], $data['id_documento']]);
-            }
-            
-            // Log attività
-            $this->logger->log('versione_aggiunta', 'documenti_versioni_extended', $versioneId, [
-                'documento' => $data['id_documento'],
-                'versione' => $data['numero_versione'],
-                'stato' => $data['stato_workflow']
-            ]);
-            
-            $this->db->commit();
-            return $versioneId;
+            return [
+                'id' => $versionId,
+                'version_number' => $newVersionNumber,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
             
         } catch (Exception $e) {
-            $this->db->rollBack();
+            error_log("Errore creazione versione: " . $e->getMessage());
             throw $e;
         }
     }
     
     /**
-     * Gestisce upload file
+     * Ottieni lista versioni di un documento
      */
-    private function handleFileUpload($fileData, $documentoId) {
-        // Crea directory se non esiste
-        $uploadDir = $this->uploadPath . date('Y/m/');
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-        
-        // Genera nome file univoco
-        $extension = pathinfo($fileData['name'], PATHINFO_EXTENSION);
-        $fileName = sprintf('%d_%s.%s', $documentoId, uniqid(), $extension);
-        $fullPath = $uploadDir . $fileName;
-        $relativePath = date('Y/m/') . $fileName;
-        
-        // Sposta file
-        if (!move_uploaded_file($fileData['tmp_name'], $fullPath)) {
-            throw new Exception('Errore durante il caricamento del file');
-        }
-        
-        // Calcola hash
-        $hash = hash_file('sha256', $fullPath);
-        
-        return [
-            'path' => $relativePath,
-            'hash' => $hash,
-            'size' => filesize($fullPath)
-        ];
-    }
-    
-    /**
-     * Approva versione documento
-     */
-    public function approveVersion($versioneId, $approvatoDa) {
-        try {
-            $this->db->beginTransaction();
-            
-            // Aggiorna stato versione
-            $stmt = $this->db->prepare("
-                UPDATE documenti_versioni_extended 
-                SET stato_workflow = 'approvato',
-                    approvato_da = ?,
-                    data_approvazione = NOW()
-                WHERE id = ? AND stato_workflow != 'approvato'
-            ");
-            $stmt->execute([$approvatoDa, $versioneId]);
-            
-            if ($stmt->rowCount() === 0) {
-                throw new Exception('Versione già approvata o non trovata');
-            }
-            
-            // Ottieni info versione
-            $stmt = $this->db->prepare("
-                SELECT * FROM documenti_versioni_extended WHERE id = ?
-            ");
-            $stmt->execute([$versioneId]);
-            $versione = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            // Aggiorna metadati ISO
-            if ($versione['prossima_revisione']) {
-                $stmt = $this->db->prepare("
-                    UPDATE documenti_metadati_iso 
-                    SET ultima_revisione = CURDATE(),
-                        prossima_revisione = ?
-                    WHERE id_documento = ?
-                ");
-                $stmt->execute([
-                    $versione['prossima_revisione'],
-                    $versione['id_documento']
-                ]);
-            }
-            
-            // Log attività
-            $this->logger->log('versione_approvata', 'documenti_versioni_extended', $versioneId, [
-                'documento' => $versione['id_documento'],
-                'versione' => $versione['numero_versione'],
-                'approvato_da' => $approvatoDa
-            ]);
-            
-            $this->db->commit();
-            return true;
-            
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            throw $e;
-        }
-    }
-    
-    /**
-     * Ottieni storico versioni documento
-     */
-    public function getVersionHistory($documentoId) {
-        $stmt = $this->db->prepare("
-            SELECT v.*, 
-                uc.nome AS nome_caricatore,
-                ua.nome AS nome_approvatore,
-                ur.nome AS nome_responsabile
-            FROM documenti_versioni_extended v
-            LEFT JOIN utenti uc ON v.caricato_da = uc.id
-            LEFT JOIN utenti ua ON v.approvato_da = ua.id
-            LEFT JOIN utenti ur ON v.responsabile_revisione = ur.id
-            WHERE v.id_documento = ?
-            ORDER BY v.id DESC
-        ");
-        $stmt->execute([$documentoId]);
-        
-        $versions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Decodifica metadati
-        foreach ($versions as &$version) {
-            $version['metadati'] = json_decode($version['metadati'], true) ?? [];
-            $version['dimensione_formattata'] = $this->formatFileSize($version['dimensione_file']);
-        }
-        
-        return $versions;
-    }
-    
-    /**
-     * Confronta due versioni
-     */
-    public function compareVersions($versioneId1, $versioneId2) {
-        $stmt = $this->db->prepare("
-            SELECT * FROM documenti_versioni_extended 
-            WHERE id IN (?, ?)
-        ");
-        $stmt->execute([$versioneId1, $versioneId2]);
-        
-        $versions = [];
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $versions[$row['id']] = $row;
-        }
-        
-        if (count($versions) !== 2) {
-            throw new Exception('Versioni non trovate');
-        }
-        
-        // Confronta campi principali
-        $comparison = [
-            'version_1' => $versions[$versioneId1],
-            'version_2' => $versions[$versioneId2],
-            'differences' => []
-        ];
-        
-        // Campi da confrontare
-        $fieldsToCompare = [
-            'numero_versione', 'stato_workflow', 'responsabile_revisione',
-            'data_revisione', 'prossima_revisione', 'dimensione_file', 'hash_file'
-        ];
-        
-        foreach ($fieldsToCompare as $field) {
-            if ($versions[$versioneId1][$field] !== $versions[$versioneId2][$field]) {
-                $comparison['differences'][] = [
-                    'field' => $field,
-                    'old_value' => $versions[$versioneId1][$field],
-                    'new_value' => $versions[$versioneId2][$field]
-                ];
-            }
-        }
-        
-        return $comparison;
-    }
-    
-    /**
-     * Ottieni documenti in scadenza revisione
-     */
-    public function getDocumentsNearRevision($giorni = 30, $spazioId = null) {
-        $sql = "
-            SELECT d.*, dmi.*, 
-                c.nome AS nome_cartella,
-                c.percorso_completo,
-                u.nome AS nome_responsabile,
-                s.nome AS nome_spazio
-            FROM documenti d
-            INNER JOIN documenti_metadati_iso dmi ON d.id = dmi.id_documento
-            INNER JOIN cartelle c ON d.id_cartella = c.id
-            INNER JOIN spazi_documentali s ON c.id_spazio = s.id
-            LEFT JOIN utenti u ON dmi.responsabile_documento = u.id
-            WHERE dmi.prossima_revisione IS NOT NULL
-            AND dmi.prossima_revisione <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
-            AND d.eliminato = 0
-        ";
-        
-        $params = [$giorni];
-        
-        if ($spazioId) {
-            $sql .= " AND c.id_spazio = ?";
-            $params[] = $spazioId;
-        }
-        
-        $sql .= " ORDER BY dmi.prossima_revisione";
-        
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
+    public function getVersions($documentId, $limit = 20) {
+        $stmt = db_query(
+            "SELECT v.*, u.nome as user_nome, u.cognome as user_cognome
+             FROM document_versions v
+             LEFT JOIN utenti u ON v.created_by = u.id
+             WHERE v.document_id = ?
+             ORDER BY v.version_number DESC
+             LIMIT ?",
+            [$documentId, $limit]
+        );
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
     /**
-     * Formatta dimensione file
+     * Ottieni una versione specifica
      */
-    private function formatFileSize($bytes) {
-        if ($bytes == 0) return '0 Bytes';
+    public function getVersion($versionId) {
+        $stmt = db_query(
+            "SELECT * FROM document_versions WHERE id = ?",
+            [$versionId]
+        );
         
-        $k = 1024;
-        $sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        $i = floor(log($bytes) / log($k));
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    /**
+     * Ripristina una versione precedente
+     */
+    public function restoreVersion($versionId, $userId, $userName) {
+        $version = $this->getVersion($versionId);
+        if (!$version) {
+            throw new Exception('Versione non trovata');
+        }
         
-        return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
+        // Crea nuova versione con contenuto ripristinato
+        return $this->addVersion(
+            $version['document_id'],
+            $version['contenuto_html'],
+            $version['file_path'],
+            $userId,
+            $userName,
+            true,
+            'Ripristinato dalla versione ' . $version['version_number']
+        );
+    }
+    
+    /**
+     * Confronta due versioni
+     */
+    public function compareVersions($versionId1, $versionId2) {
+        $v1 = $this->getVersion($versionId1);
+        $v2 = $this->getVersion($versionId2);
+        
+        if (!$v1 || !$v2) {
+            throw new Exception('Una o entrambe le versioni non trovate');
+        }
+        
+        // Verifica se esiste già un confronto cached
+        $stmt = db_query(
+            "SELECT * FROM document_version_comparisons 
+             WHERE (version1_id = ? AND version2_id = ?) 
+                OR (version1_id = ? AND version2_id = ?)",
+            [$versionId1, $versionId2, $versionId2, $versionId1]
+        );
+        
+        $comparison = $stmt->fetch();
+        
+        if (!$comparison) {
+            // Genera nuovo confronto
+            $diff = $this->generateDiff($v1['contenuto_html'], $v2['contenuto_html']);
+            
+            // Salva in cache
+            db_query(
+                "INSERT INTO document_version_comparisons 
+                 (id, version1_id, version2_id, diff_html, summary, created_at)
+                 VALUES (?, ?, ?, ?, ?, NOW())",
+                [
+                    uniqid('cmp_'),
+                    $versionId1,
+                    $versionId2,
+                    $diff['html'],
+                    $diff['summary']
+                ]
+            );
+            
+            return $diff;
+        }
+        
+        return [
+            'html' => $comparison['diff_html'],
+            'summary' => $comparison['summary']
+        ];
+    }
+    
+    /**
+     * Genera diff tra due contenuti HTML
+     */
+    private function generateDiff($html1, $html2) {
+        // Implementazione semplice di diff
+        // In produzione, usare una libreria come php-htmldiff
+        
+        $lines1 = explode("\n", strip_tags($html1));
+        $lines2 = explode("\n", strip_tags($html2));
+        
+        $added = count($lines2) - count($lines1);
+        $modified = 0;
+        
+        for ($i = 0; $i < min(count($lines1), count($lines2)); $i++) {
+            if ($lines1[$i] !== $lines2[$i]) {
+                $modified++;
+            }
+        }
+        
+        return [
+            'html' => '<p>Confronto non disponibile in questa versione</p>',
+            'summary' => sprintf('%d righe aggiunte, %d modificate', max(0, $added), $modified)
+        ];
+    }
+    
+    /**
+     * Pulisci versioni vecchie (mantieni solo le ultime N)
+     */
+    public function cleanOldVersions($documentId, $keepLast = 50) {
+        // Ottieni l'ID della versione da cui iniziare a eliminare
+        $stmt = db_query(
+            "SELECT id FROM document_versions 
+             WHERE document_id = ? 
+             ORDER BY version_number DESC 
+             LIMIT ?, 1000",
+            [$documentId, $keepLast]
+        );
+        
+        $versionsToDelete = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        if (!empty($versionsToDelete)) {
+            $placeholders = str_repeat('?,', count($versionsToDelete) - 1) . '?';
+            
+            // Elimina versioni vecchie (CASCADE eliminerà anche views e comparisons)
+            db_query(
+                "DELETE FROM document_versions WHERE id IN ($placeholders)",
+                $versionsToDelete
+            );
+            
+            return count($versionsToDelete);
+        }
+        
+        return 0;
+    }
+    
+    /**
+     * Registra visualizzazione versione
+     */
+    public function logView($versionId, $userId, $ipAddress = null) {
+        db_query(
+            "INSERT INTO document_version_views (id, version_id, user_id, ip_address, viewed_at)
+             VALUES (?, ?, ?, ?, NOW())",
+            [uniqid('view_'), $versionId, $userId, $ipAddress ?? $_SERVER['REMOTE_ADDR'] ?? null]
+        );
     }
 }
+?>

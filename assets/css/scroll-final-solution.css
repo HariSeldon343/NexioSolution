@@ -1,0 +1,270 @@
+/**
+ * SCROLL FINAL SOLUTION
+ * Soluzione definitiva per i problemi di scroll
+ * Creato: 2025-08-12
+ * 
+ * PRINCIPI:
+ * 1. Mai usare height fisso su body o html
+ * 2. Usare sempre min-height invece di height
+ * 3. Solo la sidebar può avere height: 100vh (perché è fixed)
+ * 4. Non forzare overflow se non necessario
+ */
+
+/* ==========================================================================
+   RESET GLOBALE - Rimuove tutte le restrizioni di altezza
+   ========================================================================== */
+
+html {
+    /* Nessun height fisso */
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+    /* Scroll naturale */
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
+body {
+    /* Nessun height fisso, solo minimo */
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    /* Nessun position fixed */
+    position: relative;
+    /* Overflow naturale */
+    overflow-x: hidden;
+    /* Display flex per layout con sidebar */
+    display: flex;
+    background: #f5f7fa;
+}
+
+/* ==========================================================================
+   LAYOUT PRINCIPALE
+   ========================================================================== */
+
+/* Sidebar - L'UNICO elemento con height: 100vh */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    height: 100vh; /* OK per elemento fixed */
+    background: #162d4f;
+    z-index: 1000;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Main content - Usa min-height, non height */
+.main-content {
+    margin-left: 260px;
+    flex: 1;
+    min-height: 100vh; /* Minimo, può crescere */
+    /* Nessun height fisso */
+    padding: 20px;
+    background: #f5f7fa;
+    width: calc(100% - 260px);
+    /* Overflow naturale, non forzato */
+}
+
+/* Container e wrapper - Solo min-height */
+.app-container,
+.wrapper,
+.content-wrapper,
+.page-wrapper,
+.container,
+.container-fluid {
+    /* Solo altezza minima, mai fissa */
+    min-height: inherit;
+    /* Nessun overflow forzato */
+}
+
+/* ==========================================================================
+   COMPONENTI
+   ========================================================================== */
+
+/* Page content */
+.page-content,
+.content {
+    /* Può crescere quanto necessario */
+    min-height: calc(100vh - 80px); /* Considera header/padding */
+}
+
+/* Cards e panels */
+.card,
+.card-body,
+.panel,
+.dashboard-panel {
+    /* Nessuna restrizione di altezza */
+    height: auto;
+    /* Overflow solo se necessario */
+}
+
+/* Tables */
+.table-responsive {
+    /* Scroll orizzontale solo per tabelle larghe */
+    overflow-x: auto;
+    overflow-y: visible;
+    /* Nessuna altezza massima */
+    max-height: none;
+}
+
+/* Modals */
+.modal-open {
+    /* Non bloccare lo scroll del body */
+    overflow: auto;
+    padding-right: 0;
+}
+
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1040;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    /* Sidebar mobile */
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar.active,
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    /* Main content mobile */
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 60px 15px 20px;
+    }
+    
+    /* Mobile menu toggle */
+    .mobile-menu-toggle {
+        display: block;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1100;
+    }
+}
+
+/* ==========================================================================
+   UTILITY CLASSES
+   ========================================================================== */
+
+/* Forza scroll se necessario */
+.force-scroll {
+    overflow-y: auto !important;
+}
+
+/* Blocca scroll (per modali, etc.) */
+.no-scroll {
+    overflow: hidden !important;
+}
+
+/* Container scrollabile con altezza fissa */
+.scrollable-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* ==========================================================================
+   DEBUG & FIXES
+   ========================================================================== */
+
+/* Rimuove eventuali height: 100% residui */
+.main-content *:not(.sidebar):not(.modal):not(.modal-backdrop) {
+    height: auto;
+}
+
+/* Assicura che niente blocchi lo scroll globale */
+body > *:not(.sidebar):not(.modal):not(.modal-backdrop) {
+    position: static;
+    overflow: visible;
+}
+
+/* Fix per elementi Bootstrap che potrebbero avere overflow hidden */
+.row,
+.col,
+[class*="col-"] {
+    overflow: visible;
+    min-height: 0;
+}
+
+/* ==========================================================================
+   PERFORMANCE
+   ========================================================================== */
+
+/* Ottimizzazione rendering */
+.sidebar {
+    will-change: transform;
+}
+
+/* Contenimento layout per performance */
+.main-content {
+    contain: layout style;
+}
+
+/* ==========================================================================
+   ACCESSIBILITY
+   ========================================================================== */
+
+/* Focus visibile per navigazione da tastiera */
+*:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-to-main {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #000;
+    color: #fff;
+    padding: 8px;
+    text-decoration: none;
+    z-index: 100;
+}
+
+.skip-to-main:focus {
+    top: 0;
+}
+
+/* ==========================================================================
+   PRINT
+   ========================================================================== */
+
+@media print {
+    /* Rimuovi sidebar e navigation */
+    .sidebar,
+    .mobile-menu-toggle,
+    .page-header {
+        display: none;
+    }
+    
+    /* Full width per stampa */
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 0;
+    }
+    
+    /* Nessun background */
+    body,
+    .main-content {
+        background: white;
+    }
+}

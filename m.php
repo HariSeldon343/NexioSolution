@@ -179,7 +179,7 @@ if (!$auth->isAuthenticated() && !isset($_POST['login'])) {
         <div class="login-container">
             <div class="logo-container">
                 <div class="logo">
-                    <img src="assets/images/nexio-icon.svg" alt="Nexio" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\"font-size: 48px; font-weight: bold; color: #667eea;\">N</span>';">
+                    <img src="assets/images/nexio-icon.svg?v=<?php echo @filemtime(__DIR__ . '/assets/images/nexio-icon.svg'); ?>" alt="Nexio" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\"font-size: 48px; font-weight: bold; color: #667eea;\">N</span>';">
                 </div>
                 <h1 class="app-name">Nexio Platform</h1>
                 <p class="app-tagline">Sistema Gestionale Integrato</p>

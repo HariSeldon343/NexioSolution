@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../middleware/Auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -39,43 +40,63 @@ try {
         exit;
     }
 
-    // Establish database connection
-    $db = Database::getInstance();
-
     $docId = $input['docId'] ?? null;
     $title = $input['title'] ?? 'Documento senza titolo';
     $content = $input['content']; // HTML content
-    $plainText = $input['plainText'] ?? '';
+    $plainText = $input['plainText'] ?? strip_tags($content);
     $stats = $input['stats'] ?? [];
     $settings = $input['settings'] ?? [];
+    
+    // Extract header/footer settings
+    $headerText = $input['header_text'] ?? '';
+    $footerText = $input['footer_text'] ?? '';
+    $pageNumbering = $input['page_numbering'] ?? false;
+    $pageNumberFormat = $input['page_number_format'] ?? 'page_x_of_y';
+    
     $userId = $user['id'];
     $aziendaId = $currentAzienda ? $currentAzienda['azienda_id'] : null;
     $now = date('Y-m-d H:i:s');
     
-    // Prepare metadata JSON
+    // Prepare metadata JSON with header/footer settings
     $metadata = json_encode([
         'stats' => $stats,
         'settings' => $settings,
+        'header_text' => $headerText,
+        'footer_text' => $footerText,
+        'page_numbering' => $pageNumbering,
+        'page_number_format' => $pageNumberFormat,
         'editor_version' => 'advanced_v1.0',
         'last_modified' => $now
     ], JSON_UNESCAPED_UNICODE);
     
     if ($docId) {
         // Update existing document
-        $updateData = [
-            'titolo' => $title,
-            'contenuto_html' => $content,
-            'contenuto' => $plainText,
-            'metadata' => $metadata,
-            'updated_at' => $now
-        ];
+        $stmt = db_query(
+            "UPDATE documenti 
+             SET titolo = ?, 
+                 contenuto_html = ?, 
+                 contenuto = ?, 
+                 metadata = ?,
+                 data_modifica = NOW(),
+                 modificato_da = ?
+             WHERE id = ? 
+             AND (azienda_id = ? OR azienda_id IS NULL OR ?)",
+            [
+                $title,
+                $content,
+                $plainText,
+                $metadata,
+                $userId,
+                $docId,
+                $aziendaId,
+                $auth->isSuperAdmin() ? 1 : 0
+            ]
+        );
         
-        $rowsAffected = $db->update('documenti', $updateData, 'id = ? AND user_id = ?', [$docId, $userId]);
-        
-        if ($rowsAffected === 0) {
-            // Check if document exists but belongs to another user
-            $stmt = $db->query("SELECT id, user_id FROM documenti WHERE id = ?", [$docId]);
-            $existing = $stmt->fetch();
+        if ($stmt->rowCount() === 0) {
+            // Check if document exists but user doesn't have permission
+            $checkStmt = db_query("SELECT id, azienda_id FROM documenti WHERE id = ?", [$docId]);
+            $existing = $checkStmt->fetch();
             
             if ($existing) {
                 throw new Exception('Access denied to this document');
@@ -84,10 +105,33 @@ try {
             }
         }
         
-        // Log activity using ActivityLogger if available
+        // Create version if DocumentVersion class exists
+        if (class_exists('DocumentVersion')) {
+            try {
+                $versionModel = new DocumentVersion();
+                $versionModel->addVersion(
+                    $docId,
+                    $content,
+                    null,
+                    $userId,
+                    $user['nome'] . ' ' . $user['cognome'],
+                    false,
+                    'Salvataggio automatico dall\'editor'
+                );
+            } catch (Exception $e) {
+                // Log but don't fail if versioning fails
+                error_log("Warning: Could not create version: " . $e->getMessage());
+            }
+        }
+        
+        // Log activity
         if (class_exists('ActivityLogger')) {
-            $logger = ActivityLogger::getInstance();
-            $logger->log('documento', 'modificato', $docId, "Documento '$title' aggiornato");
+            try {
+                $logger = ActivityLogger::getInstance();
+                $logger->log('documento', 'modificato', $docId, "Documento '$title' aggiornato");
+            } catch (Exception $e) {
+                error_log("Warning: Could not log activity: " . $e->getMessage());
+            }
         }
         
         $response = [
@@ -99,26 +143,60 @@ try {
             'stats' => $stats
         ];
     } else {
+        // Generate unique code for new document
+        $codice = 'DOC-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
+        
         // Create new document
-        $insertData = [
-            'user_id' => $userId,
-            'azienda_id' => $aziendaId,
-            'titolo' => $title,
-            'contenuto_html' => $content,
-            'contenuto' => $plainText,
-            'tipo' => 'documento',
-            'stato' => 'bozza',
-            'metadata' => $metadata,
-            'created_at' => $now,
-            'updated_at' => $now
-        ];
+        $stmt = db_query(
+            "INSERT INTO documenti (
+                codice, titolo, contenuto_html, contenuto, 
+                tipo_documento, stato, metadata,
+                azienda_id, cartella_id, creato_da, 
+                data_creazione, data_modifica
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())",
+            [
+                $codice,
+                $title,
+                $content,
+                $plainText,
+                'documento',
+                'bozza',
+                $metadata,
+                $aziendaId,
+                null, // cartella_id - can be set later
+                $userId
+            ]
+        );
         
-        $newDocId = $db->insert('documenti', $insertData);
+        $newDocId = db_connection()->lastInsertId();
         
-        // Log activity using ActivityLogger if available
+        // Create initial version if DocumentVersion class exists
+        if (class_exists('DocumentVersion')) {
+            try {
+                $versionModel = new DocumentVersion();
+                $versionModel->addVersion(
+                    $newDocId,
+                    $content,
+                    null,
+                    $userId,
+                    $user['nome'] . ' ' . $user['cognome'],
+                    true, // Major version for new document
+                    'Versione iniziale'
+                );
+            } catch (Exception $e) {
+                // Log but don't fail if versioning fails
+                error_log("Warning: Could not create initial version: " . $e->getMessage());
+            }
+        }
+        
+        // Log activity
         if (class_exists('ActivityLogger')) {
-            $logger = ActivityLogger::getInstance();
-            $logger->log('documento', 'creato', $newDocId, "Nuovo documento '$title' creato");
+            try {
+                $logger = ActivityLogger::getInstance();
+                $logger->log('documento', 'creato', $newDocId, "Nuovo documento '$title' creato");
+            } catch (Exception $e) {
+                error_log("Warning: Could not log activity: " . $e->getMessage());
+            }
         }
         
         $response = [

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PWA - Nexio Mobile</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f8fafc;
+        }
+        
+        h1 {
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+        
+        .test-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .test-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status.warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .status.error {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .status.checking {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background: #1d4ed8;
+        }
+        
+        .log {
+            background: #1e293b;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .icon-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .icon-item {
+            text-align: center;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+        
+        .icon-item img {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 5px;
+        }
+        
+        .icon-item span {
+            font-size: 11px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Nexio Mobile PWA - Test di Installabilità</h1>
+    
+    <div class="test-section">
+        <h2>✅ Checklist PWA</h2>
+        <div class="test-item">
+            <span>HTTPS o localhost</span>
+            <span id="https-status" class="status checking">Controllo...</span>
+        </div>
+        <div class="test-item">
+            <span>Service Worker registrato</span>
+            <span id="sw-status" class="status checking">Controllo...</span>
+        </div>
+        <div class="test-item">
+            <span>Manifest.json valido</span>
+            <span id="manifest-status" class="status checking">Controllo...</span>
+        </div>
+        <div class="test-item">
+            <span>Icone disponibili</span>
+            <span id="icons-status" class="status checking">Controllo...</span>
+        </div>
+        <div class="test-item">
+            <span>Offline page disponibile</span>
+            <span id="offline-status" class="status checking">Controllo...</span>
+        </div>
+        <div class="test-item">
+            <span>App installabile</span>
+            <span id="install-status" class="status checking">Controllo...</span>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🎮 Controlli</h2>
+        <button onclick="testServiceWorker()">Test Service Worker</button>
+        <button onclick="testOfflineMode()">Test Modalità Offline</button>
+        <button onclick="clearCache()">Pulisci Cache</button>
+        <button onclick="checkForUpdates()">Controlla Aggiornamenti</button>
+        <button onclick="installApp()">Installa App</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>📱 Anteprima Icone</h2>
+        <div id="icon-preview" class="icon-preview"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 Log Console</h2>
+        <div id="log" class="log">Inizializzazione test PWA...\n</div>
+    </div>
+    
+    <script>
+        let deferredPrompt;
+        const log = document.getElementById('log');
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            log.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // Check HTTPS
+        function checkHTTPS() {
+            const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+            document.getElementById('https-status').className = `status ${isSecure ? 'success' : 'error'}`;
+            document.getElementById('https-status').textContent = isSecure ? 'OK' : 'Non sicuro';
+            addLog(`HTTPS/localhost: ${isSecure ? 'OK' : 'Non sicuro'}`, isSecure ? 'success' : 'error');
+            return isSecure;
+        }
+        
+        // Check Service Worker
+        async function checkServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.register('sw.js');
+                    document.getElementById('sw-status').className = 'status success';
+                    document.getElementById('sw-status').textContent = 'Registrato';
+                    addLog('Service Worker registrato con successo', 'success');
+                    
+                    // Check for updates
+                    registration.addEventListener('updatefound', () => {
+                        addLog('Nuovo Service Worker trovato', 'warning');
+                    });
+                    
+                    return true;
+                } catch (error) {
+                    document.getElementById('sw-status').className = 'status error';
+                    document.getElementById('sw-status').textContent = 'Errore';
+                    addLog(`Errore registrazione Service Worker: ${error.message}`, 'error');
+                    return false;
+                }
+            } else {
+                document.getElementById('sw-status').className = 'status error';
+                document.getElementById('sw-status').textContent = 'Non supportato';
+                addLog('Service Worker non supportato dal browser', 'error');
+                return false;
+            }
+        }
+        
+        // Check Manifest
+        async function checkManifest() {
+            try {
+                const response = await fetch('manifest.json');
+                const manifest = await response.json();
+                
+                const hasRequiredFields = manifest.name && 
+                                         manifest.short_name && 
+                                         manifest.start_url && 
+                                         manifest.display && 
+                                         manifest.icons && 
+                                         manifest.icons.length > 0;
+                
+                document.getElementById('manifest-status').className = `status ${hasRequiredFields ? 'success' : 'warning'}`;
+                document.getElementById('manifest-status').textContent = hasRequiredFields ? 'Valido' : 'Incompleto';
+                
+                addLog(`Manifest: ${hasRequiredFields ? 'Valido' : 'Campi mancanti'}`, hasRequiredFields ? 'success' : 'warning');
+                
+                // Check icons
+                if (manifest.icons) {
+                    displayIcons(manifest.icons);
+                    document.getElementById('icons-status').className = 'status success';
+                    document.getElementById('icons-status').textContent = `${manifest.icons.length} icone`;
+                    addLog(`Trovate ${manifest.icons.length} icone`, 'success');
+                }
+                
+                return hasRequiredFields;
+            } catch (error) {
+                document.getElementById('manifest-status').className = 'status error';
+                document.getElementById('manifest-status').textContent = 'Non trovato';
+                addLog(`Errore caricamento manifest: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        // Display icons
+        function displayIcons(icons) {
+            const preview = document.getElementById('icon-preview');
+            preview.innerHTML = '';
+            
+            icons.slice(0, 8).forEach(icon => {
+                const div = document.createElement('div');
+                div.className = 'icon-item';
+                div.innerHTML = `
+                    <img src="${icon.src}" alt="${icon.sizes}" onerror="this.style.display='none'">
+                    <span>${icon.sizes}</span>
+                `;
+                preview.appendChild(div);
+            });
+        }
+        
+        // Check offline page
+        async function checkOfflinePage() {
+            try {
+                const response = await fetch('offline.html', { method: 'HEAD' });
+                const exists = response.ok;
+                
+                document.getElementById('offline-status').className = `status ${exists ? 'success' : 'error'}`;
+                document.getElementById('offline-status').textContent = exists ? 'Disponibile' : 'Non trovata';
+                addLog(`Pagina offline: ${exists ? 'Disponibile' : 'Non trovata'}`, exists ? 'success' : 'error');
+                
+                return exists;
+            } catch (error) {
+                document.getElementById('offline-status').className = 'status error';
+                document.getElementById('offline-status').textContent = 'Errore';
+                addLog(`Errore controllo pagina offline: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        // Check installability
+        function checkInstallability() {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                document.getElementById('install-status').className = 'status success';
+                document.getElementById('install-status').textContent = 'Pronta';
+                addLog('App pronta per l\'installazione!', 'success');
+            });
+            
+            // Check if already installed
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                document.getElementById('install-status').className = 'status success';
+                document.getElementById('install-status').textContent = 'Installata';
+                addLog('App già installata', 'success');
+            } else {
+                setTimeout(() => {
+                    if (!deferredPrompt) {
+                        document.getElementById('install-status').className = 'status warning';
+                        document.getElementById('install-status').textContent = 'In attesa';
+                        addLog('In attesa del prompt di installazione...', 'warning');
+                    }
+                }, 3000);
+            }
+        }
+        
+        // Test Service Worker
+        async function testServiceWorker() {
+            addLog('Test Service Worker in corso...');
+            
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'TEST' });
+                addLog('Messaggio di test inviato al Service Worker', 'success');
+            } else {
+                addLog('Service Worker non attivo', 'error');
+            }
+        }
+        
+        // Test offline mode
+        function testOfflineMode() {
+            addLog('Simulazione modalità offline...');
+            window.location.href = 'offline.html';
+        }
+        
+        // Clear cache
+        async function clearCache() {
+            addLog('Pulizia cache in corso...');
+            
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map(name => caches.delete(name)));
+                addLog(`Cache pulita: ${cacheNames.length} cache eliminate`, 'success');
+                
+                // Reload to re-register service worker
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                addLog('Cache API non supportata', 'error');
+            }
+        }
+        
+        // Check for updates
+        async function checkForUpdates() {
+            addLog('Controllo aggiornamenti...');
+            
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.ready;
+                await registration.update();
+                addLog('Controllo aggiornamenti completato', 'success');
+            }
+        }
+        
+        // Install app
+        function installApp() {
+            if (deferredPrompt) {
+                addLog('Mostrando prompt di installazione...');
+                deferredPrompt.prompt();
+                
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        addLog('App installata con successo!', 'success');
+                    } else {
+                        addLog('Installazione annullata dall\'utente', 'warning');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                addLog('App non pronta per l\'installazione o già installata', 'warning');
+            }
+        }
+        
+        // Initialize tests
+        async function init() {
+            addLog('Avvio test PWA...');
+            
+            checkHTTPS();
+            await checkServiceWorker();
+            await checkManifest();
+            await checkOfflinePage();
+            checkInstallability();
+            
+            addLog('Test completati!', 'success');
+        }
+        
+        // Start tests when page loads
+        window.addEventListener('load', init);
+        
+        // Listen for messages from service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                addLog(`Messaggio dal Service Worker: ${JSON.stringify(event.data)}`, 'info');
+            });
+        }
+    </script>
+</body>
+</html>

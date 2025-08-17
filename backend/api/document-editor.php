@@ -213,6 +213,12 @@ function handleExportDocument($user, $currentAzienda) {
     $format = $_POST['format'] ?? $_GET['format'] ?? 'pdf';
     $content = $_POST['content'] ?? null;
     
+    // Header/Footer parameters
+    $headerText = $_POST['header_text'] ?? '';
+    $footerText = $_POST['footer_text'] ?? '';
+    $pageNumbering = filter_var($_POST['page_numbering'] ?? false, FILTER_VALIDATE_BOOLEAN);
+    $pageNumberFormat = $_POST['page_number_format'] ?? 'page_x_of_y';
+    
     if (!$documentId && !$content) {
         http_response_code(400);
         echo json_encode([
@@ -225,6 +231,7 @@ function handleExportDocument($user, $currentAzienda) {
     try {
         $documentContent = $content;
         $documentTitle = 'Documento';
+        $metadata = [];
         
         if ($documentId) {
             $stmt = db_query("SELECT * FROM documenti WHERE id = ?", [$documentId]);
@@ -251,21 +258,39 @@ function handleExportDocument($user, $currentAzienda) {
                 throw new Exception('Non hai i permessi per esportare questo documento');
             }
             
-            $documentContent = $documento['contenuto'];
+            $documentContent = $documento['contenuto_html'] ?? $documento['contenuto'];
             $documentTitle = $documento['titolo'];
+            
+            // Get metadata if exists
+            if (!empty($documento['metadata'])) {
+                $metadata = json_decode($documento['metadata'], true);
+                // Use metadata values if not provided in POST
+                if (empty($headerText)) $headerText = $metadata['header_text'] ?? '';
+                if (empty($footerText)) $footerText = $metadata['footer_text'] ?? '';
+                if (!isset($_POST['page_numbering'])) $pageNumbering = $metadata['page_numbering'] ?? false;
+                if (!isset($_POST['page_number_format'])) $pageNumberFormat = $metadata['page_number_format'] ?? 'page_x_of_y';
+            }
         }
+        
+        // Prepare export options
+        $exportOptions = [
+            'header_text' => $headerText,
+            'footer_text' => $footerText,
+            'page_numbering' => $pageNumbering,
+            'page_number_format' => $pageNumberFormat
+        ];
         
         switch ($format) {
             case 'pdf':
-                $result = exportToPDF($documentContent, $documentTitle);
+                $result = exportToPDF($documentContent, $documentTitle, $exportOptions);
                 break;
                 
             case 'docx':
-                $result = exportToDocx($documentContent, $documentTitle);
+                $result = exportToDocx($documentContent, $documentTitle, $exportOptions);
                 break;
                 
             case 'html':
-                $result = exportToHtml($documentContent, $documentTitle);
+                $result = exportToHtml($documentContent, $documentTitle, $exportOptions);
                 break;
                 
             default:
@@ -286,7 +311,7 @@ function handleExportDocument($user, $currentAzienda) {
     }
 }
 
-function exportToPDF($content, $title) {
+function exportToPDF($content, $title, $options = []) {
     require_once '../utils/DompdfGenerator.php';
     
     try {
@@ -294,6 +319,11 @@ function exportToPDF($content, $title) {
         
         // Pulisci il contenuto HTML
         $cleanContent = cleanHTMLForPDF($content);
+        
+        // Aggiungi header/footer se specificati
+        if (!empty($options['header_text']) || !empty($options['footer_text']) || $options['page_numbering']) {
+            $cleanContent = addHeaderFooterToPDF($cleanContent, $title, $options);
+        }
         
         // Genera PDF
         $pdfContent = $generator->generateFromHTML($cleanContent, $title);
@@ -316,24 +346,92 @@ function exportToPDF($content, $title) {
     }
 }
 
-function exportToDocx($content, $title) {
+function exportToDocx($content, $title, $options = []) {
     try {
-        // Per ora, esportiamo come HTML con mimetype Word
-        $cleanContent = cleanHTMLForWord($content);
+        // Check if PHPWord is available
+        if (!class_exists('PhpOffice\PhpWord\PhpWord')) {
+            // Fallback to HTML export
+            return exportToHtmlAsWord($content, $title, $options);
+        }
         
-        $filename = sanitizeFilename($title) . '_' . date('Y-m-d_H-i-s') . '.doc';
+        // Create PHPWord document
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+        
+        // Add section
+        $section = $phpWord->addSection([
+            'marginLeft' => 1440,
+            'marginRight' => 1440,
+            'marginTop' => 1440,
+            'marginBottom' => 1440,
+        ]);
+        
+        // Add header if specified
+        if (!empty($options['header_text'])) {
+            $header = $section->addHeader();
+            $header->addText(
+                $options['header_text'], 
+                ['size' => 10], 
+                ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER]
+            );
+        }
+        
+        // Add footer with page numbers if specified
+        if (!empty($options['footer_text']) || $options['page_numbering']) {
+            $footer = $section->addFooter();
+            
+            if ($options['page_numbering']) {
+                $footerTable = $footer->addTable();
+                $footerTable->addRow();
+                
+                // Footer text on the left
+                $cell1 = $footerTable->addCell(4500);
+                if (!empty($options['footer_text'])) {
+                    $cell1->addText($options['footer_text'], ['size' => 10]);
+                }
+                
+                // Page numbers on the right
+                $cell2 = $footerTable->addCell(4500);
+                $pageNumberText = '';
+                switch ($options['page_number_format'] ?? 'page_x_of_y') {
+                    case 'page_x':
+                        $pageNumberText = 'Pagina {PAGE}';
+                        break;
+                    case 'page_x_of_y':
+                        $pageNumberText = 'Pagina {PAGE} di {NUMPAGES}';
+                        break;
+                    case 'x_of_y':
+                        $pageNumberText = '{PAGE} / {NUMPAGES}';
+                        break;
+                    case 'simple':
+                        $pageNumberText = '{PAGE}';
+                        break;
+                }
+                $cell2->addPreserveText(
+                    $pageNumberText, 
+                    ['size' => 10], 
+                    ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::RIGHT]
+                );
+            } else if (!empty($options['footer_text'])) {
+                $footer->addText($options['footer_text'], ['size' => 10]);
+            }
+        }
+        
+        // Add document content
+        \PhpOffice\PhpWord\Shared\Html::addHtml($section, $content, false, false);
+        
+        // Save to temp file
+        $filename = sanitizeFilename($title) . '_' . date('Y-m-d_H-i-s') . '.docx';
         $tempPath = sys_get_temp_dir() . '/' . $filename;
         
-        // Crea un file HTML che Word può aprire
-        $wordHTML = generateWordHTML($cleanContent, $title);
-        file_put_contents($tempPath, $wordHTML);
+        $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+        $writer->save($tempPath);
         
         return [
             'format' => 'docx',
             'filename' => $filename,
             'path' => $tempPath,
             'download_url' => 'backend/api/download-export.php?file=' . urlencode($filename),
-            'size' => strlen($wordHTML)
+            'size' => filesize($tempPath)
         ];
         
     } catch (Exception $e) {
@@ -341,14 +439,40 @@ function exportToDocx($content, $title) {
     }
 }
 
-function exportToHtml($content, $title) {
+function exportToHtmlAsWord($content, $title, $options = []) {
+    // Fallback method when PHPWord is not available
+    $cleanContent = cleanHTMLForWord($content);
+    
+    $filename = sanitizeFilename($title) . '_' . date('Y-m-d_H-i-s') . '.doc';
+    $tempPath = sys_get_temp_dir() . '/' . $filename;
+    
+    // Create HTML that Word can open with header/footer support
+    $wordHTML = generateWordHTMLWithHeaderFooter($cleanContent, $title, $options);
+    file_put_contents($tempPath, $wordHTML);
+    
+    return [
+        'format' => 'docx',
+        'filename' => $filename,
+        'path' => $tempPath,
+        'download_url' => 'backend/api/download-export.php?file=' . urlencode($filename),
+        'size' => strlen($wordHTML)
+    ];
+}
+
+function exportToHtml($content, $title, $options = []) {
     try {
         $cleanContent = $content;
         
         $filename = sanitizeFilename($title) . '_' . date('Y-m-d_H-i-s') . '.html';
         $tempPath = sys_get_temp_dir() . '/' . $filename;
         
-        $htmlContent = generateFullHTML($cleanContent, $title);
+        // If header/footer options are provided, generate HTML with those
+        if (!empty($options['header_text']) || !empty($options['footer_text']) || $options['page_numbering']) {
+            $htmlContent = addHeaderFooterToPDF($cleanContent, $title, $options);
+        } else {
+            $htmlContent = generateFullHTML($cleanContent, $title);
+        }
+        
         file_put_contents($tempPath, $htmlContent);
         
         return [
@@ -368,6 +492,97 @@ function cleanHTMLForPDF($html) {
     // Rimuove elementi TinyMCE specifici e pulisce HTML
     $html = preg_replace('/<div[^>]*class="mce-pagebreak"[^>]*>.*?<\/div>/is', '<div style="page-break-before: always;"></div>', $html);
     $html = strip_tags($html, '<p><br><strong><b><em><i><u><h1><h2><h3><h4><h5><h6><ul><ol><li><table><tr><td><th><div><span>');
+    return $html;
+}
+
+function addHeaderFooterToPDF($content, $title, $options) {
+    $html = '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>' . htmlspecialchars($title) . '</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm 2cm;';
+    
+    if (!empty($options['header_text'])) {
+        $html .= '
+            @top-center {
+                content: "' . htmlspecialchars($options['header_text']) . '";
+                font-size: 10pt;
+            }';
+    }
+    
+    if (!empty($options['footer_text']) || $options['page_numbering']) {
+        $html .= '
+            @bottom-left {
+                content: "' . htmlspecialchars($options['footer_text']) . '";
+                font-size: 10pt;
+            }';
+        
+        if ($options['page_numbering']) {
+            $html .= '
+            @bottom-right {
+                content: ';
+            switch ($options['page_number_format'] ?? 'page_x_of_y') {
+                case 'page_x':
+                    $html .= '"Pagina " counter(page)';
+                    break;
+                case 'page_x_of_y':
+                    $html .= '"Pagina " counter(page) " di " counter(pages)';
+                    break;
+                case 'x_of_y':
+                    $html .= 'counter(page) " / " counter(pages)';
+                    break;
+                case 'simple':
+                    $html .= 'counter(page)';
+                    break;
+            }
+            $html .= ';
+                font-size: 10pt;
+            }';
+        }
+    }
+    
+    $html .= '
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            color: #2c3e50;
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+        }
+        h1 { font-size: 24pt; }
+        h2 { font-size: 18pt; }
+        h3 { font-size: 14pt; }
+        h4 { font-size: 12pt; }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        table td, table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        table th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>' . htmlspecialchars($title) . '</h1>
+    ' . $content . '
+</body>
+</html>';
+    
     return $html;
 }
 
@@ -396,6 +611,102 @@ function generateWordHTML($content, $title) {
 <body>
     <h1>" . htmlspecialchars($title) . "</h1>
     " . $content . "
+</body>
+</html>";
+}
+
+function generateWordHTMLWithHeaderFooter($content, $title, $options) {
+    $headerSection = '';
+    $footerSection = '';
+    
+    // Add header if specified
+    if (!empty($options['header_text'])) {
+        $headerSection = "
+    <div style='mso-element:header' id='h1'>
+        <p style='text-align:center; font-size:10pt;'>" . htmlspecialchars($options['header_text']) . "</p>
+    </div>";
+    }
+    
+    // Add footer if specified
+    if (!empty($options['footer_text']) || $options['page_numbering']) {
+        $footerContent = '';
+        
+        if (!empty($options['footer_text'])) {
+            $footerContent .= htmlspecialchars($options['footer_text']);
+        }
+        
+        if ($options['page_numbering']) {
+            $pageNum = '';
+            switch ($options['page_number_format'] ?? 'page_x_of_y') {
+                case 'page_x':
+                    $pageNum = "<span style='mso-field-code:\" PAGE \"'></span>";
+                    break;
+                case 'page_x_of_y':
+                    $pageNum = "Pagina <span style='mso-field-code:\" PAGE \"'></span> di <span style='mso-field-code:\" NUMPAGES \"'></span>";
+                    break;
+                case 'x_of_y':
+                    $pageNum = "<span style='mso-field-code:\" PAGE \"'></span> / <span style='mso-field-code:\" NUMPAGES \"'></span>";
+                    break;
+                case 'simple':
+                    $pageNum = "<span style='mso-field-code:\" PAGE \"'></span>";
+                    break;
+            }
+            
+            if ($footerContent && $pageNum) {
+                $footerSection = "
+    <div style='mso-element:footer' id='f1'>
+        <table width='100%' border='0' cellpadding='0' cellspacing='0'>
+            <tr>
+                <td style='text-align:left; font-size:10pt;'>$footerContent</td>
+                <td style='text-align:right; font-size:10pt;'>$pageNum</td>
+            </tr>
+        </table>
+    </div>";
+            } else if ($pageNum) {
+                $footerSection = "
+    <div style='mso-element:footer' id='f1'>
+        <p style='text-align:right; font-size:10pt;'>$pageNum</p>
+    </div>";
+            } else {
+                $footerSection = "
+    <div style='mso-element:footer' id='f1'>
+        <p style='text-align:left; font-size:10pt;'>$footerContent</p>
+    </div>";
+            }
+        }
+    }
+    
+    return "<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' 
+      xmlns:w='urn:schemas-microsoft-com:office:word' 
+      xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='ProgId' content='Word.Document'>
+    <meta name='Generator' content='Microsoft Word'>
+    <title>" . htmlspecialchars($title) . "</title>
+    <style>
+        @page Section1 { 
+            size: A4; 
+            margin: 2.5cm 1.9cm;
+            mso-header: h1;
+            mso-footer: f1;
+        }
+        div.Section1 { page: Section1; }
+        body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; }
+        h1 { font-size: 18pt; margin: 24pt 0 12pt 0; }
+        h2 { font-size: 16pt; margin: 18pt 0 6pt 0; }
+        h3 { font-size: 14pt; margin: 12pt 0 6pt 0; }
+        p { margin: 0 0 12pt 0; text-align: justify; }
+    </style>
+</head>
+<body>
+    <div class='Section1'>
+        $headerSection
+        <h1>" . htmlspecialchars($title) . "</h1>
+        " . $content . "
+        $footerSection
+    </div>
 </body>
 </html>";
 }

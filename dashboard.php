@@ -163,9 +163,9 @@ try {
                 }
             }
             
-            $stats['spazio_utilizzato'] = round($totalBytes / 1048576, 2); // Convert bytes to MB
+            $stats['spazio_filesystem'] = round($totalBytes / 1048576, 2); // Convert bytes to MB
         } catch (Exception $e) {
-            $stats['spazio_utilizzato'] = 0;
+            $stats['spazio_filesystem'] = 0;
         }
     } else if ($aziendaId) {
         // Vista specifica azienda
@@ -260,10 +260,18 @@ try {
             $stats['attivita_24h'] = 0;
         }
         
-        // Spazio utilizzato dall'azienda (MB)
+        // Spazio filesystem dell'azienda (MB) - solo file caricati tramite filesystem
         try {
-            // Calcola spazio dai file dell'azienda nel database
-            $stmt = db_query("SELECT SUM(COALESCE(dimensione_file, file_size, 0)) as total_bytes FROM documenti WHERE azienda_id = ? AND stato != 'cestino'", [$aziendaId]);
+            // Calcola spazio solo dai file del filesystem (hanno file_path popolato)
+            // Questi sono i file caricati tramite filesystem.php, non template o altri documenti
+            $stmt = db_query("
+                SELECT SUM(COALESCE(dimensione_file, file_size, 0)) as total_bytes 
+                FROM documenti 
+                WHERE azienda_id = ? 
+                    AND stato != 'cestino'
+                    AND file_path IS NOT NULL 
+                    AND file_path != ''
+            ", [$aziendaId]);
             $totalBytes = $stmt && $stmt->rowCount() > 0 ? ($stmt->fetch()['total_bytes'] ?? 0) : 0;
             
             // Se non ci sono dati nel DB, prova a calcolare dalla directory dell'azienda
@@ -283,9 +291,9 @@ try {
                 }
             }
             
-            $stats['spazio_utilizzato'] = round($totalBytes / 1048576, 2); // Convert bytes to MB
+            $stats['spazio_filesystem'] = round($totalBytes / 1048576, 2); // Convert bytes to MB
         } catch (Exception $e) {
-            $stats['spazio_utilizzato'] = 0;
+            $stats['spazio_filesystem'] = 0;
         }
     }
 
@@ -427,7 +435,7 @@ try {
     if (!isset($stats['eventi_settimana'])) $stats['eventi_settimana'] = 0;
     if (!isset($stats['tickets_risolti_mese'])) $stats['tickets_risolti_mese'] = 0;
     if (!isset($stats['attivita_24h'])) $stats['attivita_24h'] = 0;
-    if (!isset($stats['spazio_utilizzato'])) $stats['spazio_utilizzato'] = 0;
+    if (!isset($stats['spazio_filesystem'])) $stats['spazio_filesystem'] = 0;
     
     if (!isset($documenti_recenti)) $documenti_recenti = [];
     if (!isset($eventi_prossimi)) $eventi_prossimi = [];
@@ -914,7 +922,7 @@ renderPageHeader('Dashboard', 'Panoramica generale del sistema', 'tachometer-alt
         <h2><i class="fas fa-filter"></i>Filtra per Azienda</h2>
     </div>
     <form method="GET" action="" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-        <select name="azienda_filter" class="form-control" style="max-width: 300px; height: 38px; border: 1px solid #e5e7eb; border-radius: 6px;">
+        <select name="azienda_filter" class="form-control" >
             <option value="">-- Vista Globale --</option>
             <?php foreach ($aziende_list as $az): ?>
                 <option value="<?php echo $az['id']; ?>" <?php echo (isset($_GET['azienda_filter']) && $_GET['azienda_filter'] == $az['id']) ? 'selected' : ''; ?>>
@@ -922,11 +930,11 @@ renderPageHeader('Dashboard', 'Panoramica generale del sistema', 'tachometer-alt
                 </option>
             <?php endforeach; ?>
         </select>
-        <button type="submit" class="btn btn-primary" style="height: 36px; padding: 0 16px; background: white; border: 1px solid #2d5a9f; border-radius: 2px; color: #2d5a9f; font-weight: 400; cursor: pointer; transition: border-color 0.15s; text-transform: uppercase; letter-spacing: 0.025em; font-size: 12px;">
+        <button type="submit" class="btn btn-primary" >
             <i class="fas fa-search" style="font-size: 11px;"></i> Applica Filtro
         </button>
         <?php if (isset($_GET['azienda_filter']) && $_GET['azienda_filter']): ?>
-            <a href="?" class="btn btn-secondary" style="height: 36px; padding: 0 16px; background: white; border: 1px solid #e5e7eb; border-radius: 2px; color: #6b7280; font-weight: 400; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: border-color 0.15s; text-transform: uppercase; letter-spacing: 0.025em; font-size: 12px;">
+            <a href="?" class="btn btn-secondary" >
                 <i class="fas fa-times" style="font-size: 11px;"></i> Rimuovi Filtro
             </a>
         <?php endif; ?>
@@ -1063,15 +1071,15 @@ if ($isSuperAdmin) {
 <!-- Tickets Aperti - Moved here to be 3rd element -->
 <div class="dashboard-panel" style="margin-bottom: 25px;">
     <div class="panel-header">
-        <h2><i class="fas fa-headset" style="margin-right: 10px; color: #667eea;"></i>Tickets Aperti</h2>
-        <a href="<?php echo APP_PATH; ?>/tickets.php" style="color: #667eea; font-size: 14px; text-decoration: none;">
+        <h2><i class="fas fa-headset" ></i>Tickets Aperti</h2>
+        <a href="<?php echo APP_PATH; ?>/tickets.php" >
             Tutti i tickets <i class="fas fa-arrow-right"></i>
         </a>
     </div>
     
     <?php if (empty($tickets_recenti)): ?>
-        <p style="color: #718096; text-align: center; padding: 40px 20px;">
-            <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981; margin-bottom: 10px; display: block;"></i>
+        <p >
+            <i class="fas fa-check-circle" ></i>
             Nessun ticket aperto - Ottimo lavoro!
         </p>
     <?php else: ?>
@@ -1097,7 +1105,7 @@ if ($isSuperAdmin) {
                 ?>
                 <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-                        <h4 style="font-weight: 500; color: #111827; margin: 0; flex: 1; font-size: 15px;">
+                        <h4 >
                             <?php echo htmlspecialchars($ticket['titolo']); ?>
                         </h4>
                         <span style="background: <?php echo $priorityBg; ?>; color: <?php echo $priorityColor; ?>; 
@@ -1105,7 +1113,7 @@ if ($isSuperAdmin) {
                             <?php echo ucfirst($ticket['priorita']); ?>
                         </span>
                     </div>
-                    <div style="font-size: 13px; color: #6b7280;">
+                    <div >
                         <i class="fas fa-user"></i> <?php echo htmlspecialchars($ticket['utente_nome'] . ' ' . $ticket['utente_cognome']); ?> •
                         <i class="fas fa-clock"></i> <?php echo date('d/m/Y', strtotime($ticket['created_at'])); ?>
                         <?php if (!$aziendaId && isset($ticket['azienda_nome'])): ?>
@@ -1113,8 +1121,7 @@ if ($isSuperAdmin) {
                         <?php endif; ?>
                     </div>
                     <div style="margin-top: 10px;">
-                        <span style="background: #f3f4f6; color: #374151; padding: 3px 8px; 
-                                     border-radius: 4px; font-size: 12px;">
+                        <span >
                             <?php echo ucfirst($ticket['stato']); ?>
                         </span>
                     </div>
@@ -1126,9 +1133,9 @@ if ($isSuperAdmin) {
 
 <?php if (!$aziendaId && !$hasElevatedPrivileges): ?>
 <div class="dashboard-panel" style="text-align: center; padding: 60px 20px;">
-    <i class="fas fa-building" style="font-size: 64px; color: #e53e3e; margin-bottom: 20px;"></i>
-    <h2 style="color: #1a202c; margin-bottom: 15px;">Nessuna Azienda Associata</h2>
-    <p style="color: #718096; max-width: 500px; margin: 0 auto;">Il tuo account non è ancora associato a nessuna azienda. Per poter utilizzare la piattaforma, contatta l'amministratore del sistema.</p>
+    <i class="fas fa-building" ></i>
+    <h2 >Nessuna Azienda Associata</h2>
+    <p >Il tuo account non è ancora associato a nessuna azienda. Per poter utilizzare la piattaforma, contatta l'amministratore del sistema.</p>
 </div>
 <?php else: ?>
 
@@ -1180,8 +1187,8 @@ if ($isSuperAdmin) {
         <div class="stat-icon stat-icon-disk">
             <i class="fas fa-hdd"></i>
         </div>
-        <div class="stat-value"><?php echo number_format($stats['spazio_utilizzato'] ?? 0, 1, ',', '.'); ?> MB</div>
-        <div class="stat-label">Spazio Utilizzato</div>
+        <div class="stat-value"><?php echo number_format($stats['spazio_filesystem'] ?? 0, 1, ',', '.'); ?> MB</div>
+        <div class="stat-label">Spazio Filesystem</div>
     </div>
     
     <?php else: ?>
@@ -1243,14 +1250,14 @@ if ($isSuperAdmin) {
     <div class="dashboard-panel">
         <div class="panel-header">
             <h2><i class="fas fa-cloud-upload-alt"></i>File Caricati Recentemente</h2>
-            <a href="<?php echo APP_PATH; ?>/filesystem.php" style="color: #6b7280; font-size: 12px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.025em;">
+            <a href="<?php echo APP_PATH; ?>/filesystem.php" >
                 File Manager <i class="fas fa-arrow-right" style="font-size: 10px;"></i>
             </a>
         </div>
         
         <?php if (empty($attivitaRecenti)): ?>
-            <p style="color: #718096; text-align: center; padding: 40px 20px;">
-                <i class="fas fa-folder-open" style="font-size: 32px; color: #e5e7eb; margin-bottom: 10px; display: block;"></i>
+            <p >
+                <i class="fas fa-folder-open" ></i>
                 Nessun file caricato recentemente
             </p>
         <?php else: ?>
@@ -1342,7 +1349,7 @@ if ($isSuperAdmin) {
                         <div class="activity-title">
                             <?php echo htmlspecialchars($fileName); ?>
                             <?php if ($fileSize != 'N/A'): ?>
-                                <span style="font-weight: normal; color: #9ca3af; font-size: 11px; margin-left: 8px;">
+                                <span >
                                     (<?php echo $fileSize; ?>)
                                 </span>
                             <?php endif; ?>
@@ -1360,7 +1367,7 @@ if ($isSuperAdmin) {
                     </div>
                     <?php if (!empty($file['file_path'])): ?>
                     <a href="<?php echo APP_PATH; ?>/backend/api/download-file.php?id=<?php echo $file['id']; ?>" 
-                       style="color: #667eea; text-decoration: none; font-size: 14px;" 
+                        
                        title="Scarica file">
                         <i class="fas fa-download"></i>
                     </a>
@@ -1407,8 +1414,8 @@ if ($isSuperAdmin) {
 <!-- Sezione Task Assegnati per Super User -->
 <div class="dashboard-panel" style="margin-top: 25px;">
     <div class="panel-header">
-        <h2><i class="fas fa-tasks" style="margin-right: 10px; color: #667eea;"></i>Task Assegnati</h2>
-        <a href="<?php echo APP_PATH; ?>/tasks.php" style="color: #667eea; font-size: 14px; text-decoration: none;">
+        <h2><i class="fas fa-tasks" ></i>Task Assegnati</h2>
+        <a href="<?php echo APP_PATH; ?>/tasks.php" >
             Gestione Task <i class="fas fa-arrow-right"></i>
         </a>
     </div>
@@ -1534,34 +1541,24 @@ if ($isSuperAdmin) {
 
 <?php endif; // Fine del blocco if (!$aziendaId && !$isSuperAdmin) ?>
 
-</main>
-</div>
-
 <script>
 // Dashboard interactivity
 document.addEventListener('DOMContentLoaded', function() {
     // Subtle fade-in for cards
     const statCards = document.querySelectorAll('.stat-card-modern');
-    statCards.forEach((card, index) => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(10px)';
-        
-        setTimeout(() => {
-            card.style.transition = 'all 0.3s ease-out';
+    statCards.forEach((card) => {
+        if (card) {
             card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, index * 50);
+            card.style.transform = 'none';
+        }
     });
     
-    // Fade-in for panels
+    // Panels - keep static
     const panels = document.querySelectorAll('.dashboard-panel, .workday-summary');
-    panels.forEach((panel, index) => {
-        panel.style.opacity = '0';
-        
-        setTimeout(() => {
-            panel.style.transition = 'opacity 0.4s ease-out';
+    panels.forEach((panel) => {
+        if (panel) {
             panel.style.opacity = '1';
-        }, 300 + (index * 50));
+        }
     });
     
     // Auto refresh every 5 minutes
@@ -1585,5 +1582,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-</body>
-</html> 
+<?php include dirname(__FILE__) . '/components/footer.php'; ?> 

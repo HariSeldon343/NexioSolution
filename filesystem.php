@@ -507,7 +507,7 @@ include 'components/header.php';
             <i class="fas fa-folder-tree"></i> Struttura Cartelle
         </div>
         <div class="folder-tree" id="folderTree">
-            <div class="loading" style="padding: 20px; text-align: center; color: #6b7280;">
+            <div class="loading" >
                 <i class="fas fa-spinner fa-spin"></i> Caricamento...
             </div>
         </div>
@@ -541,7 +541,7 @@ include 'components/header.php';
                 
                 <div>
                     <input type="text" class="form-control" placeholder="Cerca..." 
-                           id="searchInput" onkeyup="searchFiles()" style="width: 200px;">
+                           id="searchInput" onkeyup="searchFiles()" >
                 </div>
             </div>
             
@@ -600,9 +600,9 @@ include 'components/header.php';
             <?php endif; ?>
             
             <div class="upload-area" id="uploadArea">
-                <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #9ca3af; margin-bottom: 10px;"></i>
+                <i class="fas fa-cloud-upload-alt" ></i>
                 <p>Trascina qui i file o clicca per selezionare</p>
-                <p style="font-size: 12px; color: #6b7280;">Formati: PDF, DOC, DOCX (Max 10MB)</p>
+                <p >Formati: PDF, DOC, DOCX (Max 10MB)</p>
                 <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx" style="display: none;">
             </div>
             
@@ -673,12 +673,12 @@ include 'components/header.php';
 <div class="modal" id="deleteModal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 style="color: #ef4444;">Conferma Eliminazione</h3>
+            <h3 >Conferma Eliminazione</h3>
             <button onclick="closeModal('deleteModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
         </div>
         <div class="modal-body">
             <p>Sei sicuro di voler eliminare <strong id="deleteItemName"></strong>?</p>
-            <p style="color: #6b7280; font-size: 14px;">Questa azione non può essere annullata.</p>
+            <p >Questa azione non può essere annullata.</p>
             
             <div style="margin-top: 20px;">
                 <label>
@@ -815,6 +815,15 @@ function renderFiles(data) {
                 <div class="file-meta">${formatFileSize(file.dimensione_file)}</div>
                 <div class="company-info">(${escapeHtml(companyName)})</div>
                 <div class="file-card-actions-bottom">
+                    ${isDocumentEditable(file) ? `
+                    <button class="action-btn btn-primary" 
+                            onclick="event.stopPropagation(); editDocument(${file.id})" 
+                            title="Modifica online" 
+                            aria-label="Modifica online ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
+                            tabindex="0"
+                            style="background: #0d6efd; color: white;">
+                        <i class="fas fa-pencil-alt" aria-hidden="true"></i>
+                    </button>` : ''}
                     <button class="action-btn" 
                             onclick="event.stopPropagation(); handleRename(${file.id}, 'file', '${escapeHtml(file.nome).replace(/'/g, '\\\'')}')" 
                             title="Rinomina" 
@@ -1127,6 +1136,25 @@ function openFile(fileId) {
     window.open('backend/api/filesystem-simple-api.php?action=download&id=' + fileId, '_blank');
 }
 
+// Funzione per verificare se un file è modificabile online
+function isDocumentEditable(file) {
+    // Verifica se abbiamo il nome del file o il percorso
+    const fileName = file.nome || file.file_path || '';
+    if (!fileName) return false;
+    
+    // Estrai l'estensione dal nome o percorso
+    const extension = fileName.toLowerCase().split('.').pop();
+    
+    // Supporta DOCX e DOC
+    return extension === 'docx' || extension === 'doc';
+}
+
+// Funzione per aprire l'editor di documenti
+function editDocument(fileId) {
+    // Apri l'editor in una nuova scheda
+    window.open('document-editor.php?id=' + fileId, '_blank');
+}
+
 function searchFiles() {
     const query = document.getElementById('searchInput').value.trim();
     if (query.length < 2 && query.length > 0) return;
@@ -1175,7 +1203,7 @@ function getFileIcon(type) {
 // Folder tree functionality
 function loadFolderTree() {
     const treeContainer = document.getElementById('folderTree');
-    treeContainer.innerHTML = '<div class="loading" style="padding: 20px; text-align: center; color: #6b7280;"><i class="fas fa-spinner fa-spin"></i> Caricamento...</div>';
+    treeContainer.innerHTML = '<div class="loading" ><i class="fas fa-spinner fa-spin"></i> Caricamento...</div>';
     
     fetch('backend/api/filesystem-simple-api.php?action=tree')
         .then(response => response.json())
@@ -1183,12 +1211,12 @@ function loadFolderTree() {
             if (data.success) {
                 renderFolderTree(data.tree);
             } else {
-                treeContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Errore nel caricamento</div>';
+                treeContainer.innerHTML = '<div >Errore nel caricamento</div>';
             }
         })
         .catch(error => {
             console.error('Error loading tree:', error);
-            treeContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Errore di connessione</div>';
+            treeContainer.innerHTML = '<div >Errore di connessione</div>';
         });
 }
 
@@ -1228,7 +1256,7 @@ function renderTreeNodes(nodes, level) {
                     <div class="tree-toggle ${hasChildren ? '' : 'invisible'}" onclick="event.stopPropagation(); toggleTreeNode('${nodeId}')">
                         <i class="fas fa-chevron-right"></i>
                     </div>
-                    <i class="fas fa-folder" style="color: #fbbf24; margin-right: 8px;"></i>
+                    <i class="fas fa-folder" ></i>
                     <span>${escapeHtml(node.nome)}</span>
                 </div>
         `;

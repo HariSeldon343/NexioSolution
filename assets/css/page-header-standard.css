@@ -1,0 +1,36 @@
+/* Standard Page Header for all pages (matches aziende.php) */
+.page-header, .content-header {
+  background: #2d5a9f !important;
+  color: #ffffff !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  border-radius: 0 !important;
+}
+
+.page-header h1, .content-header h1 {
+  color: #ffffff !important;
+  font-size: 1.5rem !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.page-header h1 i, .content-header h1 i {
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 1rem !important;
+}
+
+/* Subtitle under the title */
+.page-header .page-subtitle, .content-header .page-subtitle {
+  margin-top: 0.25rem !important;
+  font-size: 0.875rem !important;
+  color: rgba(255,255,255,0.85) !important;
+  font-weight: 400 !important;
+}
+
+/* Ensure spacing when header is the first element in main-content */
+.main-content > .page-header, .main-content > .content-header {
+  margin-top: 0 !important;
+} 

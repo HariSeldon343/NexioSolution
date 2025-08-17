@@ -1,0 +1,485 @@
+/* =====================================================
+   NEXIO LAYOUT MASTER FIX - DEFINITIVE SOLUTION
+   Created: 2025-08-12
+   Purpose: Fix all layout issues including sidebar badge cutoff,
+            inconsistent spacing, wrong margins, and card layouts
+   ===================================================== */
+
+/* =====================================================
+   1. GLOBAL RESET - Remove all conflicts
+   ===================================================== */
+
+* {
+    box-sizing: border-box !important;
+}
+
+html {
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+}
+
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 100vh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    background: #f7fafc !important;
+}
+
+/* =====================================================
+   2. SIDEBAR STRUCTURE - Fixed with proper footer space
+   ===================================================== */
+
+.sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 260px !important;
+    height: 100vh !important;
+    background: #162d4f !important;
+    display: flex !important;
+    flex-direction: column !important;
+    z-index: 1000 !important;
+    overflow: hidden !important; /* Prevent sidebar from scrolling */
+}
+
+/* Sidebar Header - Fixed height */
+.sidebar-header {
+    flex: 0 0 auto !important;
+    padding: 1.5rem !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+/* Sidebar Menu - Scrollable */
+.sidebar-menu {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 1rem 0 !important;
+    /* Ensure there's space at the bottom for the footer */
+    padding-bottom: 2rem !important;
+}
+
+/* Sidebar Footer - Fixed with enough space for badge */
+.sidebar-footer {
+    flex: 0 0 auto !important;
+    padding: 1rem 1.5rem !important;
+    /* CRITICAL: Extra padding at bottom to prevent badge cutoff */
+    padding-bottom: 2rem !important;
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+    background: #162d4f !important;
+    /* Ensure minimum height for badge */
+    min-height: 120px !important;
+}
+
+/* User info container */
+.sidebar-footer .user-info {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+}
+
+/* User name row */
+.sidebar-footer .user-name-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Badge container - Ensure proper spacing */
+.sidebar-footer .user-controls-row {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    /* Extra padding to ensure badge isn't cut off */
+    padding: 0.5rem 0 !important;
+}
+
+/* Badge styling with guaranteed visibility */
+.sidebar-footer .badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem 1rem !important;
+    background: linear-gradient(135deg, #0d6efd 0%, #0056d3 100%) !important;
+    color: white !important;
+    border-radius: 4px !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    white-space: nowrap !important;
+    /* Ensure badge is never cut off */
+    min-height: 32px !important;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3) !important;
+}
+
+/* Custom scrollbar for sidebar menu */
+.sidebar-menu::-webkit-scrollbar {
+    width: 4px !important;
+}
+
+.sidebar-menu::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.sidebar-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 2px !important;
+}
+
+/* =====================================================
+   3. MAIN CONTENT AREA - Proper spacing
+   ===================================================== */
+
+.main-content {
+    margin-left: 260px !important;
+    min-height: 100vh !important;
+    background: #ffffff !important;
+    /* Consistent padding across all pages */
+    padding: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Page header - Consistent across all pages */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    padding: 2rem !important;
+    margin: 0 !important;
+    margin-bottom: 2rem !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.page-header h1,
+.page-header h2 {
+    color: white !important;
+    margin: 0 !important;
+    font-weight: 600 !important;
+}
+
+/* Content wrapper - Add consistent padding */
+.main-content > .container,
+.main-content > .container-fluid,
+.main-content > div:not(.page-header) {
+    padding: 0 2rem 2rem 2rem !important;
+}
+
+/* =====================================================
+   4. CARD LAYOUTS - Consistent sizing
+   ===================================================== */
+
+/* Dashboard stats cards */
+.stats-overview {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
+    gap: 1.5rem !important;
+    margin-bottom: 2rem !important;
+    padding: 0 !important;
+}
+
+.stat-card-modern {
+    background: white !important;
+    border-radius: 8px !important;
+    padding: 1.5rem !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.stat-card-modern:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Aziende (Companies) cards grid */
+.aziende-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+    gap: 1.5rem !important;
+    margin-bottom: 2rem !important;
+    padding: 0 !important;
+}
+
+.azienda-card {
+    background: white !important;
+    border-radius: 8px !important;
+    padding: 1.5rem !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    /* Ensure consistent height */
+    min-height: 200px !important;
+}
+
+.azienda-card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Dashboard panels */
+.dashboard-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)) !important;
+    gap: 1.5rem !important;
+    margin-bottom: 2rem !important;
+}
+
+.dashboard-panel {
+    background: white !important;
+    border-radius: 8px !important;
+    padding: 1.5rem !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* =====================================================
+   5. TABLES - Consistent styling
+   ===================================================== */
+
+.table {
+    width: 100% !important;
+    margin-bottom: 1rem !important;
+    background-color: white !important;
+}
+
+.table thead th {
+    background-color: #f8f9fa !important;
+    border-bottom: 2px solid #dee2e6 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.05em !important;
+    padding: 0.75rem !important;
+}
+
+.table tbody td {
+    padding: 0.75rem !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #e9ecef !important;
+}
+
+/* =====================================================
+   6. BUTTONS - Consistent sizing and spacing
+   ===================================================== */
+
+.btn {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    white-space: nowrap !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b4199 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.4) !important;
+}
+
+.btn i {
+    font-size: 0.875rem !important;
+}
+
+/* =====================================================
+   7. FORMS - Consistent spacing
+   ===================================================== */
+
+.form-container {
+    background: white !important;
+    border-radius: 8px !important;
+    padding: 2rem !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    margin-bottom: 2rem !important;
+}
+
+.form-group {
+    margin-bottom: 1.5rem !important;
+}
+
+.form-label {
+    font-weight: 500 !important;
+    color: #374151 !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 0.875rem !important;
+}
+
+.form-control {
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+}
+
+.form-control:focus {
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+}
+
+/* =====================================================
+   8. RESPONSIVE DESIGN
+   ===================================================== */
+
+@media (max-width: 768px) {
+    /* Hide sidebar on mobile by default */
+    .sidebar {
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s ease !important;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0) !important;
+    }
+    
+    /* Full width main content on mobile */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    /* Adjust grids for mobile */
+    .stats-overview,
+    .aziende-grid,
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    /* Reduce padding on mobile */
+    .main-content > .container,
+    .main-content > .container-fluid,
+    .main-content > div:not(.page-header) {
+        padding: 0 1rem 1rem 1rem !important;
+    }
+    
+    .page-header {
+        padding: 1.5rem !important;
+    }
+    
+    /* Mobile menu toggle */
+    .mobile-menu-toggle {
+        position: fixed !important;
+        top: 1rem !important;
+        left: 1rem !important;
+        z-index: 1001 !important;
+        background: #667eea !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 6px !important;
+        padding: 0.5rem !important;
+        width: 40px !important;
+        height: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+}
+
+/* =====================================================
+   9. UTILITY CLASSES
+   ===================================================== */
+
+/* Spacing utilities */
+.mb-0 { margin-bottom: 0 !important; }
+.mb-1 { margin-bottom: 0.5rem !important; }
+.mb-2 { margin-bottom: 1rem !important; }
+.mb-3 { margin-bottom: 1.5rem !important; }
+.mb-4 { margin-bottom: 2rem !important; }
+
+.mt-0 { margin-top: 0 !important; }
+.mt-1 { margin-top: 0.5rem !important; }
+.mt-2 { margin-top: 1rem !important; }
+.mt-3 { margin-top: 1.5rem !important; }
+.mt-4 { margin-top: 2rem !important; }
+
+.p-0 { padding: 0 !important; }
+.p-1 { padding: 0.5rem !important; }
+.p-2 { padding: 1rem !important; }
+.p-3 { padding: 1.5rem !important; }
+.p-4 { padding: 2rem !important; }
+
+/* Text utilities */
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+
+/* Display utilities */
+.d-none { display: none !important; }
+.d-block { display: block !important; }
+.d-flex { display: flex !important; }
+.d-grid { display: grid !important; }
+
+/* Flexbox utilities */
+.align-items-center { align-items: center !important; }
+.justify-content-center { justify-content: center !important; }
+.justify-content-between { justify-content: space-between !important; }
+.gap-1 { gap: 0.5rem !important; }
+.gap-2 { gap: 1rem !important; }
+.gap-3 { gap: 1.5rem !important; }
+
+/* =====================================================
+   10. OVERRIDE ALL CONFLICTS - MAXIMUM PRIORITY
+   ===================================================== */
+
+/* Ensure these rules take precedence over all other CSS */
+body .sidebar-footer {
+    min-height: 120px !important;
+    padding-bottom: 2rem !important;
+}
+
+body .sidebar-footer .badge {
+    min-height: 32px !important;
+    margin-bottom: 0 !important;
+    display: inline-flex !important;
+}
+
+body .main-content {
+    padding: 0 !important;
+}
+
+body .page-header {
+    margin: 0 !important;
+    margin-bottom: 2rem !important;
+    padding: 2rem !important;
+}
+
+/* Force consistent card spacing */
+body .stats-overview,
+body .aziende-grid,
+body .dashboard-grid {
+    gap: 1.5rem !important;
+    margin-bottom: 2rem !important;
+}
+
+/* Ensure no elements are cut off */
+body * {
+    overflow: visible !important;
+}
+
+/* Exception for scrollable areas */
+body .sidebar-menu,
+body .table-responsive {
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+}
+
+/* END OF NEXIO LAYOUT MASTER FIX */

@@ -207,7 +207,7 @@ body {
     font-size: 0.95rem;
 }
 
-.user-role {
+.user-role { /* base */
     font-size: 0.8rem;
     opacity: 0.8;
 }

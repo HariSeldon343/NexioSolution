@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Nexio Platform - Multi-tenant collaborative document management system with companies, users, documents, calendars, and tickets. Built with PHP 8.0+ and MySQL, running on XAMPP (Windows WSL2).
+Nexio Platform - Enterprise multi-tenant collaborative document management system with ISO compliance automation. Features include hierarchical document management, calendar integration, ticket system, task management, and mobile applications. Built with PHP 8.0+ and MySQL, currently running on XAMPP (Windows WSL2) with 100+ database tables, 60+ API endpoints, and comprehensive security features.
 
 ## Environment & Database
 
@@ -21,15 +21,22 @@ Nexio Platform - Multi-tenant collaborative document management system with comp
 /mnt/c/xampp/mysql/bin/mysql.exe -u root nexiosol
 /mnt/c/xampp/mysql/bin/mysql.exe -u root nexiosol < database/[file].sql
 /mnt/c/xampp/mysql/bin/mysql.exe -u root -e "SHOW TABLES;" nexiosol
+/mnt/c/xampp/mysql/bin/mysql.exe -u root -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='nexiosol';" # Count tables (100+)
 
 # PHP Validation & Execution
 /mnt/c/xampp/php/php.exe -l [file].php              # Check syntax
 /mnt/c/xampp/php/php.exe [script].php               # Run script
+/mnt/c/xampp/php/php.exe -r "phpinfo();"            # Check PHP config
 
 # Setup & Maintenance Scripts
 /mnt/c/xampp/php/php.exe scripts/setup-nexio-documentale.php    # Complete setup
 /mnt/c/xampp/php/php.exe scripts/monitor-nexio-performance.php  # Monitor performance
 /mnt/c/xampp/php/php.exe scripts/setup-company-folders.php      # Create company folders
+/mnt/c/xampp/php/php.exe backend/websocket/server.php           # Start WebSocket server
+
+# Cron Jobs
+/mnt/c/xampp/php/php.exe cron/check-password-expiry.php        # Password expiry check
+/mnt/c/xampp/php/php.exe cron/process-email-queue.php          # Process email queue
 
 # XAMPP Control
 /mnt/c/xampp/xampp start
@@ -39,6 +46,7 @@ Nexio Platform - Multi-tenant collaborative document management system with comp
 # Composer (when available)
 composer install --no-dev --optimize-autoloader
 composer test                                       # Run PHPUnit tests
+composer dump-autoload -o                          # Optimize autoloader
 ```
 
 ## Architecture
@@ -207,11 +215,77 @@ if ($stmt->rowCount() > 0) { /* exists */ }
 
 // Verify column exists
 $stmt = db_query("SHOW COLUMNS FROM table_name LIKE 'column_name'");
+
+// Check database performance
+$stmt = db_query("SHOW PROCESSLIST");
+$stmt = db_query("SHOW STATUS LIKE 'Slow_queries'");
 ```
 
 ### Mobile App Integration
 - API endpoints in `/backend/api/mobile-*.php`
-- Authentication: `mobile-auth-api.php`
+- Authentication: `mobile-auth-api.php` (JWT tokens)
 - Events: `mobile-events-api.php`
 - Tasks: `mobile-tasks-api.php`
 - Companies: `mobile-companies-api.php`
+- Flutter app: `/flutter_nexio_app/`
+- PWA: `/mobile/`
+
+### Known Issues & Solutions
+
+**CSS Chaos (68 overlapping files)**
+- Problem: Multiple fix layers causing specificity wars
+- Solution: Consolidate into 3-5 organized files
+- Files to merge: nexio-*.css files in /assets/css/
+
+**Performance Bottlenecks**
+- No caching layer (implement Redis)
+- No asset bundling (add Webpack/Vite)
+- 20+ CSS files loaded per page
+- Solution: Implement build pipeline
+
+**Security Concerns**
+- MySQL root without password (CRITICAL)
+- CORS allows all origins (*)
+- Session security needs improvement
+- Solution: Harden security configuration
+
+**Technical Debt**
+- Mixed jQuery and vanilla JavaScript
+- No automated tests
+- Hardcoded configuration values
+- Solution: Gradual refactoring plan
+
+## Important Reminders
+
+### Development Best Practices
+- **File Management**: Always prefer editing existing files over creating new ones
+- **Documentation**: Only create docs when explicitly requested
+- **Security First**: Never expose sensitive data or create security vulnerabilities
+- **Multi-Tenant Aware**: Always consider company isolation in queries
+- **Performance**: Use indexes and optimize queries for 100+ table database
+- **Error Handling**: Always include proper error handling and logging
+
+### Quick Reference
+
+**Common Tasks**
+1. **Add new API endpoint**: Create in `/backend/api/`, include Auth and CSRF
+2. **Add database table**: Create SQL in `/database/`, run migration
+3. **Fix UI issue**: Check existing CSS fixes first, avoid adding more layers
+4. **Add new feature**: Update relevant model, API, and frontend
+5. **Debug issue**: Check `/logs/`, use `error_log()`, verify database
+
+**Performance Tips**
+- Use `db_query()` helper for prepared statements
+- Implement pagination for large datasets
+- Cache frequently accessed data
+- Optimize images before upload
+- Minimize JavaScript/CSS files
+
+**Security Checklist**
+- Validate all user input
+- Use prepared statements for SQL
+- Implement CSRF tokens
+- Check user permissions
+- Sanitize output (XSS prevention)
+- Log security-relevant actions
+- Use HTTPS in production

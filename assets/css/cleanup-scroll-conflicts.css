@@ -1,0 +1,99 @@
+/* CLEANUP SCROLL CONFLICTS - Rimuove tutti i conflitti dai CSS precedenti */
+/* Questo file sovrascrive specificamente le regole problematiche */
+
+/* Override delle regole di scroll-final-solution.css (se rimane caricato) */
+html:has(.sidebar),
+body:has(.sidebar),
+.app-layout,
+.layout-container {
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    max-height: none !important;
+}
+
+/* Override delle regole di app-layout-fix.css */
+.app-container,
+.app-wrapper {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* Override delle regole di sidebar-fullscreen-fix.css */
+body {
+    display: block !important;
+    height: auto !important;
+    overflow-y: auto !important;
+}
+
+/* Assicura che il main-content sia scrollabile */
+.main-content,
+#main-content,
+[class*="main-content"] {
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    max-height: none !important;
+    flex: none !important;
+    display: block !important;
+}
+
+/* Rimuove qualsiasi fixed positioning dal content */
+.content-wrapper,
+.content-container {
+    position: relative !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* Override di qualsiasi viewport limitation */
+[style*="height: 100vh"],
+[style*="max-height: 100vh"],
+[style*="overflow: hidden"] {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+/* Assicura che i wrapper non limitino l'altezza */
+.wrapper,
+.page-wrapper,
+.content {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: visible !important;
+}
+
+/* Force scrollbar visibility per debug */
+:root {
+    overflow-y: scroll !important;
+}
+
+/* Rimuove qualsiasi flex che potrebbe causare problemi */
+body:not(.modal-open) {
+    display: block !important;
+    flex-direction: initial !important;
+}
+
+/* Override specifico per il container principale */
+body > div:not(.sidebar):not(.modal):not(.modal-backdrop) {
+    overflow: visible !important;
+    height: auto !important;
+}
+
+/* Assicura che la sidebar rimanga fissa senza influenzare il resto */
+.sidebar {
+    position: fixed !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+}
+
+/* Il contenuto principale deve scorrere liberamente */
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+}

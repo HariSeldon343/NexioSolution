@@ -1,0 +1,27 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Rounded square background -->
+  <rect x="40" y="40" width="432" height="432" rx="64" ry="64" fill="url(#bgGradient)"/>
+  
+  <!-- Star/Diamond symbol -->
+  <g transform="translate(256, 256)">
+    <!-- Outer star -->
+    <path d="M 0,-120 L 30,-30 L 120,0 L 30,30 L 0,120 L -30,30 L -120,0 L -30,-30 Z" 
+          fill="white" opacity="0.9"/>
+    
+    <!-- Inner star for depth -->
+    <path d="M 0,-60 L 15,-15 L 60,0 L 15,15 L 0,60 L -15,15 L -60,0 L -15,-15 Z" 
+          fill="white"/>
+  </g>
+  
+  <!-- Nexio text (optional, remove for smaller sizes) -->
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="48" font-weight="bold" 
+        text-anchor="middle" fill="white" opacity="0.8">NEXIO</text>
+</svg>

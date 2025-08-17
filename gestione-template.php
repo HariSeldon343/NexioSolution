@@ -1230,7 +1230,8 @@ function previewTemplate(templateId) {
                             .content { min-height: 200mm; }
                             ${data.css || ''}
                         </style>
-                    </head>
+                        <link rel="stylesheet" href="assets/css/nexio-master-clean.css">
+</head>
                     <body>
                         <div class="page">
                             <div class="header">${data.header || '<p>Header vuoto</p>'}</div>

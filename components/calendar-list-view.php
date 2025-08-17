@@ -11,6 +11,14 @@ if (!isset($csrf)) {
 
 // Include calendar helper
 require_once 'backend/utils/CalendarHelper.php';
+require_once 'backend/utils/CalendarColorHelper.php';
+
+// Initialize color mappings for consistent colors across the view
+if (isset($eventi) && isset($aziende)) {
+    CalendarColorHelper::initializeColorMappings($eventi, $aziende);
+} elseif (isset($eventi)) {
+    CalendarColorHelper::initializeColorMappings($eventi);
+}
 
 // Combina eventi e task in un array unico
 $allItems = [];
@@ -49,6 +57,15 @@ if (!empty($allItems)) {
 }
 ?>
 
+<!-- Include Calendar Color CSS -->
+<link rel="stylesheet" href="<?= APP_PATH ?>/assets/css/calendar-colors.css">
+
+<!-- Calendar Legend -->
+<?php 
+$showIcsIndicator = true; // Show ICS import indicator in legend
+include 'components/calendar-legend.php'; 
+?>
+
 <div class="events-list-view">
     <?php if (empty($allItems)): ?>
         <div class="empty-state">
@@ -82,9 +99,11 @@ if (!empty($allItems)) {
             
             if ($item['type'] === 'event'):
                 $evento = $item['data'];
+                $colorClass = CalendarColorHelper::getEventColorClass($evento);
+                $sourceClass = CalendarColorHelper::getSourceIndicatorClass($evento);
             ?>
             
-            <div class="event-card" data-event-id="<?= $evento['id'] ?>">
+            <div class="event-card <?= $colorClass ?> <?= $sourceClass ?>" data-event-id="<?= $evento['id'] ?>">
                 <div class="event-time">
                     <span class="start-time"><?= date('H:i', strtotime($evento['data_inizio'])) ?></span>
                     <?php if ($evento['data_fine'] && $evento['data_fine'] !== $evento['data_inizio']): ?>

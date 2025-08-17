@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <td style='padding: 8px; border: 1px solid #ddd;'>{$password}</td>
                             </tr>
                         </table>
-                        <p style='color: #1b3f76; font-weight: bold; margin-top: 20px;'>
+                        <p >
                             ⚠️ Al primo accesso ti verrà richiesto di cambiare la password
                         </p>
                         <p>Puoi accedere alla piattaforma all'indirizzo: <a href='" . APP_URL . "'>" . APP_URL . "</a></p>
@@ -741,7 +741,7 @@ require_once 'components/page-header.php';
         <p>Stai per disattivare il referente:</p>
         <p><strong><?php echo htmlspecialchars($referente['nome'] . ' ' . $referente['cognome']); ?></strong></p>
         <p>Email: <?php echo htmlspecialchars($referente['email']); ?></p>
-        <p style="color: #666; margin-top: 15px;">Il referente potrà essere riattivato in seguito.</p>
+        <p >Il referente potrà essere riattivato in seguito.</p>
         
         <form method="post" action="" style="margin-top: 20px;">
             <input type="hidden" name="confirm" value="yes">
@@ -765,9 +765,9 @@ require_once 'components/page-header.php';
         <h1><i class="fas fa-user-times"></i> Elimina Definitivamente Referente</h1>
     </div>
     
-    <div class="confirm-dialog" style="background: #fee; border-color: #fcc;">
-        <h3 style="color: #c00;">🗑️ ATTENZIONE: Eliminazione Definitiva</h3>
-        <p style="color: #c00; font-weight: bold;">Questa azione è IRREVERSIBILE!</p>
+    <div class="confirm-dialog" >
+        <h3 >🗑️ ATTENZIONE: Eliminazione Definitiva</h3>
+        <p >Questa azione è IRREVERSIBILE!</p>
         <p>Stai per eliminare definitivamente il referente:</p>
         <p><strong><?php echo htmlspecialchars($referente['nome'] . ' ' . $referente['cognome']); ?></strong></p>
         <p>Email: <?php echo htmlspecialchars($referente['email']); ?></p>

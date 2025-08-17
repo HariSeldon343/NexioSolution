@@ -33,12 +33,8 @@
         }
 
         // Toggle sidebar on mobile
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                toggleSidebar();
-            });
-        }
+        // Removed: sidebar-toggle button no longer exists
+        // The sidebar can still be toggled via swipe gestures on mobile
 
         // Handle menu item clicks on mobile
         if (isMobile) {

@@ -21,10 +21,9 @@
     font-size: 0.875rem !important;
 }
 
-.sidebar-footer .user-role {
-    color: rgba(255, 255, 255, 0.8) !important;
-    font-size: 0.75rem !important;
-}
+/* Sidebar user-role must be inline and auto-sized */
+.sidebar-footer .user-role { display: inline-flex !important; width: auto !important; }
+.sidebar-footer .user-role .badge { display: inline-flex !important; width: auto !important; }
 
 .sidebar-footer .btn-icon {
     color: rgba(255, 255, 255, 0.6) !important;

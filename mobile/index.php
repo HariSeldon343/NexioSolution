@@ -1,6 +1,7 @@
 <?php
 // Mobile Version - Redirect to login if not authenticated
 session_start();
+require_once 'config.php';
 require_once '../backend/config/config.php';
 require_once '../backend/middleware/Auth.php';
 
@@ -28,32 +29,35 @@ $isSuperAdmin = $auth->isSuperAdmin();
     <meta name="description" content="Nexio Mobile - Piattaforma collaborativa per la gestione documentale">
     <title>Nexio Mobile</title>
     
+    <?php echo base_url_meta(); ?>
+    <?php echo js_config(); ?>
+    
     <!-- PWA Manifest -->
-    <link rel="manifest" href="/piattaforma-collaborativa/mobile/manifest.json">
+    <link rel="manifest" href="manifest.php">
     
     <!-- Primary Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/piattaforma-collaborativa/mobile/icons/icon-72x72.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/piattaforma-collaborativa/mobile/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/piattaforma-collaborativa/mobile/icons/icon-512x512.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-72x72.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
     
     <!-- Apple Touch Icons for iOS -->
-    <link rel="apple-touch-icon" href="/piattaforma-collaborativa/mobile/icons/icon-192x192.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="/piattaforma-collaborativa/mobile/icons/icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="96x96" href="/piattaforma-collaborativa/mobile/icons/icon-96x96.png">
-    <link rel="apple-touch-icon" sizes="128x128" href="/piattaforma-collaborativa/mobile/icons/icon-128x128.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="/piattaforma-collaborativa/mobile/icons/icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="/piattaforma-collaborativa/mobile/icons/icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="192x192" href="/piattaforma-collaborativa/mobile/icons/icon-192x192.png">
-    <link rel="apple-touch-icon" sizes="384x384" href="/piattaforma-collaborativa/mobile/icons/icon-384x384.png">
-    <link rel="apple-touch-icon" sizes="512x512" href="/piattaforma-collaborativa/mobile/icons/icon-512x512.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="icons/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="icons/icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128x128.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="384x384" href="icons/icon-384x384.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512x512.png">
     
     <!-- iOS specific PWA tags -->
     <meta name="apple-mobile-web-app-title" content="Nexio">
-    <link rel="apple-touch-startup-image" href="/piattaforma-collaborativa/mobile/icons/icon-512x512.png">
+    <link rel="apple-touch-startup-image" href="icons/icon-512x512.png">
     
     <!-- Microsoft Tiles -->
     <meta name="msapplication-TileColor" content="#2563eb">
-    <meta name="msapplication-TileImage" content="/piattaforma-collaborativa/mobile/icons/icon-144x144.png">
+    <meta name="msapplication-TileImage" content="icons/icon-144x144.png">
     
     <!-- Styles -->
     <style>
@@ -562,7 +566,7 @@ $isSuperAdmin = $auth->isSuperAdmin();
                 let response;
                 switch(page) {
                     case 'dashboard':
-                        response = await fetch('api/dashboard-data.php');
+                        response = await fetch(`${window.NexioConfig.BASE_URL}/mobile/api/dashboard-data.php`);
                         const data = await response.json();
                         content.innerHTML = renderDashboard(data);
                         break;
@@ -653,13 +657,83 @@ $isSuperAdmin = $auth->isSuperAdmin();
         }
         
         // Render documenti
-        function renderDocumenti() {
-            return `
-                <div style="padding: 20px;">
-                    <h2 style="margin-bottom: 16px;">Documenti</h2>
-                    <p style="color: var(--secondary);">Sezione documenti in costruzione...</p>
-                </div>
-            `;
+        async function renderDocumenti() {
+            try {
+                const response = await fetch(`${window.NexioConfig.API_URL}/folders-api.php?action=get_contents`);
+                const data = await response.json();
+                
+                if (!data.success) throw new Error(data.error);
+                
+                let html = '<div class="section">';
+                html += '<h2 class="section-title">Documenti e Cartelle</h2>';
+                
+                // Cartelle
+                if (data.folders && data.folders.length > 0) {
+                    data.folders.forEach(folder => {
+                        html += `
+                            <div class="list-card" onclick="openFolder(${folder.id})">
+                                <div class="list-icon" style="background: rgba(245, 158, 11, 0.1);">
+                                    <span>📁</span>
+                                </div>
+                                <div class="list-content">
+                                    <div class="list-title">${folder.nome}</div>
+                                    <div class="list-subtitle">Cartella</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Documenti
+                if (data.files && data.files.length > 0) {
+                    data.files.forEach(file => {
+                        const icon = getFileIcon(file.mime_type);
+                        html += `
+                            <div class="list-card" onclick="viewDocument(${file.id})">
+                                <div class="list-icon" style="background: ${icon.bg};">
+                                    <span>${icon.emoji}</span>
+                                </div>
+                                <div class="list-content">
+                                    <div class="list-title">${file.titolo || file.nome_file}</div>
+                                    <div class="list-subtitle">${formatFileSize(file.file_size)} • ${formatDate(file.data_modifica)}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                if (data.folders?.length === 0 && data.files?.length === 0) {
+                    html += '<p style="text-align: center; color: var(--secondary); padding: 20px;">Nessun documento disponibile</p>';
+                }
+                
+                html += '</div>';
+                return html;
+            } catch (error) {
+                return '<div style="padding: 20px; text-align: center; color: var(--danger);">Errore caricamento documenti</div>';
+            }
+        }
+        
+        function getFileIcon(mimeType) {
+            if (!mimeType) return { emoji: '📄', bg: 'rgba(100, 116, 139, 0.1)' };
+            if (mimeType.includes('pdf')) return { emoji: '📕', bg: 'rgba(239, 68, 68, 0.1)' };
+            if (mimeType.includes('word')) return { emoji: '📘', bg: 'rgba(37, 99, 235, 0.1)' };
+            if (mimeType.includes('excel') || mimeType.includes('sheet')) return { emoji: '📗', bg: 'rgba(16, 185, 129, 0.1)' };
+            if (mimeType.includes('image')) return { emoji: '🖼️', bg: 'rgba(139, 92, 246, 0.1)' };
+            return { emoji: '📄', bg: 'rgba(100, 116, 139, 0.1)' };
+        }
+        
+        function formatFileSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 10) / 10 + ' ' + sizes[i];
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit' });
         }
         
         // Render calendario
@@ -690,8 +764,12 @@ $isSuperAdmin = $auth->isSuperAdmin();
         // Register service worker for PWA with better error handling
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/piattaforma-collaborativa/mobile/sw.js', {
-                    scope: '/piattaforma-collaborativa/'
+                // Registra il service worker con percorso relativo
+                const swPath = `${window.NexioConfig.BASE_URL}/mobile/sw-dynamic.js`;
+                const swScope = `${window.NexioConfig.BASE_URL}/mobile/`;
+                
+                navigator.serviceWorker.register(swPath, {
+                    scope: swScope
                 })
                     .then(registration => {
                         console.log('ServiceWorker registered:', registration);

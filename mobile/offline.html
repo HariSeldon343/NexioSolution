@@ -136,8 +136,8 @@
             button.disabled = true;
             icon.classList.add('checking');
             
-            // Prova a fare una richiesta
-            fetch('/piattaforma-collaborativa/mobile/manifest.json', {
+            // Prova a fare una richiesta con percorso relativo
+            fetch('./manifest.php', {
                 method: 'HEAD',
                 cache: 'no-cache'
             })

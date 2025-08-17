@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'config.php';
 require_once '../backend/config/config.php';
 require_once '../backend/middleware/Auth.php';
 
@@ -43,8 +44,11 @@ try {
     <meta name="theme-color" content="#2563eb">
     <title>Documenti - Nexio Mobile</title>
     
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="../assets/images/nexio-icon.svg">
+    <?php echo base_url_meta(); ?>
+    <?php echo js_config(); ?>
+    
+    <link rel="manifest" href="manifest.php">
+    <link rel="icon" type="image/png" href="icons/icon-192x192.png">
     
     <style>
         * {

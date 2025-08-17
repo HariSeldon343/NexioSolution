@@ -272,6 +272,9 @@ function handleExportDocument($user, $currentAzienda) {
             }
         }
         
+        // Process [[TOC]] placeholder if present
+        $documentContent = processTOCPlaceholder($documentContent);
+        
         // Prepare export options
         $exportOptions = [
             'header_text' => $headerText,
@@ -416,8 +419,39 @@ function exportToDocx($content, $title, $options = []) {
             }
         }
         
-        // Add document content
-        \PhpOffice\PhpWord\Shared\Html::addHtml($section, $content, false, false);
+        // Check if content has a TOC (already processed)
+        if (strpos($content, 'class="toc-container"') !== false) {
+            // Extract TOC and main content separately
+            $tocPattern = '/<div class="toc-container"[^>]*>.*?<\/div>/is';
+            preg_match($tocPattern, $content, $tocMatches);
+            $tocContent = $tocMatches[0] ?? '';
+            $mainContent = preg_replace($tocPattern, '', $content);
+            
+            // Add TOC as a separate section if exists
+            if ($tocContent) {
+                // Add TOC title
+                $section->addText('Indice', ['bold' => true, 'size' => 16]);
+                $section->addTextBreak();
+                
+                // Parse TOC entries from HTML
+                if (preg_match_all('/<a[^>]*href="#([^"]*)"[^>]*>(.*?)<\/a>/i', $tocContent, $matches)) {
+                    foreach ($matches[2] as $index => $heading) {
+                        $cleanHeading = strip_tags($heading);
+                        // Determine level based on list item indentation or default to 1
+                        $section->addText($cleanHeading, ['size' => 11]);
+                    }
+                }
+                
+                // Add page break after TOC
+                $section->addPageBreak();
+            }
+            
+            // Add main content
+            \PhpOffice\PhpWord\Shared\Html::addHtml($section, $mainContent, false, false);
+        } else {
+            // Add document content normally
+            \PhpOffice\PhpWord\Shared\Html::addHtml($section, $content, false, false);
+        }
         
         // Save to temp file
         $filename = sanitizeFilename($title) . '_' . date('Y-m-d_H-i-s') . '.docx';
@@ -488,10 +522,72 @@ function exportToHtml($content, $title, $options = []) {
     }
 }
 
+function processTOCPlaceholder($content) {
+    // Check if [[TOC]] placeholder exists
+    if (strpos($content, '[[TOC]]') === false) {
+        return $content;
+    }
+    
+    // Generate TOC from content
+    $toc = generateTableOfContents($content);
+    
+    // Replace placeholder with generated TOC
+    $content = str_replace('[[TOC]]', $toc, $content);
+    
+    return $content;
+}
+
+function generateTableOfContents($content) {
+    // Create a DOM document to parse the HTML
+    $dom = new DOMDocument();
+    @$dom->loadHTML('<?xml encoding="UTF-8">' . $content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+    
+    // Find all headings
+    $xpath = new DOMXPath($dom);
+    $headings = $xpath->query('//h1|//h2|//h3|//h4|//h5|//h6');
+    
+    if ($headings->length === 0) {
+        return '';
+    }
+    
+    $tocHTML = '<div class="toc-container" style="border: 1px solid #ddd; padding: 20px; margin: 20px 0; background: #f9f9f9; page-break-after: always;">';
+    $tocHTML .= '<h2 style="margin-top: 0; color: #333;">Indice</h2>';
+    $tocHTML .= '<ol style="margin: 0; padding-left: 20px;">';
+    
+    $headingIndex = 0;
+    foreach ($headings as $heading) {
+        $level = intval(substr($heading->nodeName, 1));
+        $text = $heading->textContent;
+        
+        // Add ID to heading for internal linking
+        $headingId = 'heading-' . $headingIndex;
+        $heading->setAttribute('id', $headingId);
+        
+        // Add appropriate indentation based on heading level
+        $indent = ($level - 1) * 20;
+        $listStyle = $level === 1 ? 'decimal' : ($level === 2 ? 'lower-alpha' : 'lower-roman');
+        
+        $tocHTML .= '<li style="margin-left: ' . $indent . 'px; list-style-type: ' . $listStyle . ';">';
+        $tocHTML .= '<a href="#' . $headingId . '" style="text-decoration: none; color: #333;">' . htmlspecialchars($text) . '</a>';
+        $tocHTML .= '</li>';
+        
+        $headingIndex++;
+    }
+    
+    $tocHTML .= '</ol>';
+    $tocHTML .= '</div>';
+    
+    // Save the modified DOM back to HTML string
+    $modifiedContent = $dom->saveHTML();
+    
+    // Insert TOC at the beginning or where placeholder was
+    return $tocHTML;
+}
+
 function cleanHTMLForPDF($html) {
     // Rimuove elementi TinyMCE specifici e pulisce HTML
     $html = preg_replace('/<div[^>]*class="mce-pagebreak"[^>]*>.*?<\/div>/is', '<div style="page-break-before: always;"></div>', $html);
-    $html = strip_tags($html, '<p><br><strong><b><em><i><u><h1><h2><h3><h4><h5><h6><ul><ol><li><table><tr><td><th><div><span>');
+    $html = strip_tags($html, '<p><br><strong><b><em><i><u><h1><h2><h3><h4><h5><h6><ul><ol><li><table><tr><td><th><div><span><a>');
     return $html;
 }
 

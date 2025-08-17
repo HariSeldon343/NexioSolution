@@ -1,0 +1,15 @@
+version: '3.7'
+services:
+  onlyoffice-documentserver:
+    image: onlyoffice/documentserver:latest
+    container_name: nexio-documentserver
+    restart: always
+    ports:
+      - "8082:80"              # Espone l'editor su http://localhost:8082
+    environment:
+      - JWT_ENABLED=true        # abilita firma JWT fra client e server
+      - JWT_SECRET=mysecret     # sostituisci con una chiave segreta lunga
+      - JWT_HEADER=Authorization
+    volumes:
+      - ./data:/var/www/onlyoffice/Data      # salvataggio dati
+      - ./logs:/var/log/onlyoffice           # log del server

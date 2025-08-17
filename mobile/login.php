@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'config.php';
 require_once '../backend/config/config.php';
 require_once '../backend/middleware/Auth.php';
 
@@ -36,16 +37,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="description" content="Accedi a Nexio Mobile - Piattaforma collaborativa">
     <title>Nexio - Login</title>
     
+    <?php echo base_url_meta(); ?>
+    <?php echo js_config(); ?>
+    
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.php">
     
     <!-- Icons -->
-    <link rel="icon" type="image/svg+xml" href="icons/icon-192x192.svg">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.svg">
+    <link rel="icon" type="image/png" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     
     <!-- iOS specific -->
     <meta name="apple-mobile-web-app-title" content="Nexio">
-    <link rel="apple-touch-startup-image" href="icons/icon-512x512.svg">
+    <link rel="apple-touch-startup-image" href="icons/icon-512x512.png">
     
     <style>
         * {
@@ -262,7 +266,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-container">
         <div class="logo-container">
             <div class="logo">
-                <img src="../assets/images/nexio-icon.svg?v=<?php echo @filemtime(dirname(__DIR__) . '/assets/images/nexio-icon.svg'); ?>" alt="Nexio" onerror="this.style.display='none'; this.parentElement.innerHTML='N';">
+                <img src="<?php echo asset_url('images/nexio-icon.svg'); ?>" alt="Nexio" onerror="this.style.display='none'; this.parentElement.innerHTML='N';">
             </div>
             <h1 class="app-name">Nexio</h1>
             <p class="app-tagline">Piattaforma Collaborativa Mobile</p>
@@ -315,12 +319,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
             
             <div class="forgot-password">
-                <a href="../recupera-password.php">Password dimenticata?</a>
+                <a href="<?php echo url('recupera-password.php'); ?>">Password dimenticata?</a>
             </div>
         </div>
         
         <div class="desktop-link">
-            <a href="../login.php">Versione Desktop →</a>
+            <a href="<?php echo url('login.php'); ?>">Versione Desktop →</a>
         </div>
     </div>
     
@@ -335,9 +339,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Auto-focus first input
         document.getElementById('username').focus();
         
-        // Register service worker
+        // Register service worker con percorso dinamico
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(console.error);
+            const swPath = `${window.NexioConfig.BASE_URL}/mobile/sw-dynamic.js`;
+            navigator.serviceWorker.register(swPath).catch(console.error);
         }
     </script>
 </body>

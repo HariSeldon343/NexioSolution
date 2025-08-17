@@ -1,22 +1,27 @@
-// Service Worker per Nexio Mobile PWA - Enhanced Version
-const CACHE_VERSION = 'v2';
+// Service Worker per Nexio Mobile PWA - Dynamic Version
+// Usa percorsi relativi per compatibilità tra localhost e produzione
+
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `nexio-mobile-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `nexio-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `nexio-images-${CACHE_VERSION}`;
 const DOCUMENT_CACHE = `nexio-documents-${CACHE_VERSION}`;
 
-// Asset essenziali da cachare all'installazione
+// Ottieni il base path dal service worker scope
+const SW_SCOPE = self.registration.scope;
+const BASE_PATH = new URL(SW_SCOPE).pathname.replace('/mobile/', '');
+
+// Asset essenziali da cachare all'installazione (percorsi relativi)
 const STATIC_ASSETS = [
-  '/piattaforma-collaborativa/mobile/',
-  '/piattaforma-collaborativa/mobile/index.php',
-  '/piattaforma-collaborativa/mobile/login.php',
-  '/piattaforma-collaborativa/mobile/documenti.php',
-  '/piattaforma-collaborativa/mobile/editor.php',
-  '/piattaforma-collaborativa/mobile/offline.html',
-  '/piattaforma-collaborativa/mobile/manifest.json',
-  '/piattaforma-collaborativa/assets/images/nexio-icon.svg',
-  '/piattaforma-collaborativa/assets/images/nexio-logo.svg',
-  '/piattaforma-collaborativa/assets/vendor/tinymce/js/tinymce/tinymce.min.js'
+  './',
+  './index.php',
+  './login.php',
+  './documenti.php',
+  './editor.php',
+  './offline.html',
+  './manifest.php',
+  '../assets/images/nexio-icon.svg',
+  '../assets/images/nexio-logo.svg'
 ];
 
 // Cache limits
@@ -30,10 +35,11 @@ const CACHE_LIMITS = {
 const API_PATTERN = /\/api\//;
 const IMAGE_PATTERN = /\.(jpg|jpeg|png|gif|svg|webp)$/i;
 const STATIC_PATTERN = /\.(css|js)$/i;
+const TINYMCE_PATTERN = /\/tinymce\//;
 
 // Installazione del Service Worker
 self.addEventListener('install', event => {
-  console.log('[SW] Installing Service Worker');
+  console.log('[SW] Installing Service Worker v3');
   
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -54,7 +60,7 @@ self.addEventListener('install', event => {
 
 // Attivazione del Service Worker
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating Service Worker');
+  console.log('[SW] Activating Service Worker v3');
   
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -63,7 +69,8 @@ self.addEventListener('activate', event => {
           // Elimina vecchie cache
           if (cacheName !== CACHE_NAME && 
               cacheName !== RUNTIME_CACHE && 
-              cacheName !== IMAGE_CACHE) {
+              cacheName !== IMAGE_CACHE &&
+              cacheName !== DOCUMENT_CACHE) {
             console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -80,6 +87,15 @@ self.addEventListener('fetch', event => {
   
   // Ignora richieste non HTTP/HTTPS
   if (!url.protocol.startsWith('http')) return;
+  
+  // Ignora richieste esterne al nostro dominio
+  if (url.origin !== location.origin) return;
+  
+  // Non cachare TinyMCE assets
+  if (TINYMCE_PATTERN.test(url.pathname)) {
+    event.respondWith(fetch(request));
+    return;
+  }
   
   // Strategia per API: Network First con fallback alla cache
   if (API_PATTERN.test(url.pathname)) {
@@ -103,7 +119,7 @@ self.addEventListener('fetch', event => {
   if (request.mode === 'navigate' || request.destination === 'document') {
     event.respondWith(
       networkFirst(request, CACHE_NAME)
-        .catch(() => caches.match('/piattaforma-collaborativa/mobile/offline.html'))
+        .catch(() => caches.match('./offline.html'))
     );
     return;
   }
@@ -134,6 +150,8 @@ async function cacheFirst(request, cacheName) {
   try {
     const response = await fetch(request);
     if (response && response.status === 200) {
+      // Limita la dimensione della cache
+      await trimCache(cacheName, CACHE_LIMITS.runtime);
       cache.put(request, response.clone());
     }
     return response;
@@ -152,6 +170,8 @@ async function networkFirst(request, cacheName) {
     
     // Cacha solo risposte valide
     if (response && response.status === 200) {
+      // Limita la dimensione della cache
+      await trimCache(cacheName, CACHE_LIMITS.runtime);
       cache.put(request, response.clone());
     }
     
@@ -164,6 +184,18 @@ async function networkFirst(request, cacheName) {
     }
     
     throw error;
+  }
+}
+
+// Funzione per limitare la dimensione della cache
+async function trimCache(cacheName, maxItems) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  
+  if (keys.length > maxItems) {
+    // Rimuovi gli elementi più vecchi
+    const keysToDelete = keys.slice(0, keys.length - maxItems);
+    await Promise.all(keysToDelete.map(key => cache.delete(key)));
   }
 }
 
@@ -181,7 +213,9 @@ self.addEventListener('message', event => {
         );
       }).then(() => {
         // Notifica il client che la cache è stata pulita
-        event.ports[0].postMessage({ type: 'CACHE_CLEARED' });
+        if (event.ports && event.ports[0]) {
+          event.ports[0].postMessage({ type: 'CACHE_CLEARED' });
+        }
       })
     );
   }
@@ -199,8 +233,8 @@ async function syncData() {
   console.log('[SW] Syncing data with server...');
   
   try {
-    // Esempio: sincronizza dati pendenti
-    const response = await fetch('/piattaforma-collaborativa/backend/api/sync-api.php', {
+    // Usa percorso relativo per API
+    const response = await fetch('../backend/api/sync-api.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -220,8 +254,8 @@ async function syncData() {
 self.addEventListener('push', event => {
   const options = {
     body: event.data ? event.data.text() : 'Nuova notifica da Nexio',
-    icon: '/piattaforma-collaborativa/mobile/icons/icon-192x192.png',
-    badge: '/piattaforma-collaborativa/mobile/icons/icon-72x72.png',
+    icon: './icons/icon-192x192.png',
+    badge: './icons/icon-72x72.png',
     vibrate: [200, 100, 200],
     data: {
       dateOfArrival: Date.now(),
@@ -231,12 +265,12 @@ self.addEventListener('push', event => {
       {
         action: 'explore',
         title: 'Apri',
-        icon: '/piattaforma-collaborativa/mobile/icons/icon-72x72.png'
+        icon: './icons/icon-72x72.png'
       },
       {
         action: 'close',
         title: 'Chiudi',
-        icon: '/piattaforma-collaborativa/mobile/icons/icon-72x72.png'
+        icon: './icons/icon-72x72.png'
       }
     ]
   };
@@ -253,9 +287,9 @@ self.addEventListener('notificationclick', event => {
   if (event.action === 'explore') {
     // Apri l'app o naviga alla pagina specifica
     event.waitUntil(
-      clients.openWindow('/piattaforma-collaborativa/mobile/')
+      clients.openWindow('./')
     );
   }
 });
 
-console.log('[SW] Service Worker loaded');
+console.log('[SW] Service Worker v3 loaded with dynamic paths');

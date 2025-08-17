@@ -138,8 +138,8 @@ if (!isset($_SESSION['csrf_token'])) {
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
-    <!-- TinyMCE Cloud con API Key Premium (Trial fino al 31/08/2025) -->
-    <script src="https://cdn.tiny.cloud/1/4jharm4wbljffqkf1cmbbehx5nzacqseuqlmsjoyre65ikvr/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+    <!-- TinyMCE Self-Hosted -->
+    <script src="assets/vendor/tinymce/js/tinymce/tinymce.min.js"></script>
     
     <!-- Custom styles -->
     <style>
@@ -366,7 +366,9 @@ if (!isset($_SESSION['csrf_token'])) {
                 
                 <div class="toolbar-divider"></div>
                 
-                <!-- TOC ora gestito dal plugin tableofcontents di TinyMCE -->
+                <button class="btn btn-outline-secondary" onclick="insertTOC()">
+                    <i class="fas fa-list-ol"></i> Inserisci TOC
+                </button>
                 
                 <button class="btn btn-outline-secondary" onclick="printDocument()">
                     <i class="fas fa-print"></i> Stampa
@@ -520,28 +522,25 @@ if (!isset($_SESSION['csrf_token'])) {
     // Inizializzazione TinyMCE
     tinymce.init({
         selector: '#document-editor',
+        license_key: '4jharm4wbljffqkf1cmbbehx5nzacqseuqlmsjoyre65ikvr',
+        base_url: '/piattaforma-collaborativa/assets/vendor/tinymce/js/tinymce',
+        suffix: '.min',
         height: '100%',
         readonly: !CAN_EDIT,
         
-        // Plugin standard + premium
+        // Plugin open-source only
         plugins: [
-            // Standard plugins
             'anchor', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
             'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime',
             'media', 'table', 'help', 'wordcount', 'pagebreak', 'autosave',
-            // Premium plugins (trial fino 31/08/2025)
-            'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed',
-            'permanentpen', 'powerpaste', 'advtable', 'advcode',
-            'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents',
-            'footnotes', 'autocorrect', 'typography', 'inlinecss',
-            'markdown', 'importword', 'exportword', 'exportpdf'
+            'codesample', 'directionality', 'emoticons', 'importcss',
+            'nonbreaking', 'quickbars', 'save', 'searchreplace', 'visualchars'
         ],
         
-        toolbar: 'undo redo | blocks formatpainter | bold italic underline strikethrough | ' +
+        toolbar: 'undo redo | blocks | bold italic underline strikethrough | ' +
                 'alignleft aligncenter alignright alignjustify | ' +
-                'bullist numlist checklist outdent indent | table tableofcontents | ' +
-                'footnotes | importword exportword exportpdf | ' +
-                'removeformat | code fullscreen | help',
+                'bullist numlist outdent indent | table | insertTOC | ' +
+                'pagebreak | removeformat | code fullscreen | help',
                 
         menubar: 'file edit view insert format table tools help',
         
@@ -596,62 +595,29 @@ if (!isset($_SESSION['csrf_token'])) {
         autosave_retention: '30m',
         autosave_restore_when_empty: true,
         
-        // Configurazioni plugin premium
-        // Table of Contents
-        toc_depth: 3,
-        toc_class: 'toc',
-        toc_header: 'div',
+        // Pagebreak plugin
+        pagebreak_separator: '<div style="page-break-after: always;"></div>',
         
-        // Footnotes
-        footnotes_prefix: 'fn',
+        // Image upload
+        images_upload_url: 'backend/api/upload-image.php',
+        automatic_uploads: true,
+        images_reuse_filename: true,
         
-        // PowerPaste
-        powerpaste_word_import: 'merge',
-        powerpaste_html_import: 'merge',
-        powerpaste_allow_local_images: true,
-        
-        // Export/Import
-        exportpdf_converter: 'client',
-        importword_converter: 'client',
-        exportword_converter: 'client',
-        
-        // Merge Tags configuration (if needed, otherwise will be ignored)
-        mergetags_list: [
-            {
-                title: 'Utente',
-                menu: [
-                    { value: '{{user.name}}', title: 'Nome utente' },
-                    { value: '{{user.email}}', title: 'Email utente' }
-                ]
-            },
-            {
-                title: 'Documento',
-                menu: [
-                    { value: '{{document.title}}', title: 'Titolo documento' },
-                    { value: '{{document.date}}', title: 'Data documento' }
-                ]
-            }
-        ],
-        
-        // Advanced Tables
-        advtable_default_styles: {
-            'border-collapse': 'collapse',
-            'width': '100%'
-        },
-        
-        // AI Assistant (se disponibile)
-        ai_request: (request, respondWith) => {
-            // Placeholder per future integrazioni AI
-            respondWith.string(() => Promise.reject('AI non ancora configurato'));
-        },
-        
-        // Comments (per collaborazione)
-        tinycomments_mode: 'embedded',
-        tinycomments_author: USER_NAME,
-        tinycomments_author_id: USER_ID.toString(),
+        // Custom toolbar button per TOC
+        toolbar_mode: 'sliding',
         
         setup: function(ed) {
             editor = ed;
+            
+            // Aggiungi comando custom per inserire TOC placeholder
+            ed.ui.registry.addButton('insertTOC', {
+                text: 'TOC',
+                tooltip: 'Inserisci indice (Table of Contents)',
+                onAction: function() {
+                    ed.insertContent('<p>[[TOC]]</p>');
+                    showNotification('TOC placeholder inserito. Verrà generato l\'indice nell\'export.', 'info');
+                }
+            });
             
             // Gestione eventi per collaborazione real-time
             if (CAN_EDIT) {
@@ -1235,6 +1201,43 @@ if (!isset($_SESSION['csrf_token'])) {
             console.error('Export error:', error);
             alert('Errore durante l\'esportazione: ' + error.message);
         }
+    }
+    
+    // Function to insert TOC placeholder
+    function insertTOC() {
+        if (editor) {
+            editor.insertContent('<p>[[TOC]]</p>');
+            showNotification('TOC placeholder inserito. Verrà generato l\'indice nell\'export.', 'info');
+        }
+    }
+    
+    // Function to generate TOC from headings
+    function generateTOCFromContent(content) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        
+        const headings = tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        if (headings.length === 0) return '';
+        
+        let tocHTML = '<div class="toc-container" style="border: 1px solid #ddd; padding: 20px; margin: 20px 0; background: #f9f9f9;">';
+        tocHTML += '<h2 style="margin-top: 0;">Indice</h2>';
+        tocHTML += '<ol style="margin: 0; padding-left: 20px;">';
+        
+        headings.forEach((heading, index) => {
+            const level = parseInt(heading.tagName.substring(1));
+            const text = heading.textContent;
+            const indent = (level - 1) * 20;
+            
+            tocHTML += `<li style="margin-left: ${indent}px; list-style-type: ${level === 1 ? 'decimal' : level === 2 ? 'lower-alpha' : 'lower-roman'};">`;
+            tocHTML += `<a href="#heading-${index}" style="text-decoration: none; color: #333;">${text}</a>`;
+            tocHTML += '</li>';
+            
+            // Add ID to heading for linking
+            heading.id = `heading-${index}`;
+        });
+        
+        tocHTML += '</ol></div>';
+        return tocHTML;
     }
     
     // Initialize page settings on load

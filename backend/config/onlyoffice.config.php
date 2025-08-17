@@ -21,6 +21,13 @@ $ONLYOFFICE_SUPPORTED_FORMATS = [
     'pptx', 'ppt', 'odp'
 ];
 
+$ONLYOFFICE_DS_PUBLIC_URL  = 'http://localhost:8082'; // URL pubblico (esterno) del Document Server
+$ONLYOFFICE_DS_INTERNAL_URL = 'http://onlyoffice-documentserver'; // URL interno se usi docker-compose; altrimenti identico al precedente
+$ONLYOFFICE_CALLBACK_URL   = 'http://<tuo_dominio>/backend/api/onlyoffice-callback.php';
+$ONLYOFFICE_DOCUMENTS_DIR  = __DIR__ . '/../../uploads/documenti_onlyoffice'; // cartella dove salvare temporaneamente i docx
+$ONLYOFFICE_DEBUG = false;
+
+
 // Dimensione massima file (bytes) - 50MB
 $ONLYOFFICE_MAX_FILE_SIZE = 50 * 1024 * 1024;
 

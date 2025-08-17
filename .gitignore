@@ -1,2 +1,5 @@
 NS/
 backup_nexio_files_*.tar.gz
+test-tinymce*.html
+tinymce_*.zip
+tinymce_*/

@@ -1,0 +1,51 @@
+# Mobile Directory Configuration
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Gestione del manifest dinamico
+    RewriteRule ^manifest\.json$ manifest.php [L]
+    
+    # Permetti l'accesso ai file esistenti
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Reindirizza al file index se non esiste
+    RewriteRule ^(.*)$ index.php?page=$1 [QSA,L]
+</IfModule>
+
+# Headers per PWA
+<IfModule mod_headers.c>
+    # Service Worker scope
+    Header set Service-Worker-Allowed "/"
+    
+    # CORS per risorse locali
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type"
+    
+    # Cache control per asset statici
+    <FilesMatch "\.(png|jpg|jpeg|gif|svg|ico|css|js)$">
+        Header set Cache-Control "public, max-age=31536000"
+    </FilesMatch>
+    
+    # Cache control per manifest
+    <FilesMatch "manifest\.(json|php)$">
+        Header set Cache-Control "public, max-age=3600"
+    </FilesMatch>
+</IfModule>
+
+# Compressione
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Tipo MIME per manifest
+AddType application/manifest+json .json
+
+# Sicurezza base
+Options -Indexes
+DirectoryIndex index.php
+
+# PHP Error Handling
+php_flag display_errors Off
+php_flag log_errors On

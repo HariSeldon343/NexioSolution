@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Fix Definitivo OnlyOffice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 50px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .btn-onlyoffice {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            transition: all 0.3s;
+        }
+        .btn-onlyoffice:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .code {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test Fix Definitivo</h1>
+        
+        <div class="alert alert-success">
+            <strong>✅ Fix Applicato!</strong><br>
+            Le funzioni sono ora esposte DOPO la loro definizione (riga 1579-1581 di filesystem.php)
+        </div>
+
+        <div class="code">
+            <strong>Codice aggiunto alla fine di filesystem.php:</strong><br>
+            window.editDocument = editDocument;<br>
+            window.isDocumentEditable = isDocumentEditable;<br>
+            window.openFile = openFile;
+        </div>
+
+        <h2>Test del Bottone:</h2>
+        <p>Clicca questo bottone per aprire il documento ID 22 con OnlyOffice:</p>
+        
+        <!-- Bottone identico a quello in filesystem.php -->
+        <button class="btn-onlyoffice" 
+                onclick="event.stopPropagation(); editDocument(event, 22)">
+            📝 Apri con OnlyOffice
+        </button>
+
+        <div class="alert alert-warning">
+            <strong>⚠️ Importante:</strong><br>
+            1. Ricarica filesystem.php con Ctrl+F5<br>
+            2. Apri la console (F12) e verifica il messaggio "OnlyOffice functions loaded"<br>
+            3. Se il popup è bloccato, permetti i popup per questo sito
+        </div>
+
+        <h3>Debug Console:</h3>
+        <div id="debug" class="code"></div>
+    </div>
+
+    <script>
+        // Funzione editDocument minima per test
+        function editDocument(event, fileId) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            const url = '/piattaforma-collaborativa/onlyoffice-editor.php?id=' + fileId;
+            const debug = document.getElementById('debug');
+            debug.innerHTML = `
+                <strong>✅ Funzione chiamata!</strong><br>
+                URL: ${url}<br>
+                FileID: ${fileId}<br>
+                Timestamp: ${new Date().toLocaleTimeString()}<br>
+                <br>
+                Tentativo apertura in nuova scheda...
+            `;
+            
+            try {
+                const newWindow = window.open(url, '_blank');
+                if (newWindow) {
+                    debug.innerHTML += '<br><strong style="color: green">✅ Successo! La finestra dovrebbe aprirsi.</strong>';
+                } else {
+                    debug.innerHTML += '<br><strong style="color: red">❌ Popup bloccato dal browser!</strong>';
+                    if (confirm('Il popup è stato bloccato. Aprire nella stessa finestra?')) {
+                        window.location.href = url;
+                    }
+                }
+            } catch (error) {
+                debug.innerHTML += `<br><strong style="color: red">❌ Errore: ${error.message}</strong>`;
+            }
+        }
+        
+        // Esponi globalmente per il test
+        window.editDocument = editDocument;
+        
+        // Verifica al caricamento
+        document.addEventListener('DOMContentLoaded', function() {
+            const debug = document.getElementById('debug');
+            debug.innerHTML = `
+                <strong>Stato al caricamento:</strong><br>
+                window.editDocument: ${typeof window.editDocument}<br>
+                Pronto per il test!
+            `;
+        });
+    </script>
+</body>
+</html>

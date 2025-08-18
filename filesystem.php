@@ -544,13 +544,13 @@ include 'components/header.php';
             <!-- Toolbar -->
             <div class="fs-toolbar">
                 <div>
-                    <button class="btn btn-primary" onclick="showUploadModal()">
+                    <button type="button" class="btn btn-primary" onclick="showUploadModal()">
                         <i class="fas fa-upload"></i> Carica File
                     </button>
-                    <button class="btn btn-secondary" onclick="showNewFolderModal()">
+                    <button type="button" class="btn btn-secondary" onclick="showNewFolderModal()">
                         <i class="fas fa-folder-plus"></i> Nuova Cartella
                     </button>
-                    <button class="btn btn-secondary" onclick="toggleSelectMode()">
+                    <button type="button" class="btn btn-secondary" onclick="toggleSelectMode()">
                         <i class="fas fa-check-square"></i> Selezione Multipla
                     </button>
                 </div>
@@ -567,16 +567,16 @@ include 'components/header.php';
                     <span id="selectedCount">0</span> elementi selezionati
                 </div>
                 <div class="selection-actions">
-                    <button class="btn btn-secondary" onclick="selectAllItems()">
+                    <button type="button" class="btn btn-secondary" onclick="selectAllItems()">
                         <i class="fas fa-check-double"></i> Seleziona Tutto
                     </button>
-                    <button class="btn btn-secondary" onclick="deselectAllItems()">
+                    <button type="button" class="btn btn-secondary" onclick="deselectAllItems()">
                         <i class="fas fa-times"></i> Deseleziona Tutto
                     </button>
-                    <button class="btn btn-primary" onclick="downloadSelected()">
+                    <button type="button" class="btn btn-primary" onclick="downloadSelected()">
                         <i class="fas fa-download"></i> Scarica Selezionati
                     </button>
-                    <button class="btn btn-danger" onclick="deleteSelected()">
+                    <button type="button" class="btn btn-danger" onclick="deleteSelected()">
                         <i class="fas fa-trash"></i> Elimina Selezionati
                     </button>
                 </div>
@@ -598,7 +598,7 @@ include 'components/header.php';
     <div class="modal-content">
         <div class="modal-header">
             <h3>Carica File</h3>
-            <button onclick="closeModal('uploadModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <button type="button" onclick="closeModal('uploadModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
         </div>
         <div class="modal-body">
             <?php if ($isSuperAdmin || $isUtenteSpeciale): ?>
@@ -625,8 +625,8 @@ include 'components/header.php';
             <div id="uploadList" style="margin-top: 20px;"></div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('uploadModal')">Annulla</button>
-            <button class="btn btn-primary" onclick="uploadFiles()">Carica</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal('uploadModal')">Annulla</button>
+            <button type="button" class="btn btn-primary" onclick="uploadFiles()">Carica</button>
         </div>
     </div>
 </div>
@@ -636,7 +636,7 @@ include 'components/header.php';
     <div class="modal-content">
         <div class="modal-header">
             <h3>Nuova Cartella</h3>
-            <button onclick="closeModal('folderModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <button type="button" onclick="closeModal('folderModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
         </div>
         <div class="modal-body">
             <div class="form-group">
@@ -659,8 +659,8 @@ include 'components/header.php';
             <?php endif; ?>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('folderModal')">Annulla</button>
-            <button class="btn btn-primary" onclick="createFolder()">Crea</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal('folderModal')">Annulla</button>
+            <button type="button" class="btn btn-primary" onclick="createFolder()">Crea</button>
         </div>
     </div>
 </div>
@@ -670,7 +670,7 @@ include 'components/header.php';
     <div class="modal-content">
         <div class="modal-header">
             <h3>Rinomina</h3>
-            <button onclick="closeModal('renameModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <button type="button" onclick="closeModal('renameModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
         </div>
         <div class="modal-body">
             <div class="form-group">
@@ -679,8 +679,8 @@ include 'components/header.php';
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('renameModal')">Annulla</button>
-            <button class="btn btn-primary" onclick="confirmRename()">Rinomina</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal('renameModal')">Annulla</button>
+            <button type="button" class="btn btn-primary" onclick="confirmRename()">Rinomina</button>
         </div>
     </div>
 </div>
@@ -690,7 +690,7 @@ include 'components/header.php';
     <div class="modal-content">
         <div class="modal-header">
             <h3 >Conferma Eliminazione</h3>
-            <button onclick="closeModal('deleteModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <button type="button" onclick="closeModal('deleteModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
         </div>
         <div class="modal-body">
             <p>Sei sicuro di voler eliminare <strong id="deleteItemName"></strong>?</p>
@@ -704,8 +704,8 @@ include 'components/header.php';
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Annulla</button>
-            <button class="btn btn-danger" id="confirmBtn" onclick="confirmDeleteFS()" disabled>Elimina</button>
+            <button type="button" class="btn btn-secondary" onclick="closeModal('deleteModal')">Annulla</button>
+            <button type="button" class="btn btn-danger" id="confirmBtn" onclick="confirmDeleteFS()" disabled>Elimina</button>
         </div>
     </div>
 </div>
@@ -726,11 +726,40 @@ let selectedItems = new Set(); // Per tracciare elementi selezionati
 // Initial load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Filesystem JS initialized');
+    
+    // Event delegation per bottoni OnlyOffice caricati dinamicamente
+    document.addEventListener('click', function(e) {
+        // Verifica se il click è su un bottone OnlyOffice o suoi figli
+        const button = e.target.closest('.btn-onlyoffice');
+        if (button) {
+            console.log('OnlyOffice button clicked via delegation');
+            e.stopPropagation();
+            e.preventDefault();
+            
+            // Estrai l'ID del file dall'onclick attribute
+            const onclickAttr = button.getAttribute('onclick');
+            if (onclickAttr) {
+                const match = onclickAttr.match(/editDocument\([^,]+,\s*(\d+)\)/);
+                if (match && match[1]) {
+                    const fileId = parseInt(match[1]);
+                    console.log('Delegated click - extracted fileId:', fileId);
+                    editDocument(e, fileId);
+                } else {
+                    console.error('Could not extract fileId from onclick attribute:', onclickAttr);
+                }
+            } else {
+                console.error('No onclick attribute found on button');
+            }
+            return false; // Previeni ulteriore propagazione
+        }
+    }, true); // Use capture phase
+    
     loadFolder(null);
     loadFolderTree();
     
     // Verify functions are available
     console.log('confirmDeleteFS exists:', typeof confirmDeleteFS === 'function');
+    console.log('editDocument exists:', typeof editDocument === 'function');
 });
 
 // Load folder contents
@@ -787,21 +816,21 @@ function renderFiles(data) {
                 <div class="file-meta">${folder.count || 0} elementi</div>
                 <div class="company-info">(${escapeHtml(companyName)})</div>
                 <div class="file-card-actions-bottom">
-                    <button class="action-btn" 
+                    <button type="button" class="action-btn" 
                             onclick="event.stopPropagation(); handleRename(${folder.id}, 'folder', '${escapeHtml(folder.nome).replace(/'/g, '\\\'')}')" 
                             title="Rinomina" 
                             aria-label="Rinomina cartella ${escapeHtml(folder.nome).replace(/'/g, '\\\'')}"
                             tabindex="0">
                         <i class="fas fa-edit" aria-hidden="true"></i>
                     </button>
-                    <button class="action-btn" 
+                    <button type="button" class="action-btn" 
                             onclick="event.stopPropagation(); downloadFolder(${folder.id})" 
                             title="Scarica cartella come ZIP" 
                             aria-label="Scarica cartella ${escapeHtml(folder.nome).replace(/'/g, '\\\'')} come ZIP"
                             tabindex="0">
                         <i class="fas fa-download" aria-hidden="true"></i>
                     </button>
-                    <button class="action-btn delete" 
+                    <button type="button" class="action-btn delete" 
                             onclick="event.stopPropagation(); handleDelete(${folder.id}, 'folder', '${escapeHtml(folder.nome).replace(/'/g, '\\\'')}')" 
                             title="Elimina" 
                             aria-label="Elimina cartella ${escapeHtml(folder.nome).replace(/'/g, '\\\'')}"
@@ -827,34 +856,33 @@ function renderFiles(data) {
                                        ${isSelected ? 'checked' : ''} 
                                        onclick="event.stopPropagation(); toggleSelection(event, 'file', ${file.id})">` : ''}
                 <i class="fas ${icon.class}" style="color: ${icon.color}"></i>
-                ${isDocumentEditable(file) ? '<span class="badge bg-success position-absolute" style="top: 5px; right: 5px; font-size: 10px;">OnlyOffice</span>' : ''}
                 <div class="file-name">${escapeHtml(file.nome)}</div>
                 <div class="file-meta">${formatFileSize(file.dimensione_file)}</div>
                 <div class="company-info">(${escapeHtml(companyName)})</div>
                 <div class="file-card-actions-bottom">
                     ${isDocumentEditable(file) ? `
-                    <button class="action-btn btn-onlyoffice" 
+                    <button type="button" class="action-btn btn-onlyoffice" 
                             onclick="event.stopPropagation(); editDocument(event, ${file.id})" 
                             title="Apri con OnlyOffice" 
                             aria-label="Apri con OnlyOffice ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
                             tabindex="0">
                         <i class="fas fa-file-word" aria-hidden="true"></i>
                     </button>` : ''}
-                    <button class="action-btn" 
+                    <button type="button" class="action-btn" 
                             onclick="event.stopPropagation(); handleRename(${file.id}, 'file', '${escapeHtml(file.nome).replace(/'/g, '\\\'')}')" 
                             title="Rinomina" 
                             aria-label="Rinomina file ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
                             tabindex="0">
                         <i class="fas fa-edit" aria-hidden="true"></i>
                     </button>
-                    <button class="action-btn" 
+                    <button type="button" class="action-btn" 
                             onclick="event.stopPropagation(); openFile(${file.id})" 
                             title="Scarica file" 
                             aria-label="Scarica file ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
                             tabindex="0">
                         <i class="fas fa-download" aria-hidden="true"></i>
                     </button>
-                    <button class="action-btn delete" 
+                    <button type="button" class="action-btn delete" 
                             onclick="event.stopPropagation(); handleDelete(${file.id}, 'file', '${escapeHtml(file.nome).replace(/'/g, '\\\'')}')" 
                             title="Elimina" 
                             aria-label="Elimina file ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
@@ -907,10 +935,7 @@ window.handleRename = handleRename;
 window.showDeleteModal = showDeleteModal;
 window.showRenameModal = showRenameModal;
 
-// Esponi le funzioni per l'editor di documenti
-window.editDocument = editDocument;
-window.isDocumentEditable = isDocumentEditable;
-window.openFile = openFile;
+// Le funzioni verranno esposte dopo la loro definizione
 
 // Esponi le funzioni per i modal
 window.showUploadModal = showUploadModal;
@@ -1231,15 +1256,40 @@ function isDocumentEditable(file) {
 
 // Funzione per aprire l'editor di documenti
 function editDocument(event, fileId) {
+    // Debug log per verificare che la funzione venga chiamata
+    console.log('editDocument called with fileId:', fileId);
+    
     // Previeni la propagazione dell'evento per evitare refresh
     if (event) {
         event.stopPropagation();
         event.preventDefault();
     }
     
+    // Verifica che fileId sia valido
+    if (!fileId) {
+        console.error('editDocument: fileId is missing or invalid');
+        alert('Errore: ID documento non valido');
+        return;
+    }
+    
     // Apri l'editor OnlyOffice in una nuova scheda
     console.log('Opening OnlyOffice editor for document ID:', fileId);
-    window.open('onlyoffice-editor.php?id=' + fileId, '_blank');
+    const url = 'onlyoffice-editor.php?id=' + fileId;
+    console.log('Opening URL:', url);
+    
+    try {
+        const newWindow = window.open(url, '_blank');
+        if (!newWindow) {
+            console.error('Popup blocked or window.open failed');
+            // Fallback: prova a navigare direttamente
+            if (confirm('Il popup potrebbe essere stato bloccato. Vuoi aprire OnlyOffice nella stessa finestra?')) {
+                window.location.href = url;
+            }
+        }
+    } catch (error) {
+        console.error('Error opening OnlyOffice editor:', error);
+        alert('Errore nell\'apertura dell\'editor OnlyOffice');
+    }
 }
 
 function searchFiles() {
@@ -1523,6 +1573,19 @@ function deleteSelected() {
         alert('Errore di connessione');
     });
 }
+
+// Esponi le funzioni per l'editor di documenti nello scope globale
+// IMPORTANTE: Questo deve essere fatto DOPO la definizione delle funzioni
+window.editDocument = editDocument;
+window.isDocumentEditable = isDocumentEditable;
+window.openFile = openFile;
+
+// Debug: verifica che le funzioni siano disponibili
+console.log('OnlyOffice functions loaded:', {
+    editDocument: typeof window.editDocument,
+    isDocumentEditable: typeof window.isDocumentEditable,
+    openFile: typeof window.openFile
+});
 </script>
 
 <?php include 'components/footer.php'; ?>

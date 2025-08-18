@@ -150,7 +150,7 @@
                         <strong>${standard.nome}</strong>
                         <small class="text-muted d-block">v${standard.versione}</small>
                     </div>
-                    <button class="btn btn-sm btn-outline-primary" onclick="createStandardStructure(${standard.id})">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="createStandardStructure(${standard.id})">
                         <i class="fas fa-folder-tree"></i>
                     </button>
                 </div>
@@ -269,10 +269,10 @@
                 <td>${new Date(doc.updated_at).toLocaleDateString('it-IT')}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="downloadDocument(${doc.id})" title="Scarica">
+                        <button type="button" class="btn btn-outline-primary" onclick="downloadDocument(${doc.id})" title="Scarica">
                             <i class="fas fa-download"></i>
                         </button>
-                        <button class="btn btn-outline-secondary" onclick="editDocument(${doc.id})" title="Modifica">
+                        <button type="button" class="btn btn-outline-secondary" onclick="editDocument(${doc.id})" title="Modifica">
                             <i class="fas fa-edit"></i>
                         </button>
                     </div>

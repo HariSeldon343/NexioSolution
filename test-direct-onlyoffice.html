@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Diretto OnlyOffice</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .btn-onlyoffice {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-onlyoffice:hover {
+            background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+        .btn-test {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn-test:hover {
+            opacity: 0.9;
+        }
+        .console {
+            background: #1e1e1e;
+            color: #4ec9b0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #4ec9b0;
+            padding-left: 10px;
+        }
+        .success { border-left-color: #28a745; color: #28a745; }
+        .error { border-left-color: #dc3545; color: #dc3545; }
+        .info { border-left-color: #17a2b8; color: #17a2b8; }
+        .link-test {
+            display: inline-block;
+            margin: 10px 0;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .link-test:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Test Diretto OnlyOffice Editor</h1>
+        
+        <div class="test-section">
+            <h2>1️⃣ Test con Bottone (come in filesystem.php)</h2>
+            <p>Questo simula esattamente il bottone in filesystem.php:</p>
+            <button class="btn-onlyoffice" onclick="event.stopPropagation(); editDocument(event, 22)">
+                📝 Apri Documento ID 22
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h2>2️⃣ Test con Link Diretto</h2>
+            <p>Link diretto all'editor OnlyOffice:</p>
+            <a href="onlyoffice-editor.php?id=22" target="_blank" class="link-test">
+                🔗 Apri onlyoffice-editor.php?id=22
+            </a>
+        </div>
+
+        <div class="test-section">
+            <h2>3️⃣ Test con JavaScript Puro</h2>
+            <button class="btn-test" onclick="testDirectOpen()">
+                Test window.open()
+            </button>
+            <button class="btn-test" onclick="testLocationHref()">
+                Test location.href
+            </button>
+            <button class="btn-test" onclick="testFetchAPI()">
+                Test Fetch API
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h2>4️⃣ Console di Debug</h2>
+            <button class="btn-test" onclick="clearConsole()">Pulisci Console</button>
+            <div id="console" class="console">
+                <div class="log-entry info">Console pronta per il debug...</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>5️⃣ Verifica Funzioni Disponibili</h2>
+            <button class="btn-test" onclick="checkEnvironment()">Verifica Ambiente</button>
+        </div>
+    </div>
+
+    <script>
+        // Console custom per debug
+        const customConsole = document.getElementById('console');
+        
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            customConsole.appendChild(entry);
+            customConsole.scrollTop = customConsole.scrollHeight;
+            console.log(message);
+        }
+
+        function clearConsole() {
+            customConsole.innerHTML = '<div class="log-entry info">Console pulita</div>';
+        }
+
+        // Funzione editDocument (come in filesystem.php)
+        function editDocument(event, fileId) {
+            addLog(`editDocument chiamata con fileId: ${fileId}`, 'success');
+            
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            if (!fileId) {
+                addLog('Errore: fileId non valido', 'error');
+                return;
+            }
+            
+            const url = 'onlyoffice-editor.php?id=' + fileId;
+            addLog(`Apertura URL: ${url}`, 'info');
+            
+            try {
+                const newWindow = window.open(url, '_blank');
+                if (newWindow) {
+                    addLog('✅ Finestra aperta con successo', 'success');
+                } else {
+                    addLog('⚠️ Popup bloccato dal browser', 'error');
+                    if (confirm('Il popup è stato bloccato. Vuoi aprire l\'editor nella stessa finestra?')) {
+                        window.location.href = url;
+                    }
+                }
+            } catch (error) {
+                addLog(`Errore: ${error.message}`, 'error');
+            }
+        }
+
+        // Test apertura diretta
+        function testDirectOpen() {
+            addLog('Test window.open() diretto...', 'info');
+            const url = 'onlyoffice-editor.php?id=22';
+            try {
+                const win = window.open(url, '_blank');
+                if (win) {
+                    addLog('✅ window.open() riuscito', 'success');
+                } else {
+                    addLog('❌ window.open() fallito (popup bloccato?)', 'error');
+                }
+            } catch (e) {
+                addLog(`❌ Errore: ${e.message}`, 'error');
+            }
+        }
+
+        function testLocationHref() {
+            addLog('Test con location.href...', 'info');
+            if (confirm('Questo aprirà l\'editor nella stessa finestra. Continuare?')) {
+                window.location.href = 'onlyoffice-editor.php?id=22';
+            }
+        }
+
+        function testFetchAPI() {
+            addLog('Test connessione con fetch()...', 'info');
+            fetch('onlyoffice-editor.php?id=22')
+                .then(response => {
+                    addLog(`✅ Risposta ricevuta: ${response.status} ${response.statusText}`, 'success');
+                    return response.text();
+                })
+                .then(text => {
+                    const hasOnlyOffice = text.includes('OnlyOffice') || text.includes('onlyoffice');
+                    if (hasOnlyOffice) {
+                        addLog('✅ Pagina OnlyOffice trovata', 'success');
+                    } else {
+                        addLog('⚠️ Pagina trovata ma potrebbe non essere OnlyOffice', 'info');
+                    }
+                })
+                .catch(error => {
+                    addLog(`❌ Errore fetch: ${error.message}`, 'error');
+                });
+        }
+
+        function checkEnvironment() {
+            addLog('=== Verifica Ambiente ===', 'info');
+            
+            const checks = {
+                'window.editDocument': typeof window.editDocument === 'function',
+                'window.open': typeof window.open === 'function',
+                'Popup abilitati': !window.open('', '', 'width=1,height=1') === false,
+                'localStorage': typeof localStorage !== 'undefined',
+                'sessionStorage': typeof sessionStorage !== 'undefined',
+                'fetch API': typeof fetch === 'function'
+            };
+            
+            for (const [key, value] of Object.entries(checks)) {
+                if (value) {
+                    addLog(`✅ ${key}: OK`, 'success');
+                } else {
+                    addLog(`❌ ${key}: Non disponibile`, 'error');
+                }
+            }
+            
+            // Test popup
+            const testWin = window.open('', 'test', 'width=1,height=1');
+            if (testWin) {
+                testWin.close();
+                addLog('✅ Popup test: I popup sono abilitati', 'success');
+            } else {
+                addLog('⚠️ Popup test: I popup potrebbero essere bloccati', 'error');
+            }
+        }
+
+        // Esponi globalmente
+        window.editDocument = editDocument;
+        
+        // Log iniziale
+        addLog('Pagina di test caricata', 'success');
+        addLog('Prova i vari bottoni per testare l\'apertura di OnlyOffice', 'info');
+    </script>
+</body>
+</html>

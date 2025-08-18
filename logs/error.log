@@ -17486,3 +17486,15 @@ Stack trace:
 [18-Aug-2025 14:30:38 Europe/Rome] Delete request - Type: file, ID: 13
 [18-Aug-2025 14:34:56 Europe/Rome] PHP Warning:  Undefined array key 0 in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-integration.php on line 508
 [18-Aug-2025 14:50:05 Europe/Rome] PHP Warning:  Undefined array key 0 in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-integration.php on line 508
+[18-Aug-2025 14:53:28 Europe/Rome] PHP Warning:  Undefined array key "azienda_id" in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-complete.php on line 98
+[18-Aug-2025 14:53:41 Europe/Rome] OnlyOffice Document API Error: Invalid or expired access token
+[18-Aug-2025 14:53:42 Europe/Rome] OnlyOffice Document API Error: Invalid or expired access token
+[18-Aug-2025 14:53:43 Europe/Rome] OnlyOffice Document API Error: Invalid or expired access token
+[18-Aug-2025 14:54:58 Europe/Rome] deleteItem called with data: {"action":"delete","type":"file","id":19}
+[18-Aug-2025 14:54:58 Europe/Rome] Delete request - Type: file, ID: 19
+[18-Aug-2025 14:55:01 Europe/Rome] deleteItem called with data: {"action":"delete","type":"file","id":20}
+[18-Aug-2025 14:55:01 Europe/Rome] Delete request - Type: file, ID: 20
+[18-Aug-2025 15:00:37 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined function redirect() in C:\xampp\htdocs\piattaforma-collaborativa\logout.php:23
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\logout.php on line 23

@@ -277,6 +277,22 @@ include 'components/header.php';
     display: flex;
 }
 
+/* Pulsante OnlyOffice evidenziato */
+.action-btn.btn-onlyoffice {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    color: white !important;
+    border: 2px solid #28a745 !important;
+    font-weight: bold !important;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+    transition: all 0.3s ease;
+}
+
+.action-btn.btn-onlyoffice:hover {
+    background: linear-gradient(135deg, #20c997 0%, #28a745 100%) !important;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.5);
+}
+
 /* Pulsanti più grandi e visibili */
 .action-btn {
     width: 28px;
@@ -811,18 +827,18 @@ function renderFiles(data) {
                                        ${isSelected ? 'checked' : ''} 
                                        onclick="event.stopPropagation(); toggleSelection(event, 'file', ${file.id})">` : ''}
                 <i class="fas ${icon.class}" style="color: ${icon.color}"></i>
+                ${isDocumentEditable(file) ? '<span class="badge bg-success position-absolute" style="top: 5px; right: 5px; font-size: 10px;">OnlyOffice</span>' : ''}
                 <div class="file-name">${escapeHtml(file.nome)}</div>
                 <div class="file-meta">${formatFileSize(file.dimensione_file)}</div>
                 <div class="company-info">(${escapeHtml(companyName)})</div>
                 <div class="file-card-actions-bottom">
                     ${isDocumentEditable(file) ? `
-                    <button class="action-btn btn-primary" 
+                    <button class="action-btn btn-onlyoffice" 
                             onclick="event.stopPropagation(); editDocument(${file.id})" 
-                            title="Modifica online" 
-                            aria-label="Modifica online ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
-                            tabindex="0"
-                            style="background: #0d6efd; color: white;">
-                        <i class="fas fa-pencil-alt" aria-hidden="true"></i>
+                            title="Apri con OnlyOffice" 
+                            aria-label="Apri con OnlyOffice ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
+                            tabindex="0">
+                        <i class="fas fa-file-word" aria-hidden="true"></i>
                     </button>` : ''}
                     <button class="action-btn" 
                             onclick="event.stopPropagation(); handleRename(${file.id}, 'file', '${escapeHtml(file.nome).replace(/'/g, '\\\'')}')" 
@@ -1145,14 +1161,23 @@ function isDocumentEditable(file) {
     // Estrai l'estensione dal nome o percorso
     const extension = fileName.toLowerCase().split('.').pop();
     
-    // Supporta DOCX e DOC
-    return extension === 'docx' || extension === 'doc';
+    // Supporta tutti i formati OnlyOffice
+    const supportedFormats = [
+        // Word
+        'docx', 'doc', 'odt', 'rtf', 'txt',
+        // Excel
+        'xlsx', 'xls', 'ods', 'csv',
+        // PowerPoint
+        'pptx', 'ppt', 'odp'
+    ];
+    
+    return supportedFormats.includes(extension);
 }
 
 // Funzione per aprire l'editor di documenti
 function editDocument(fileId) {
-    // Apri l'editor in una nuova scheda
-    window.open('document-editor.php?id=' + fileId, '_blank');
+    // Apri l'editor OnlyOffice in una nuova scheda
+    window.open('onlyoffice-editor.php?id=' + fileId, '_blank');
 }
 
 function searchFiles() {

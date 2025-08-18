@@ -162,7 +162,7 @@ if ($docId) {
     <?php
 }
 
-// Test 7: Cleanup
+// Test 7: Verifica Tabelle
 echo "<h2>7. Verifica Tabelle</h2>";
 try {
     $tables = [
@@ -172,15 +172,19 @@ try {
         'onlyoffice_locks' => ['document_id', 'user_id', 'lock_type']
     ];
     
+    $conn = db_connection();
+    
     foreach ($tables as $table => $columns) {
-        $stmt = db_query("SHOW TABLES LIKE ?", [$table]);
-        if ($stmt->rowCount() > 0) {
+        // Usa query diretta senza placeholder per SHOW TABLES
+        $stmt = $conn->query("SHOW TABLES LIKE '$table'");
+        if ($stmt && $stmt->rowCount() > 0) {
             echo "✅ Tabella $table esiste<br>";
             
             // Verifica colonne
             foreach ($columns as $col) {
-                $stmt = db_query("SHOW COLUMNS FROM $table LIKE ?", [$col]);
-                if ($stmt->rowCount() > 0) {
+                // Usa query diretta senza placeholder per SHOW COLUMNS
+                $stmt2 = $conn->query("SHOW COLUMNS FROM `$table` LIKE '$col'");
+                if ($stmt2 && $stmt2->rowCount() > 0) {
                     echo "&nbsp;&nbsp;✅ Colonna $col presente<br>";
                 } else {
                     echo "&nbsp;&nbsp;❌ Colonna $col mancante<br>";

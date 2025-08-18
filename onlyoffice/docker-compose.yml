@@ -8,7 +8,7 @@ services:
       - "8082:80"              # Espone l'editor su http://localhost:8082
     environment:
       - JWT_ENABLED=true        # abilita firma JWT fra client e server
-      - JWT_SECRET=mysecret     # sostituisci con una chiave segreta lunga
+      - JWT_SECRET=nexio-secret-key-2025-onlyoffice-jwt-secure-token     # chiave sincronizzata con PHP
       - JWT_HEADER=Authorization
     volumes:
       - ./data:/var/www/onlyoffice/Data      # salvataggio dati

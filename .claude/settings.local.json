@@ -11,7 +11,11 @@
       "Bash(then echo \"$file: HAS CLEAN CSS\")",
       "Bash(else echo \"$file: MISSING CLEAN CSS\")",
       "Bash(do echo -n \"$file: \")",
-      "Bash(do echo -n \"$file uses header: \")"
+      "Bash(do echo -n \"$file uses header: \")",
+      "Bash(/mnt/c/xampp/php/php.exe test-onlyoffice-jwt.php)",
+      "Bash(/mnt/c/xampp/php/php.exe:*)",
+      "Bash(curl:*)",
+      "Bash(/mnt/c/xampp/mysql/bin/mysql.exe:*)"
     ],
     "deny": []
   }

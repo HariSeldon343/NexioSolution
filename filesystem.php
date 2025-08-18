@@ -907,6 +907,32 @@ window.handleRename = handleRename;
 window.showDeleteModal = showDeleteModal;
 window.showRenameModal = showRenameModal;
 
+// Esponi le funzioni per l'editor di documenti
+window.editDocument = editDocument;
+window.isDocumentEditable = isDocumentEditable;
+window.openFile = openFile;
+
+// Esponi le funzioni per i modal
+window.showUploadModal = showUploadModal;
+window.showNewFolderModal = showNewFolderModal;
+window.closeModal = closeModal;
+window.uploadFiles = uploadFiles;
+window.createFolder = createFolder;
+window.confirmRename = confirmRename;
+
+// Esponi le funzioni per la navigazione
+window.loadFolder = loadFolder;
+window.selectTreeFolder = selectTreeFolder;
+window.toggleTreeNode = toggleTreeNode;
+
+// Esponi le funzioni per la selezione multipla
+window.toggleSelectMode = toggleSelectMode;
+window.toggleSelection = toggleSelection;
+window.selectAllItems = selectAllItems;
+window.deselectAllItems = deselectAllItems;
+window.downloadSelected = downloadSelected;
+window.deleteSelected = deleteSelected;
+
 // Debug: verifica che la funzione sia disponibile
 setTimeout(() => {
     console.log('After 100ms - confirmDeleteFS available:', typeof window.confirmDeleteFS === 'function');

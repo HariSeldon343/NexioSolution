@@ -17573,3 +17573,5 @@ Stack trace:
 [18-Aug-2025 15:34:00 Europe/Rome] PHP Warning:  Undefined array key 0 in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-integration.php on line 508
 [18-Aug-2025 15:34:10 Europe/Rome] PHP Warning:  Undefined array key "REQUEST_URI" in C:\xampp\htdocs\piattaforma-collaborativa\backend\middleware\Auth.php on line 78
 [18-Aug-2025 15:34:10 Europe/Rome] PHP Deprecated:  strpos(): Passing null to parameter #1 ($haystack) of type string is deprecated in C:\xampp\htdocs\piattaforma-collaborativa\backend\middleware\Auth.php on line 78
+[18-Aug-2025 16:23:19 Europe/Rome] deleteItem called with data: {"action":"delete","type":"file","id":24}
+[18-Aug-2025 16:23:19 Europe/Rome] Delete request - Type: file, ID: 24

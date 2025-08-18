@@ -154,15 +154,16 @@ $config = [
             'about' => true,
             'comments' => $hasEditPermission,
             'compactHeader' => false,
-            'compactToolbar' => false,
+            'compactToolbar' => true, // Toolbar compatta per ottimizzare lo spazio
+            'toolbarHideFileName' => true, // Nasconde il nome del file nella toolbar
             'compatibleFeatures' => false,
             'customer' => [
-                'address' => '',
-                'info' => 'Nexio Platform',
+                'address' => $document['nome_azienda'] ? 'Azienda: ' . $document['nome_azienda'] : '',
+                'info' => $document['nome_azienda'] ?? 'Nexio Platform',
                 'logo' => $protocol . '://' . $host . $basePath . '/assets/images/nexio-logo.svg',
                 'logoDark' => $protocol . '://' . $host . $basePath . '/assets/images/nexio-logo.svg',
                 'mail' => 'support@nexio.com',
-                'name' => 'Nexio',
+                'name' => $document['nome_azienda'] ?? 'Nexio',
                 'www' => $protocol . '://' . $host . $basePath
             ],
             'feedback' => false,
@@ -178,13 +179,13 @@ $config = [
             'logo' => [
                 'image' => $protocol . '://' . $host . $basePath . '/assets/images/nexio-logo.svg',
                 'imageDark' => $protocol . '://' . $host . $basePath . '/assets/images/nexio-logo.svg',
-                'url' => $protocol . '://' . $host . $basePath
+                'url' => $protocol . '://' . $host . $basePath . '/dashboard.php'
             ],
             'macros' => false,
             'macrosMode' => 'warn',
-            'mentionShare' => false,
+            'mentionShare' => true, // Abilita menzioni per collaborazione
             'mobileForceView' => true,
-            'plugins' => false,
+            'plugins' => true, // Abilita plugin se configurati
             'review' => [
                 'hideReviewDisplay' => false,
                 'showReviewChanges' => false,
@@ -196,15 +197,52 @@ $config = [
             'submitForm' => false,
             'toolbarNoTabs' => false,
             'unit' => 'cm',
-            'zoom' => 100
+            'zoom' => 100,
+            // Personalizzazione colori tema Nexio
+            'uiTheme' => 'theme-dark',
+            'color' => '#007bff', // Colore primario Nexio
+            // Configurazione mobile ottimizzata
+            'mobile' => [
+                'forceView' => true,
+                'scalable' => true
+            ],
+            // Opzioni avanzate di collaborazione
+            'chat' => $hasEditPermission,
+            'commentAuthorOnly' => false,
+            'showReviewChanges' => $hasEditPermission,
+            'trackChanges' => $hasEditPermission,
+            'compactHeader' => true,
+            'leftMenu' => true,
+            'rightMenu' => true,
+            'toolbar' => true,
+            'statusBar' => true,
+            'autosave' => true,
+            'forceSave' => true,
+            'hideNotes' => false
         ],
         'coEditing' => [
-            'mode' => 'fast',
-            'change' => true
+            'mode' => 'fast', // Modalità collaborazione in tempo reale
+            'change' => true,
+            'selectionColor' => [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+                '#FFEAA7', '#DDA0DD', '#98D8C8', '#FFB6C1'
+            ] // Colori per distinguere gli utenti in collaborazione
         ],
         'plugins' => [
-            'autostart' => [],
-            'pluginsData' => []
+            'autostart' => [
+                // Lista plugin da avviare automaticamente
+                'asc.{FFE1C0F4-904F-41D2-929C-8A1DF57E8C7A}', // Translator
+                'asc.{38E022EA-AD92-45FC-B22B-49DF39746DB4}', // Thesaurus
+                'asc.{B509123E-6335-40BD-B965-91EB799346EB}'  // Word Counter
+            ],
+            'pluginsData' => [
+                // Configurazione specifica dei plugin
+                'asc.{FFE1C0F4-904F-41D2-929C-8A1DF57E8C7A}' => [
+                    'settings' => [
+                        'defaultLanguage' => 'it'
+                    ]
+                ]
+            ]
         ]
     ],
     'events' => [

@@ -242,6 +242,13 @@ function saveDocumentFromCallback($key, $url, $users = [], $userdata = [], $hist
             throw new Exception('Document not found');
         }
         
+        // SECURITY: Multi-tenant check - validate company context from userdata
+        if (isset($userdata['azienda_id']) && $docInfo['azienda_id'] !== null) {
+            if ($userdata['azienda_id'] != $docInfo['azienda_id']) {
+                throw new Exception('Multi-tenant security violation: document company mismatch');
+            }
+        }
+        
         // Download document from OnlyOffice
         $context = stream_context_create([
             'http' => [
@@ -291,15 +298,16 @@ function saveDocumentFromCallback($key, $url, $users = [], $userdata = [], $hist
             $forcesavetype
         );
         
-        // Update main document record
-        updateDocumentInDatabase($documentId, $filePath, $bytesWritten, $versionData);
+        // Update main document record - include azienda_id for multi-tenant context
+        updateDocumentInDatabase($documentId, $filePath, $bytesWritten, $versionData, $docInfo['azienda_id']);
         
-        // Log activity
+        // Log activity with tenant info
         logDocumentActivity($documentId, 'document_saved', [
             'version' => $versionData['version_number'] ?? null,
             'size' => $bytesWritten,
             'users' => $users,
-            'forcesave' => $forcesavetype
+            'forcesave' => $forcesavetype,
+            'azienda_id' => $docInfo['azienda_id']
         ]);
         
         logOnlyOfficeEvent('info', 'Document saved successfully', [
@@ -689,7 +697,7 @@ function updateDocumentClosed($documentId) {
 /**
  * Update document in database with version information
  */
-function updateDocumentInDatabase($documentId, $filePath, $fileSize, $versionData = []) {
+function updateDocumentInDatabase($documentId, $filePath, $fileSize, $versionData = [], $aziendaId = null) {
     try {
         // Update main document record
         $stmt = db_query(

@@ -4,9 +4,28 @@
  * Proxy per accedere a OnlyOffice attraverso lo stesso dominio
  */
 
-header('Access-Control-Allow-Origin: *');
+// SECURITY: Require authentication
+require_once __DIR__ . '/../middleware/Auth.php';
+$auth = Auth::getInstance();
+$auth->requireAuth();
+
+// SECURITY: Remove wildcard CORS, use specific origins
+$allowedOrigins = [
+    'http://localhost',
+    'http://localhost:8082',
+    'https://office.yourdomain.com'
+];
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+} else {
+    // Default to localhost if no valid origin
+    header('Access-Control-Allow-Origin: http://localhost');
+}
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Access-Control-Allow-Credentials: true');
 
 // Gestisci preflight OPTIONS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -14,9 +33,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+// SECURITY: Add CSRF protection for state-changing operations
+if (in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT', 'DELETE'])) {
+    require_once __DIR__ . '/../utils/CSRFTokenManager.php';
+    CSRFTokenManager::validateRequest();
+}
+
 // Configurazione OnlyOffice
 $onlyoffice_server = 'http://localhost:8080';
 $path = $_GET['path'] ?? '';
+
+// SECURITY: Multi-tenant check - get current company context
+$currentAzienda = $auth->getCurrentAzienda();
+$isSuperAdmin = $auth->isSuperAdmin();
 
 // Valida il path per sicurezza
 $allowed_paths = [
@@ -38,6 +67,9 @@ if (!$is_allowed) {
     echo json_encode(['error' => 'Path non autorizzato']);
     exit;
 }
+
+// SECURITY: Log proxy access for audit
+error_log("OnlyOffice proxy access - User: {$auth->getUser()['id']}, Company: {$currentAzienda['id']}, Path: {$path}");
 
 // Costruisci URL completo
 $url = $onlyoffice_server . '/' . ltrim($path, '/');

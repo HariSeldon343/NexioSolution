@@ -8,6 +8,12 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/onlyoffice.config.php';
 require_once __DIR__ . '/../middleware/Auth.php';
 
+// SECURITY: Add CSRF protection for POST requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/../utils/CSRFTokenManager.php';
+    CSRFTokenManager::validateRequest();
+}
+
 // Apply security headers
 applyOnlyOfficeSecurityHeaders();
 

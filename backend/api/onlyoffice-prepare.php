@@ -7,6 +7,17 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/onlyoffice.config.php';
 
+// SECURITY: Require authentication
+require_once __DIR__ . '/../middleware/Auth.php';
+$auth = Auth::getInstance();
+$auth->requireAuth();
+
+// SECURITY: Add CSRF protection for POST requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once __DIR__ . '/../utils/CSRFTokenManager.php';
+    CSRFTokenManager::validateRequest();
+}
+
 // Headers CORS - SECURITY: Restrict to specific origins
 $allowedOrigins = [
     'http://localhost',
@@ -31,6 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 try {
+    // SECURITY: Get current user and company context for multi-tenant support
+    $user = $auth->getUser();
+    $currentAzienda = $auth->getCurrentAzienda();
+    $isSuperAdmin = $auth->isSuperAdmin();
     $file_id = $_GET['file_id'] ?? $_POST['file_id'] ?? null;
     
     if (!$file_id) {
@@ -42,6 +57,19 @@ try {
     
     if (empty($file_id) || strlen($file_id) > 100) {
         throw new Exception('File ID non valido');
+    }
+    
+    // SECURITY: Multi-tenant check - verify file belongs to user's company
+    if (!$isSuperAdmin && $currentAzienda) {
+        // Check if file exists in database and belongs to current company
+        $stmt = db_query(
+            "SELECT id, azienda_id FROM documenti WHERE id = ? AND (azienda_id = ? OR azienda_id IS NULL)",
+            [$file_id, $currentAzienda['id']]
+        );
+        $doc = $stmt->fetch();
+        if (!$doc) {
+            throw new Exception('File non trovato o accesso negato');
+        }
     }
     
     // Assicurati che la directory documenti esista

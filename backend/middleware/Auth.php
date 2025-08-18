@@ -75,7 +75,8 @@ class Auth {
     public function requireAuth() {
         if (!$this->isAuthenticated()) {
             // Se siamo in una chiamata API, restituisci errore JSON
-            if (strpos($_SERVER['REQUEST_URI'], '/api/') !== false || 
+            $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+            if (strpos($requestUri, '/api/') !== false || 
                 (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)) {
                 header('Content-Type: application/json');
                 http_response_code(401);

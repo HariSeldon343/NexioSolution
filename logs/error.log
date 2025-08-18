@@ -17386,3 +17386,27 @@ Stack trace:
 #1 C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php(42): db_query('SELECT d.*, c.n...', Array)
 #2 {main}
   thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\config\config.php on line 104
+[18-Aug-2025 09:55:07 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to a member function query() on null in C:\xampp\htdocs\piattaforma-collaborativa\scripts\verify-database-integrity.php:109
+Stack trace:
+#0 C:\xampp\htdocs\piattaforma-collaborativa\scripts\verify-database-integrity.php(180): checkDatabaseConnection()
+#1 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\scripts\verify-database-integrity.php on line 109
+[18-Aug-2025 09:59:47 Europe/Rome] PHP Warning:  Undefined array key "percorso_file" in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 54
+[18-Aug-2025 09:59:47 Europe/Rome] PHP Deprecated:  pathinfo(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 62
+[18-Aug-2025 09:59:47 Europe/Rome] PHP Warning:  Undefined array key "data_caricamento" in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 113
+[18-Aug-2025 09:59:47 Europe/Rome] PHP Deprecated:  strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 113
+[18-Aug-2025 09:59:47 Europe/Rome] PHP Warning:  Undefined array key "role" in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 137
+[18-Aug-2025 09:59:47 Europe/Rome] PHP Fatal error:  Uncaught Error: Non-static method ActivityLogger::log() cannot be called statically in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php:222
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 222
+[18-Aug-2025 10:00:05 Europe/Rome] PHP Warning:  Undefined array key "percorso_file" in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 54
+[18-Aug-2025 10:00:05 Europe/Rome] PHP Deprecated:  pathinfo(): Passing null to parameter #1 ($path) of type string is deprecated in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 62
+[18-Aug-2025 10:00:05 Europe/Rome] PHP Warning:  Undefined array key "data_caricamento" in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 113
+[18-Aug-2025 10:00:05 Europe/Rome] PHP Deprecated:  strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 113
+[18-Aug-2025 10:00:05 Europe/Rome] PHP Warning:  Undefined array key "role" in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 137
+[18-Aug-2025 10:00:05 Europe/Rome] PHP Fatal error:  Uncaught Error: Non-static method ActivityLogger::log() cannot be called statically in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php:222
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 222
+[18-Aug-2025 10:12:42 Europe/Rome] PHP Warning:  Cannot modify header information - headers already sent by (output started at C:\xampp\htdocs\piattaforma-collaborativa\backend\config\onlyoffice.config.php:537) in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-integration-check.php on line 243

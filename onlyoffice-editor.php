@@ -28,7 +28,7 @@ $isSuperAdmin = $auth->isSuperAdmin();
 $aziendaId = $auth->getCurrentAzienda();
 
 // Fetch document from database
-$query = "SELECT d.*, c.nome as cartella_nome, a.nome_azienda 
+$query = "SELECT d.*, c.nome as cartella_nome, a.nome AS nome_azienda 
           FROM documenti d 
           LEFT JOIN cartelle c ON d.cartella_id = c.id 
           LEFT JOIN aziende a ON d.azienda_id = a.id 
@@ -51,7 +51,13 @@ if (!$document) {
 }
 
 // Check file existence
-$filePath = __DIR__ . '/' . $document['percorso_file'];
+$percorsoFile = $document['percorso_file'] ?? '';
+if (empty($percorsoFile)) {
+    $_SESSION['error'] = "Percorso file non valido.";
+    header('Location: filesystem.php');
+    exit;
+}
+$filePath = __DIR__ . '/' . $percorsoFile;
 if (!file_exists($filePath)) {
     $_SESSION['error'] = "File non trovato sul server.";
     header('Location: filesystem.php');
@@ -59,7 +65,8 @@ if (!file_exists($filePath)) {
 }
 
 // Determine document type for OnlyOffice
-$extension = strtolower(pathinfo($document['nome_file'], PATHINFO_EXTENSION));
+$nomeFile = $document['nome_file'] ?? '';
+$extension = $nomeFile ? strtolower(pathinfo($nomeFile, PATHINFO_EXTENSION)) : '';
 $documentType = 'word'; // Default
 
 if (isset($ONLYOFFICE_DOCUMENT_TYPES[$extension])) {
@@ -81,7 +88,8 @@ if (isset($ONLYOFFICE_DOCUMENT_TYPES[$extension])) {
 $canEdit = in_array($extension, ['docx', 'xlsx', 'pptx', 'txt', 'csv']);
 
 // Check user permissions for editing
-$hasEditPermission = $isSuperAdmin || $user['role'] === 'utente_speciale' || $document['creato_da'] == $userId;
+$userRole = $user['role'] ?? 'utente';
+$hasEditPermission = $isSuperAdmin || $userRole === 'utente_speciale' || $document['creato_da'] == $userId;
 
 // Determine mode (view or edit)
 $mode = (isset($_GET['mode']) && $_GET['mode'] === 'edit' && $canEdit && $hasEditPermission) ? 'edit' : 'view';
@@ -110,7 +118,7 @@ $config = [
         'key' => $documentKey,
         'info' => [
             'owner' => $document['nome_azienda'] ?? 'Sistema',
-            'uploaded' => date('c', strtotime($document['data_caricamento'])),
+            'uploaded' => isset($document['data_caricamento']) ? date('c', strtotime($document['data_caricamento'])) : date('c'),
             'favorite' => false
         ],
         'permissions' => [
@@ -134,7 +142,7 @@ $config = [
         'user' => [
             'id' => (string)$userId,
             'name' => $userName,
-            'group' => $user['role']
+            'group' => $userRole
         ],
         'embedded' => [
             'saveUrl' => null,
@@ -219,13 +227,12 @@ if ($ONLYOFFICE_JWT_ENABLED) {
 
 // Activity logging
 require_once 'backend/utils/ActivityLogger.php';
-ActivityLogger::log(
+$logger = ActivityLogger::getInstance();
+$logger->log(
     'documento',
     $mode === 'edit' ? 'modifica' : 'visualizzazione',
-    "Apertura documento in OnlyOffice: {$document['nome_file']}",
-    $userId,
-    $aziendaId,
-    $documentId
+    $documentId,
+    "Apertura documento in OnlyOffice: {$document['nome_file']}"
 );
 
 // Page setup

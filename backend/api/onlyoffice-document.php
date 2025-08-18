@@ -178,7 +178,7 @@ function getDocumentWithSecurity($documentId, $accessToken) {
     $aziendaId = $payload['azienda_id'] ?? null;
     
     // Build query with multi-tenant filtering
-    $query = "SELECT d.*, a.nome_azienda 
+    $query = "SELECT d.*, a.nome AS nome_azienda 
               FROM documenti d 
               LEFT JOIN aziende a ON d.azienda_id = a.id 
               WHERE d.id = ?";

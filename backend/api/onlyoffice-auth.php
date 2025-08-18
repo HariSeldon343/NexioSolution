@@ -197,7 +197,7 @@ function getDocumentConfiguration($documentId) {
     
     // Get document details
     $stmt = db_query(
-        "SELECT d.*, a.nome_azienda 
+        "SELECT d.*, a.nome AS nome_azienda 
          FROM documenti d 
          LEFT JOIN aziende a ON d.azienda_id = a.id 
          WHERE d.id = ?",

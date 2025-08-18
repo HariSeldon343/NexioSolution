@@ -534,4 +534,4 @@ if ($ONLYOFFICE_DEBUG && php_sapi_name() !== 'cli') {
         'production' => $isProduction
     ]);
 }
-?> 
+?>

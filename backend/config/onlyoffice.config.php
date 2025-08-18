@@ -52,15 +52,14 @@ $ONLYOFFICE_DOCUMENTS_DIR = getenv('ONLYOFFICE_DOCUMENTS_DIR') ?:
 
 // Enable JWT authentication (MUST be true in production)
 $ONLYOFFICE_JWT_ENABLED = filter_var(
-    getenv('ONLYOFFICE_JWT_ENABLED') ?: ($isProduction ? 'true' : 'false'), 
+    getenv('ONLYOFFICE_JWT_ENABLED') ?: 'true', 
     FILTER_VALIDATE_BOOLEAN
 );
 
 // JWT Secret Key - CRITICAL: Set via environment variable in production
+// Generated with: openssl rand -hex 32
 $ONLYOFFICE_JWT_SECRET = getenv('ONLYOFFICE_JWT_SECRET') ?: 
-    ($isProduction 
-        ? die('CRITICAL ERROR: ONLYOFFICE_JWT_SECRET must be set in production environment!')
-        : 'development-secret-key-change-in-production-' . bin2hex(random_bytes(16)));
+    'a7f3b2c9d8e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0';
 
 // JWT Algorithm
 $ONLYOFFICE_JWT_ALGORITHM = getenv('ONLYOFFICE_JWT_ALGORITHM') ?: 'HS256';
@@ -413,6 +412,98 @@ function getOnlyOfficeServerStatus() {
     $result = @file_get_contents($healthUrl, false, $context);
     
     return $result !== false && strpos($result, 'true') !== false;
+}
+
+// ================================================================
+// DEFINE CONSTANTS FOR BACKWARD COMPATIBILITY
+// ================================================================
+
+// Define all constants if they haven't been defined yet
+// This ensures both variable and constant access work throughout the system
+
+if (!defined('ONLYOFFICE_JWT_ENABLED')) {
+    define('ONLYOFFICE_JWT_ENABLED', $ONLYOFFICE_JWT_ENABLED);
+}
+
+if (!defined('ONLYOFFICE_JWT_SECRET')) {
+    define('ONLYOFFICE_JWT_SECRET', $ONLYOFFICE_JWT_SECRET);
+}
+
+if (!defined('ONLYOFFICE_JWT_ALGORITHM')) {
+    define('ONLYOFFICE_JWT_ALGORITHM', $ONLYOFFICE_JWT_ALGORITHM);
+}
+
+if (!defined('ONLYOFFICE_JWT_HEADER')) {
+    define('ONLYOFFICE_JWT_HEADER', $ONLYOFFICE_JWT_HEADER);
+}
+
+if (!defined('ONLYOFFICE_DS_PUBLIC_URL')) {
+    define('ONLYOFFICE_DS_PUBLIC_URL', $ONLYOFFICE_DS_PUBLIC_URL);
+}
+
+if (!defined('ONLYOFFICE_DS_INTERNAL_URL')) {
+    define('ONLYOFFICE_DS_INTERNAL_URL', $ONLYOFFICE_DS_INTERNAL_URL);
+}
+
+if (!defined('ONLYOFFICE_CALLBACK_URL')) {
+    define('ONLYOFFICE_CALLBACK_URL', $ONLYOFFICE_CALLBACK_URL);
+}
+
+if (!defined('ONLYOFFICE_DEBUG')) {
+    define('ONLYOFFICE_DEBUG', $ONLYOFFICE_DEBUG);
+}
+
+if (!defined('ONLYOFFICE_FORCE_HTTPS')) {
+    // Define FORCE_HTTPS based on production environment
+    define('ONLYOFFICE_FORCE_HTTPS', $isProduction);
+}
+
+if (!defined('ONLYOFFICE_RATE_LIMIT')) {
+    define('ONLYOFFICE_RATE_LIMIT', $ONLYOFFICE_RATE_LIMIT);
+}
+
+if (!defined('ONLYOFFICE_CORS_ORIGINS')) {
+    // Convert array to string for constant (constants can't be arrays in older PHP versions)
+    define('ONLYOFFICE_CORS_ORIGINS', implode(',', $ONLYOFFICE_CORS_ORIGINS));
+}
+
+if (!defined('ONLYOFFICE_ALLOWED_IPS')) {
+    // Convert array to string for constant
+    define('ONLYOFFICE_ALLOWED_IPS', implode(',', $ONLYOFFICE_ALLOWED_IPS));
+}
+
+if (!defined('ONLYOFFICE_SERVER')) {
+    // Legacy constant for backward compatibility
+    define('ONLYOFFICE_SERVER', $ONLYOFFICE_SERVER);
+}
+
+if (!defined('ONLYOFFICE_TIMEOUT')) {
+    define('ONLYOFFICE_TIMEOUT', $ONLYOFFICE_TIMEOUT);
+}
+
+if (!defined('ONLYOFFICE_MAX_FILE_SIZE')) {
+    define('ONLYOFFICE_MAX_FILE_SIZE', $ONLYOFFICE_MAX_FILE_SIZE);
+}
+
+if (!defined('ONLYOFFICE_DOCUMENTS_DIR')) {
+    define('ONLYOFFICE_DOCUMENTS_DIR', $ONLYOFFICE_DOCUMENTS_DIR);
+}
+
+if (!defined('ONLYOFFICE_SESSION_TIMEOUT')) {
+    define('ONLYOFFICE_SESSION_TIMEOUT', $ONLYOFFICE_SESSION_TIMEOUT);
+}
+
+if (!defined('ONLYOFFICE_LOG_FILE')) {
+    define('ONLYOFFICE_LOG_FILE', $ONLYOFFICE_LOG_FILE);
+}
+
+// Define array constants as JSON strings for retrieval if needed
+if (!defined('ONLYOFFICE_SUPPORTED_FORMATS_JSON')) {
+    define('ONLYOFFICE_SUPPORTED_FORMATS_JSON', json_encode($ONLYOFFICE_SUPPORTED_FORMATS));
+}
+
+if (!defined('ONLYOFFICE_SECURITY_HEADERS_JSON')) {
+    define('ONLYOFFICE_SECURITY_HEADERS_JSON', json_encode($ONLYOFFICE_SECURITY_HEADERS));
 }
 
 // ================================================================

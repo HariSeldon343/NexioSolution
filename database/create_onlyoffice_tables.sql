@@ -1,422 +1,400 @@
--- ================================================================
--- OnlyOffice Integration Tables for Nexio Platform
--- ================================================================
--- This script creates all necessary tables for OnlyOffice integration
--- including document versioning, collaborative editing tracking,
--- and security audit logs
--- ================================================================
+-- ====================================================
+-- OnlyOffice Integration Tables
+-- Complete database schema for OnlyOffice integration
+-- ====================================================
 
--- Drop existing tables if needed (comment out in production)
--- DROP TABLE IF EXISTS document_collaborative_actions;
--- DROP TABLE IF EXISTS document_active_editors;
--- DROP TABLE IF EXISTS document_activity_log;
--- DROP TABLE IF EXISTS documenti_versioni_extended;
--- DROP TABLE IF EXISTS onlyoffice_sessions;
--- DROP TABLE IF EXISTS onlyoffice_rate_limits;
--- DROP TABLE IF EXISTS onlyoffice_security_log;
+USE nexiosol;
 
--- ================================================================
--- Extended Document Versions Table
--- ================================================================
+-- ====================================================
+-- 1. Update documenti table with OnlyOffice columns
+-- ====================================================
+
+-- Add missing columns to documenti table if they don't exist
+ALTER TABLE documenti 
+ADD COLUMN IF NOT EXISTS nome_file VARCHAR(255) DEFAULT NULL COMMENT 'Nome del file',
+ADD COLUMN IF NOT EXISTS creato_il TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data creazione',
+ADD COLUMN IF NOT EXISTS aggiornato_il TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Data ultimo aggiornamento',
+ADD COLUMN IF NOT EXISTS ultimo_accesso TIMESTAMP NULL DEFAULT NULL COMMENT 'Data ultimo accesso',
+ADD COLUMN IF NOT EXISTS is_editing BOOLEAN DEFAULT FALSE COMMENT 'Flag editing in corso',
+ADD COLUMN IF NOT EXISTS editing_users JSON DEFAULT NULL COMMENT 'Utenti in editing',
+ADD COLUMN IF NOT EXISTS editing_started_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Inizio editing',
+ADD COLUMN IF NOT EXISTS current_version INT DEFAULT 1 COMMENT 'Versione corrente',
+ADD COLUMN IF NOT EXISTS total_versions INT DEFAULT 1 COMMENT 'Totale versioni',
+ADD COLUMN IF NOT EXISTS last_error TEXT DEFAULT NULL COMMENT 'Ultimo errore',
+ADD COLUMN IF NOT EXISTS last_error_at TIMESTAMP NULL DEFAULT NULL COMMENT 'Timestamp ultimo errore',
+ADD COLUMN IF NOT EXISTS onlyoffice_key VARCHAR(255) DEFAULT NULL COMMENT 'Chiave documento OnlyOffice',
+ADD COLUMN IF NOT EXISTS onlyoffice_url TEXT DEFAULT NULL COMMENT 'URL OnlyOffice',
+ADD INDEX idx_onlyoffice_key (onlyoffice_key),
+ADD INDEX idx_is_editing (is_editing),
+ADD INDEX idx_ultimo_accesso (ultimo_accesso);
+
+-- ====================================================
+-- 2. Extended version management table
+-- ====================================================
+
 CREATE TABLE IF NOT EXISTS documenti_versioni_extended (
     id INT AUTO_INCREMENT PRIMARY KEY,
     documento_id INT NOT NULL,
     version_number INT NOT NULL,
-    file_path VARCHAR(500),
+    file_path TEXT,
     file_size BIGINT DEFAULT 0,
-    content_hash VARCHAR(64),
+    content_html LONGTEXT COMMENT 'HTML content for text documents',
     created_by_id INT,
     created_by_name VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_major BOOLEAN DEFAULT FALSE,
-    is_current BOOLEAN DEFAULT FALSE,
-    notes TEXT,
-    changes_data JSON,
-    metadata JSON,
+    is_major BOOLEAN DEFAULT FALSE COMMENT 'Major version flag',
+    is_current BOOLEAN DEFAULT FALSE COMMENT 'Current version flag',
+    notes TEXT COMMENT 'Version notes',
+    changes_data JSON COMMENT 'Changes history from OnlyOffice',
+    hash VARCHAR(64) COMMENT 'File hash for integrity',
+    metadata JSON COMMENT 'Additional metadata',
     
-    -- Indexes
+    FOREIGN KEY (documento_id) REFERENCES documenti(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by_id) REFERENCES utenti(id) ON DELETE SET NULL,
+    
     INDEX idx_documento_version (documento_id, version_number),
-    INDEX idx_current_version (documento_id, is_current),
+    INDEX idx_current (documento_id, is_current),
     INDEX idx_created_at (created_at),
-    
-    -- Foreign key
-    CONSTRAINT fk_version_documento 
-        FOREIGN KEY (documento_id) REFERENCES documenti(id) ON DELETE CASCADE,
-    CONSTRAINT fk_version_user 
-        FOREIGN KEY (created_by_id) REFERENCES utenti(id) ON DELETE SET NULL,
-    
-    -- Unique constraint
-    UNIQUE KEY uk_documento_version (documento_id, version_number)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    UNIQUE KEY unique_doc_version (documento_id, version_number)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Extended version management for OnlyOffice documents';
 
--- ================================================================
--- Active Document Editors Table
--- ================================================================
+-- ====================================================
+-- 3. Document activity log
+-- ====================================================
+
+CREATE TABLE IF NOT EXISTS document_activity_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    document_id INT NOT NULL,
+    action VARCHAR(100) NOT NULL COMMENT 'Action type',
+    details JSON COMMENT 'Action details',
+    user_id INT,
+    user_name VARCHAR(255),
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (document_id) REFERENCES documenti(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES utenti(id) ON DELETE SET NULL,
+    
+    INDEX idx_document_action (document_id, action),
+    INDEX idx_created_at (created_at),
+    INDEX idx_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Detailed activity log for documents';
+
+-- ====================================================
+-- 4. Active editors tracking
+-- ====================================================
+
 CREATE TABLE IF NOT EXISTS document_active_editors (
     id INT AUTO_INCREMENT PRIMARY KEY,
     document_id INT NOT NULL,
-    user_id INT,
+    user_id INT NOT NULL,
     user_name VARCHAR(255),
     session_id VARCHAR(255),
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    connection_id VARCHAR(255),
-    is_active BOOLEAN DEFAULT TRUE,
+    connection_id VARCHAR(255) COMMENT 'OnlyOffice connection ID',
     
-    -- Indexes
-    INDEX idx_document_active (document_id, is_active),
-    INDEX idx_user_active (user_id, is_active),
-    INDEX idx_session (session_id),
-    INDEX idx_last_activity (last_activity),
+    FOREIGN KEY (document_id) REFERENCES documenti(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES utenti(id) ON DELETE CASCADE,
     
-    -- Foreign keys
-    CONSTRAINT fk_editor_document 
-        FOREIGN KEY (document_id) REFERENCES documenti(id) ON DELETE CASCADE,
-    CONSTRAINT fk_editor_user 
-        FOREIGN KEY (user_id) REFERENCES utenti(id) ON DELETE CASCADE,
-    
-    -- Unique constraint for active sessions
-    UNIQUE KEY uk_active_session (document_id, user_id, session_id, is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    UNIQUE KEY unique_editor (document_id, user_id),
+    INDEX idx_document (document_id),
+    INDEX idx_last_activity (last_activity)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Track active document editors';
 
--- ================================================================
--- Collaborative Actions Log Table
--- ================================================================
+-- ====================================================
+-- 5. Collaborative actions log
+-- ====================================================
+
 CREATE TABLE IF NOT EXISTS document_collaborative_actions (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     document_id INT NOT NULL,
-    action_type VARCHAR(50) NOT NULL,
+    action_type VARCHAR(100) NOT NULL,
     user_id INT,
-    user_name VARCHAR(255),
     action_data JSON,
-    ip_address VARCHAR(45),
-    user_agent TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    -- Indexes
-    INDEX idx_document_actions (document_id, created_at),
-    INDEX idx_action_type (action_type),
-    INDEX idx_user_actions (user_id, created_at),
-    INDEX idx_created_at_desc (created_at DESC),
+    FOREIGN KEY (document_id) REFERENCES documenti(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES utenti(id) ON DELETE SET NULL,
     
-    -- Foreign keys
-    CONSTRAINT fk_action_document 
-        FOREIGN KEY (document_id) REFERENCES documenti(id) ON DELETE CASCADE,
-    CONSTRAINT fk_action_user 
-        FOREIGN KEY (user_id) REFERENCES utenti(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    INDEX idx_document_type (document_id, action_type),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Log collaborative editing actions';
 
--- ================================================================
--- Document Activity Log Table
--- ================================================================
-CREATE TABLE IF NOT EXISTS document_activity_log (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    document_id INT NOT NULL,
-    action VARCHAR(100) NOT NULL,
-    details JSON,
-    user_id INT,
-    ip_address VARCHAR(45),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Indexes
-    INDEX idx_document_activity (document_id, created_at DESC),
-    INDEX idx_action (action),
-    INDEX idx_user_activity (user_id, created_at DESC),
-    
-    -- Foreign keys
-    CONSTRAINT fk_activity_document 
-        FOREIGN KEY (document_id) REFERENCES documenti(id) ON DELETE CASCADE,
-    CONSTRAINT fk_activity_user 
-        FOREIGN KEY (user_id) REFERENCES utenti(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- ====================================================
+-- 6. OnlyOffice sessions
+-- ====================================================
 
--- ================================================================
--- OnlyOffice Sessions Table
--- ================================================================
 CREATE TABLE IF NOT EXISTS onlyoffice_sessions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    session_key VARCHAR(255) UNIQUE NOT NULL,
     document_id INT NOT NULL,
-    user_id INT,
-    token VARCHAR(500),
-    config JSON,
-    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    session_key VARCHAR(255) NOT NULL COMMENT 'Unique session key',
+    user_id INT NOT NULL,
+    azienda_id INT NOT NULL,
+    permissions JSON COMMENT 'User permissions for this session',
+    jwt_token TEXT COMMENT 'JWT token for this session',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NULL DEFAULT NULL,
     last_accessed TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    ended_at TIMESTAMP NULL,
-    status ENUM('active', 'closed', 'expired') DEFAULT 'active',
+    is_active BOOLEAN DEFAULT TRUE,
     
-    -- Indexes
-    INDEX idx_session_key (session_key),
-    INDEX idx_document_sessions (document_id, status),
-    INDEX idx_user_sessions (user_id, status),
-    INDEX idx_status (status, last_accessed),
+    FOREIGN KEY (document_id) REFERENCES documenti(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES utenti(id) ON DELETE CASCADE,
+    FOREIGN KEY (azienda_id) REFERENCES aziende(id) ON DELETE CASCADE,
     
-    -- Foreign keys
-    CONSTRAINT fk_session_document 
-        FOREIGN KEY (document_id) REFERENCES documenti(id) ON DELETE CASCADE,
-    CONSTRAINT fk_session_user 
-        FOREIGN KEY (user_id) REFERENCES utenti(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    UNIQUE KEY unique_session (session_key),
+    INDEX idx_document_user (document_id, user_id),
+    INDEX idx_expires (expires_at),
+    INDEX idx_active (is_active, expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='OnlyOffice editing sessions';
 
--- ================================================================
--- OnlyOffice Rate Limiting Table
--- ================================================================
-CREATE TABLE IF NOT EXISTS onlyoffice_rate_limits (
+-- ====================================================
+-- 7. Document locks for conflict prevention
+-- ====================================================
+
+CREATE TABLE IF NOT EXISTS document_locks (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    identifier VARCHAR(255) NOT NULL,
-    endpoint VARCHAR(255) NOT NULL,
-    requests_count INT DEFAULT 1,
-    window_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    window_end TIMESTAMP NOT NULL,
+    document_id INT NOT NULL,
+    locked_by INT NOT NULL,
+    locked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    lock_type ENUM('read', 'write', 'exclusive') DEFAULT 'write',
+    lock_reason VARCHAR(255),
+    expires_at TIMESTAMP NULL DEFAULT NULL,
     
-    -- Indexes
-    INDEX idx_identifier_endpoint (identifier, endpoint, window_end),
-    INDEX idx_window_cleanup (window_end),
+    FOREIGN KEY (document_id) REFERENCES documenti(id) ON DELETE CASCADE,
+    FOREIGN KEY (locked_by) REFERENCES utenti(id) ON DELETE CASCADE,
     
-    -- Unique constraint
-    UNIQUE KEY uk_rate_limit (identifier, endpoint, window_start)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    UNIQUE KEY unique_lock (document_id, lock_type),
+    INDEX idx_expires (expires_at),
+    INDEX idx_locked_by (locked_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Document locking mechanism';
 
--- ================================================================
--- OnlyOffice Security Log Table
--- ================================================================
-CREATE TABLE IF NOT EXISTS onlyoffice_security_log (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    event_type VARCHAR(50) NOT NULL,
-    severity ENUM('info', 'warning', 'error', 'critical') DEFAULT 'info',
-    message TEXT,
-    details JSON,
-    ip_address VARCHAR(45),
-    user_agent TEXT,
-    user_id INT,
+-- ====================================================
+-- 8. OnlyOffice callback history
+-- ====================================================
+
+CREATE TABLE IF NOT EXISTS onlyoffice_callbacks (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     document_id INT,
+    callback_key VARCHAR(255),
+    status INT COMMENT 'OnlyOffice status code',
+    url TEXT COMMENT 'Document URL from callback',
+    changes_url TEXT COMMENT 'Changes URL from callback',
+    force_save_type INT COMMENT 'Force save type',
+    users JSON COMMENT 'Users data from callback',
+    actions JSON COMMENT 'Actions data from callback',
+    history JSON COMMENT 'History data from callback',
+    raw_data JSON COMMENT 'Complete raw callback data',
+    processed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    -- Indexes
-    INDEX idx_event_type (event_type, created_at DESC),
-    INDEX idx_severity (severity, created_at DESC),
-    INDEX idx_user_security (user_id, created_at DESC),
-    INDEX idx_document_security (document_id, created_at DESC),
-    INDEX idx_ip_address (ip_address, created_at DESC),
+    FOREIGN KEY (document_id) REFERENCES documenti(id) ON DELETE SET NULL,
     
-    -- Foreign keys (nullable for flexibility)
-    CONSTRAINT fk_security_user 
-        FOREIGN KEY (user_id) REFERENCES utenti(id) ON DELETE SET NULL,
-    CONSTRAINT fk_security_document 
-        FOREIGN KEY (document_id) REFERENCES documenti(id) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    INDEX idx_callback_key (callback_key),
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at),
+    INDEX idx_processed (processed)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='OnlyOffice callback history for debugging';
 
--- ================================================================
--- Update documenti table with OnlyOffice fields
--- ================================================================
-ALTER TABLE documenti 
-    ADD COLUMN IF NOT EXISTS is_editing BOOLEAN DEFAULT FALSE,
-    ADD COLUMN IF NOT EXISTS editing_users JSON,
-    ADD COLUMN IF NOT EXISTS editing_started_at TIMESTAMP NULL,
-    ADD COLUMN IF NOT EXISTS current_version INT DEFAULT 1,
-    ADD COLUMN IF NOT EXISTS total_versions INT DEFAULT 1,
-    ADD COLUMN IF NOT EXISTS last_error VARCHAR(500),
-    ADD COLUMN IF NOT EXISTS last_error_at TIMESTAMP NULL,
-    ADD COLUMN IF NOT EXISTS onlyoffice_key VARCHAR(255),
-    ADD COLUMN IF NOT EXISTS onlyoffice_url VARCHAR(500),
-    ADD INDEX IF NOT EXISTS idx_editing_status (is_editing, editing_started_at),
-    ADD INDEX IF NOT EXISTS idx_onlyoffice_key (onlyoffice_key);
+-- ====================================================
+-- 9. Document templates for OnlyOffice
+-- ====================================================
 
--- ================================================================
--- Create cleanup events for old data
--- ================================================================
-
--- Cleanup old rate limit entries (runs every hour)
-DELIMITER $$
-CREATE EVENT IF NOT EXISTS cleanup_onlyoffice_rate_limits
-ON SCHEDULE EVERY 1 HOUR
-DO
-BEGIN
-    DELETE FROM onlyoffice_rate_limits 
-    WHERE window_end < DATE_SUB(NOW(), INTERVAL 1 HOUR);
-END$$
-DELIMITER ;
-
--- Cleanup old collaborative actions (keeps last 30 days)
-DELIMITER $$
-CREATE EVENT IF NOT EXISTS cleanup_collaborative_actions
-ON SCHEDULE EVERY 1 DAY
-DO
-BEGIN
-    DELETE FROM document_collaborative_actions 
-    WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY);
-END$$
-DELIMITER ;
-
--- Cleanup expired sessions (runs every day)
-DELIMITER $$
-CREATE EVENT IF NOT EXISTS cleanup_onlyoffice_sessions
-ON SCHEDULE EVERY 1 DAY
-DO
-BEGIN
-    UPDATE onlyoffice_sessions 
-    SET status = 'expired' 
-    WHERE status = 'active' 
-    AND last_accessed < DATE_SUB(NOW(), INTERVAL 24 HOUR);
+CREATE TABLE IF NOT EXISTS onlyoffice_templates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    file_path TEXT NOT NULL,
+    file_type VARCHAR(50) NOT NULL COMMENT 'docx, xlsx, pptx',
+    category VARCHAR(100),
+    azienda_id INT COMMENT 'NULL for global templates',
+    is_active BOOLEAN DEFAULT TRUE,
+    usage_count INT DEFAULT 0,
+    created_by INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    DELETE FROM onlyoffice_sessions 
-    WHERE status IN ('closed', 'expired') 
-    AND ended_at < DATE_SUB(NOW(), INTERVAL 7 DAY);
-END$$
-DELIMITER ;
-
--- Cleanup old security logs (keeps last 90 days)
-DELIMITER $$
-CREATE EVENT IF NOT EXISTS cleanup_security_logs
-ON SCHEDULE EVERY 1 WEEK
-DO
-BEGIN
-    DELETE FROM onlyoffice_security_log 
-    WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY)
-    AND severity NOT IN ('error', 'critical');
+    FOREIGN KEY (azienda_id) REFERENCES aziende(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES utenti(id) ON DELETE SET NULL,
     
-    -- Keep critical logs for 1 year
-    DELETE FROM onlyoffice_security_log 
-    WHERE created_at < DATE_SUB(NOW(), INTERVAL 365 DAY);
-END$$
-DELIMITER ;
+    INDEX idx_category (category),
+    INDEX idx_azienda (azienda_id),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Document templates for OnlyOffice';
 
--- ================================================================
--- Create stored procedures for common operations
--- ================================================================
-
--- Procedure to create a new document version
-DELIMITER $$
-CREATE PROCEDURE IF NOT EXISTS sp_create_document_version(
-    IN p_document_id INT,
-    IN p_file_path VARCHAR(500),
-    IN p_file_size BIGINT,
-    IN p_user_id INT,
-    IN p_user_name VARCHAR(255),
-    IN p_is_major BOOLEAN,
-    IN p_notes TEXT,
-    IN p_changes_data JSON
-)
-BEGIN
-    DECLARE v_version_number INT;
-    
-    -- Get next version number
-    SELECT COALESCE(MAX(version_number), 0) + 1 INTO v_version_number
-    FROM documenti_versioni_extended
-    WHERE documento_id = p_document_id;
-    
-    -- Mark current version as not current
-    UPDATE documenti_versioni_extended 
-    SET is_current = FALSE 
-    WHERE documento_id = p_document_id AND is_current = TRUE;
-    
-    -- Insert new version
-    INSERT INTO documenti_versioni_extended (
-        documento_id, version_number, file_path, file_size,
-        created_by_id, created_by_name, is_major, is_current,
-        notes, changes_data
-    ) VALUES (
-        p_document_id, v_version_number, p_file_path, p_file_size,
-        p_user_id, p_user_name, p_is_major, TRUE,
-        p_notes, p_changes_data
-    );
-    
-    -- Update document record
-    UPDATE documenti 
-    SET current_version = v_version_number,
-        total_versions = v_version_number,
-        aggiornato_il = NOW(),
-        file_path = p_file_path,
-        dimensione_file = p_file_size
-    WHERE id = p_document_id;
-    
-    SELECT v_version_number AS version_number;
-END$$
-DELIMITER ;
-
--- Procedure to get active editors for a document
-DELIMITER $$
-CREATE PROCEDURE IF NOT EXISTS sp_get_active_editors(
-    IN p_document_id INT
-)
-BEGIN
-    SELECT 
-        dae.user_id,
-        dae.user_name,
-        dae.started_at,
-        dae.last_activity,
-        u.email,
-        u.avatar
-    FROM document_active_editors dae
-    LEFT JOIN utenti u ON dae.user_id = u.id
-    WHERE dae.document_id = p_document_id 
-    AND dae.is_active = TRUE
-    AND dae.last_activity > DATE_SUB(NOW(), INTERVAL 5 MINUTE)
-    ORDER BY dae.started_at ASC;
-END$$
-DELIMITER ;
-
--- ================================================================
--- Create views for reporting
--- ================================================================
-
--- View for document version history
-CREATE OR REPLACE VIEW v_document_version_history AS
-SELECT 
-    dve.documento_id,
-    d.nome_file,
-    dve.version_number,
-    dve.created_at,
-    dve.created_by_name,
-    dve.is_major,
-    dve.is_current,
-    dve.file_size,
-    dve.notes,
-    u.email as created_by_email
-FROM documenti_versioni_extended dve
-JOIN documenti d ON dve.documento_id = d.id
-LEFT JOIN utenti u ON dve.created_by_id = u.id
-ORDER BY dve.documento_id, dve.version_number DESC;
+-- ====================================================
+-- 10. Create views for reporting
+-- ====================================================
 
 -- View for active editing sessions
 CREATE OR REPLACE VIEW v_active_editing_sessions AS
 SELECT 
     d.id as document_id,
-    d.nome_file,
-    d.tipo_documento,
-    COUNT(DISTINCT dae.user_id) as active_editors_count,
-    GROUP_CONCAT(DISTINCT dae.user_name SEPARATOR ', ') as active_editors,
-    MIN(dae.started_at) as editing_started_at,
-    MAX(dae.last_activity) as last_activity
-FROM documenti d
-JOIN document_active_editors dae ON d.id = dae.document_id
-WHERE dae.is_active = TRUE
-AND dae.last_activity > DATE_SUB(NOW(), INTERVAL 5 MINUTE)
-GROUP BY d.id, d.nome_file, d.tipo_documento;
+    d.titolo as document_title,
+    d.azienda_id,
+    a.nome as azienda_nome,
+    de.user_id,
+    u.nome as user_name,
+    de.started_at,
+    de.last_activity,
+    TIMESTAMPDIFF(MINUTE, de.started_at, NOW()) as editing_minutes
+FROM document_active_editors de
+JOIN documenti d ON de.document_id = d.id
+LEFT JOIN aziende a ON d.azienda_id = a.id
+LEFT JOIN utenti u ON de.user_id = u.id
+WHERE de.last_activity > DATE_SUB(NOW(), INTERVAL 30 MINUTE);
 
--- ================================================================
--- Insert initial data
--- ================================================================
+-- View for document version history
+CREATE OR REPLACE VIEW v_document_version_history AS
+SELECT 
+    dv.id as version_id,
+    dv.documento_id,
+    d.titolo as document_title,
+    dv.version_number,
+    dv.created_by_name,
+    dv.created_at,
+    dv.is_major,
+    dv.is_current,
+    dv.file_size,
+    dv.notes,
+    d.azienda_id
+FROM documenti_versioni_extended dv
+JOIN documenti d ON dv.documento_id = d.id
+ORDER BY dv.documento_id, dv.version_number DESC;
 
--- Log the migration
-INSERT INTO onlyoffice_security_log (event_type, severity, message, details)
-VALUES ('migration', 'info', 'OnlyOffice tables created successfully', 
-        JSON_OBJECT('version', '1.0.0', 'timestamp', NOW()));
+-- View for document activity summary
+CREATE OR REPLACE VIEW v_document_activity_summary AS
+SELECT 
+    document_id,
+    COUNT(*) as total_actions,
+    COUNT(DISTINCT user_id) as unique_users,
+    MIN(created_at) as first_activity,
+    MAX(created_at) as last_activity,
+    COUNT(CASE WHEN action = 'document_saved' THEN 1 END) as save_count,
+    COUNT(CASE WHEN action = 'document_opened' THEN 1 END) as open_count,
+    COUNT(CASE WHEN action = 'save_error' THEN 1 END) as error_count
+FROM document_activity_log
+GROUP BY document_id;
 
--- ================================================================
--- Grant permissions (adjust as needed)
--- ================================================================
--- GRANT SELECT, INSERT, UPDATE, DELETE ON nexiosol.documenti_versioni_extended TO 'nexio_user'@'localhost';
--- GRANT SELECT, INSERT, UPDATE, DELETE ON nexiosol.document_active_editors TO 'nexio_user'@'localhost';
--- GRANT SELECT, INSERT, UPDATE, DELETE ON nexiosol.document_collaborative_actions TO 'nexio_user'@'localhost';
--- GRANT SELECT, INSERT, UPDATE, DELETE ON nexiosol.document_activity_log TO 'nexio_user'@'localhost';
--- GRANT SELECT, INSERT, UPDATE, DELETE ON nexiosol.onlyoffice_sessions TO 'nexio_user'@'localhost';
--- GRANT SELECT, INSERT, UPDATE, DELETE ON nexiosol.onlyoffice_rate_limits TO 'nexio_user'@'localhost';
--- GRANT SELECT, INSERT, UPDATE, DELETE ON nexiosol.onlyoffice_security_log TO 'nexio_user'@'localhost';
--- GRANT EXECUTE ON PROCEDURE nexiosol.sp_create_document_version TO 'nexio_user'@'localhost';
--- GRANT EXECUTE ON PROCEDURE nexiosol.sp_get_active_editors TO 'nexio_user'@'localhost';
+-- ====================================================
+-- 11. Insert default OnlyOffice templates
+-- ====================================================
 
--- ================================================================
--- Success message
--- ================================================================
-SELECT 'OnlyOffice integration tables created successfully!' AS status;
+INSERT IGNORE INTO onlyoffice_templates (name, description, file_type, category, is_active) VALUES
+('Documento Vuoto', 'Documento Word vuoto', 'docx', 'general', TRUE),
+('Foglio di Calcolo Vuoto', 'Foglio Excel vuoto', 'xlsx', 'general', TRUE),
+('Presentazione Vuota', 'Presentazione PowerPoint vuota', 'pptx', 'general', TRUE),
+('Lettera Commerciale', 'Template per lettera commerciale', 'docx', 'business', TRUE),
+('Report Mensile', 'Template per report mensile', 'docx', 'reports', TRUE),
+('Budget Annuale', 'Template per budget annuale', 'xlsx', 'finance', TRUE),
+('Presentazione Aziendale', 'Template presentazione aziendale', 'pptx', 'business', TRUE);
+
+-- ====================================================
+-- 12. Grant permissions
+-- ====================================================
+
+-- Ensure proper permissions for application user
+-- GRANT ALL PRIVILEGES ON nexiosol.* TO 'nexio_user'@'localhost';
+-- FLUSH PRIVILEGES;
+
+-- ====================================================
+-- 13. Create triggers for data integrity
+-- ====================================================
+
+DELIMITER $$
+
+-- Trigger to clean up active editors on document deletion
+CREATE TRIGGER IF NOT EXISTS before_document_delete
+BEFORE DELETE ON documenti
+FOR EACH ROW
+BEGIN
+    DELETE FROM document_active_editors WHERE document_id = OLD.id;
+    DELETE FROM document_locks WHERE document_id = OLD.id;
+    DELETE FROM onlyoffice_sessions WHERE document_id = OLD.id;
+END$$
+
+-- Trigger to update document stats after version creation
+CREATE TRIGGER IF NOT EXISTS after_version_insert
+AFTER INSERT ON documenti_versioni_extended
+FOR EACH ROW
+BEGIN
+    UPDATE documenti 
+    SET total_versions = (
+        SELECT COUNT(*) FROM documenti_versioni_extended 
+        WHERE documento_id = NEW.documento_id
+    ),
+    current_version = NEW.version_number,
+    aggiornato_il = NOW()
+    WHERE id = NEW.documento_id;
+END$$
+
+-- Trigger to clean up expired sessions
+CREATE EVENT IF NOT EXISTS cleanup_expired_sessions
+ON SCHEDULE EVERY 1 HOUR
+DO
+BEGIN
+    DELETE FROM onlyoffice_sessions 
+    WHERE expires_at < NOW() OR (is_active = FALSE AND last_accessed < DATE_SUB(NOW(), INTERVAL 24 HOUR));
+    
+    DELETE FROM document_locks 
+    WHERE expires_at < NOW();
+    
+    DELETE FROM document_active_editors 
+    WHERE last_activity < DATE_SUB(NOW(), INTERVAL 1 HOUR);
+END$$
+
+DELIMITER ;
+
+-- ====================================================
+-- 14. Add indexes for performance
+-- ====================================================
+
+-- Performance indexes for frequent queries
+ALTER TABLE document_activity_log ADD INDEX idx_document_created (document_id, created_at);
+ALTER TABLE documenti_versioni_extended ADD INDEX idx_doc_current (documento_id, is_current);
+ALTER TABLE onlyoffice_callbacks ADD INDEX idx_doc_status (document_id, status);
+
+-- ====================================================
+-- Verification queries
+-- ====================================================
+
+-- Check if all tables were created
+SELECT 
+    'Tables Created' as Status,
+    COUNT(*) as Count
+FROM information_schema.tables 
+WHERE table_schema = 'nexiosol' 
+AND table_name IN (
+    'documenti_versioni_extended',
+    'document_activity_log',
+    'document_active_editors',
+    'document_collaborative_actions',
+    'onlyoffice_sessions',
+    'document_locks',
+    'onlyoffice_callbacks',
+    'onlyoffice_templates'
+);
+
+-- Check documenti table columns
+SELECT 
+    'Documenti Columns' as Status,
+    COUNT(*) as Count
+FROM information_schema.columns
+WHERE table_schema = 'nexiosol'
+AND table_name = 'documenti'
+AND column_name IN (
+    'nome_file', 'creato_il', 'aggiornato_il', 'ultimo_accesso',
+    'is_editing', 'editing_users', 'current_version', 'total_versions'
+);
+
+-- Show summary
+SELECT 'OnlyOffice tables setup complete!' as Message;

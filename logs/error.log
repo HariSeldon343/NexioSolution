@@ -17308,3 +17308,6 @@ Stack trace:
 Stack trace:
 #0 {main}
   thrown in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-jwt.php on line 74
+[18-Aug-2025 06:44:52 Europe/Rome] PHP Warning:  Undefined array key 0 in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-integration.php on line 508
+[18-Aug-2025 06:48:51 Europe/Rome] PHP Warning:  Undefined array key 0 in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-integration.php on line 508
+[18-Aug-2025 06:49:19 Europe/Rome] PHP Warning:  Undefined array key 0 in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-integration.php on line 508

@@ -1,0 +1,98 @@
+{
+    "timestamp": "2025-08-18 06:48:51",
+    "total_tests": 25,
+    "passed": 22,
+    "failed": 3,
+    "success_rate": 88,
+    "warnings": [
+        "Using default JWT secret - change for production!",
+        "document_activity_log table not found - detailed logging unavailable",
+        "No IP restrictions configured - accepting all IPs",
+        "Skipping server test for localhost"
+    ],
+    "test_results": {
+        "JWT Configuration": {
+            "status": "passed"
+        },
+        "Server URLs Configuration": {
+            "status": "passed"
+        },
+        "Documents Directory": {
+            "status": "passed"
+        },
+        "Log File Configuration": {
+            "status": "passed"
+        },
+        "Documents Table": {
+            "status": "failed",
+            "error": "Missing columns: nome_file, creato_il, aggiornato_il, ultimo_accesso"
+        },
+        "Document Versions Table": {
+            "status": "passed"
+        },
+        "Activity Log Table": {
+            "status": "passed"
+        },
+        "OnlyOffice Callback API": {
+            "status": "passed"
+        },
+        "OnlyOffice Document API": {
+            "status": "passed"
+        },
+        "OnlyOffice Prepare API": {
+            "status": "passed"
+        },
+        "JWT Generation": {
+            "status": "passed"
+        },
+        "JWT Verification": {
+            "status": "passed"
+        },
+        "JWT Expiration Check": {
+            "status": "passed"
+        },
+        "Rate Limiting": {
+            "status": "passed"
+        },
+        "HTTPS Enforcement": {
+            "status": "passed"
+        },
+        "IP Validation": {
+            "status": "passed"
+        },
+        "Company Isolation in Documents": {
+            "status": "passed"
+        },
+        "Version Isolation Check": {
+            "status": "failed",
+            "error": "SQLSTATE[42S02]: Base table or view not found: 1146 Table 'nexiosol.v' doesn't exist"
+        },
+        "Server Availability": {
+            "status": "passed"
+        },
+        "Document Creation Flow": {
+            "status": "failed",
+            "error": "Database error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'nome_file' in 'field list'"
+        },
+        "Permission Check Simulation": {
+            "status": "passed"
+        },
+        "Document Upload Path": {
+            "status": "passed"
+        },
+        "Temporary File Handling": {
+            "status": "passed"
+        },
+        "Configuration Check Function": {
+            "status": "passed"
+        },
+        "Supported Formats": {
+            "status": "passed"
+        }
+    },
+    "recommendations": [
+        "Fix the 3 failed tests before using in production",
+        "CRITICAL: Change JWT secret from default value",
+        "Consider creating these tables for full functionality:\n    \u2022 documenti_versioni_extended (Version management)\n    \u2022 document_activity_log (Activity logging)\n    \u2022 document_active_editors (Collaborative editing tracking)\n    \u2022 document_collaborative_actions (Collaboration history)"
+    ]
+}

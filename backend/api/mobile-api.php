@@ -30,21 +30,23 @@ if ($auth->isAuthenticated()) {
 } 
 // Altrimenti prova con token Bearer
 else if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+    require_once '../utils/SimpleJWT.php';
+    
     $token = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
-    // Per ora accettiamo qualsiasi token non vuoto
-    // In produzione dovremmo validare il token JWT
+    
     if (!empty($token)) {
-        // Decodifica token base64 per ottenere user_id
-        $decoded = base64_decode($token);
-        $userId = intval($decoded);
+        try {
+            // SECURITY: Proper JWT validation instead of base64
+            $jwtPayload = SimpleJWT::decode($token);
+            $userId = isset($jwtPayload->user_id) ? intval($jwtPayload->user_id) : 0;
         
-        if ($userId > 0) {
-            $stmt = $pdo->prepare("SELECT * FROM utenti WHERE id = ?");
-            $stmt->execute([$userId]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($user) {
-                $authenticated = true;
+            if ($userId > 0) {
+                $stmt = $pdo->prepare("SELECT * FROM utenti WHERE id = ? AND stato = 'attivo'");
+                $stmt->execute([$userId]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($user) {
+                    $authenticated = true;
                 
                 // Ottieni azienda corrente
                 $stmt = $pdo->prepare("
@@ -55,8 +57,12 @@ else if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
                     LIMIT 1
                 ");
                 $stmt->execute([$userId]);
-                $currentAzienda = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $currentAzienda = $stmt->fetch(PDO::FETCH_ASSOC);
+                }
             }
+        } catch (Exception $e) {
+            // JWT validation failed
+            error_log('Mobile API JWT validation failed: ' . $e->getMessage());
         }
     }
 }

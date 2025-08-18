@@ -1,123 +1,412 @@
 <?php
 /**
- * Configurazione OnlyOffice Document Server Docker
- * Configurazione per server locale Docker
+ * OnlyOffice Document Server Configuration
+ * Production-ready configuration with JWT authentication and security hardening
  */
 
 // ================================================================
-// CONFIGURAZIONE ONLYOFFICE DOCKER
+// ENVIRONMENT DETECTION
 // ================================================================
 
-// Server OnlyOffice locale (Docker)
-$ONLYOFFICE_SERVER = 'http://localhost:8080';
+$isProduction = (getenv('APP_ENV') === 'production') || 
+                (isset($_SERVER['SERVER_NAME']) && $_SERVER['SERVER_NAME'] !== 'localhost');
+$isDocker = file_exists('/.dockerenv');
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || 
+            (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') 
+            ? 'https' : 'http';
 
-// Timeout per le richieste (secondi)
-$ONLYOFFICE_TIMEOUT = 30;
+// ================================================================
+// ONLYOFFICE SERVER CONFIGURATION
+// ================================================================
 
-// Formati supportati
+// Server URLs - configurable via environment variables
+$ONLYOFFICE_DS_PUBLIC_URL = getenv('ONLYOFFICE_DS_PUBLIC_URL') ?: 
+    ($isProduction ? 'https://office.yourdomain.com' : 'http://localhost:8082');
+
+$ONLYOFFICE_DS_INTERNAL_URL = getenv('ONLYOFFICE_DS_INTERNAL_URL') ?: 
+    ($isDocker ? 'http://onlyoffice-documentserver' : $ONLYOFFICE_DS_PUBLIC_URL);
+
+// Legacy variable for backward compatibility
+$ONLYOFFICE_SERVER = $ONLYOFFICE_DS_PUBLIC_URL;
+
+// Request timeout (seconds)
+$ONLYOFFICE_TIMEOUT = intval(getenv('ONLYOFFICE_TIMEOUT') ?: 30);
+
+// Maximum file size (bytes) - 100MB default
+$ONLYOFFICE_MAX_FILE_SIZE = intval(getenv('ONLYOFFICE_MAX_FILE_SIZE') ?: 100 * 1024 * 1024);
+
+// Supported formats
 $ONLYOFFICE_SUPPORTED_FORMATS = [
-    'docx', 'doc', 'odt', 'rtf', 'txt',
-    'xlsx', 'xls', 'ods', 'csv',
-    'pptx', 'ppt', 'odp'
+    'docx', 'doc', 'odt', 'rtf', 'txt', 'html', 'htm', 'mht', 'pdf', 'djvu', 'fb2', 'epub', 'xps',
+    'xlsx', 'xls', 'ods', 'csv', 'tsv',
+    'pptx', 'ppt', 'odp', 'ppsx', 'pps'
 ];
 
-$ONLYOFFICE_DS_PUBLIC_URL  = 'http://localhost:8082'; // URL pubblico (esterno) del Document Server
-$ONLYOFFICE_DS_INTERNAL_URL = 'http://onlyoffice-documentserver'; // URL interno se usi docker-compose; altrimenti identico al precedente
-$ONLYOFFICE_CALLBACK_URL   = 'http://<tuo_dominio>/backend/api/onlyoffice-callback.php';
-$ONLYOFFICE_DOCUMENTS_DIR  = __DIR__ . '/../../uploads/documenti_onlyoffice'; // cartella dove salvare temporaneamente i docx
-$ONLYOFFICE_DEBUG = false;
-
-
-// Dimensione massima file (bytes) - 50MB
-$ONLYOFFICE_MAX_FILE_SIZE = 50 * 1024 * 1024;
-
-// Abilita debug
-$ONLYOFFICE_DEBUG = true;
-
-// Directory per salvare i documenti
-$ONLYOFFICE_DOCUMENTS_DIR = __DIR__ . '/../../documents/onlyoffice';
-
-// JWT per sicurezza (per ora disabilitato per semplicità)
-$ONLYOFFICE_JWT_ENABLED = false;
-$ONLYOFFICE_JWT_SECRET = '';
-$ONLYOFFICE_JWT_HEADER = 'Authorization';
+// Documents directory
+$ONLYOFFICE_DOCUMENTS_DIR = getenv('ONLYOFFICE_DOCUMENTS_DIR') ?: 
+    realpath(__DIR__ . '/../../documents/onlyoffice');
 
 // ================================================================
-// AUTO-CONFIGURAZIONE CALLBACK URL
+// JWT SECURITY CONFIGURATION
 // ================================================================
 
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+// Enable JWT authentication (MUST be true in production)
+$ONLYOFFICE_JWT_ENABLED = filter_var(
+    getenv('ONLYOFFICE_JWT_ENABLED') ?: ($isProduction ? 'true' : 'false'), 
+    FILTER_VALIDATE_BOOLEAN
+);
+
+// JWT Secret Key - CRITICAL: Set via environment variable in production
+$ONLYOFFICE_JWT_SECRET = getenv('ONLYOFFICE_JWT_SECRET') ?: 
+    ($isProduction 
+        ? die('CRITICAL ERROR: ONLYOFFICE_JWT_SECRET must be set in production environment!')
+        : 'development-secret-key-change-in-production-' . bin2hex(random_bytes(16)));
+
+// JWT Algorithm
+$ONLYOFFICE_JWT_ALGORITHM = getenv('ONLYOFFICE_JWT_ALGORITHM') ?: 'HS256';
+
+// JWT Header name
+$ONLYOFFICE_JWT_HEADER = getenv('ONLYOFFICE_JWT_HEADER') ?: 'Authorization';
+
+// ================================================================
+// CALLBACK URL CONFIGURATION
+// ================================================================
+
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $basePath = rtrim(dirname(dirname(dirname($_SERVER['SCRIPT_NAME'] ?? ''))), '/');
 
-// Per Docker su Windows/WSL, OnlyOffice deve usare host.docker.internal
-// per raggiungere il host dal container
-if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) {
-    $callbackHost = 'host.docker.internal';
-    // Mantieni la porta di XAMPP se presente
-    if (strpos($host, ':') !== false) {
+// Handle Docker environment callback URL
+if ($isDocker || (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false)) {
+    $callbackHost = getenv('ONLYOFFICE_CALLBACK_HOST') ?: 'host.docker.internal';
+    if (strpos($host, ':') !== false && strpos($callbackHost, ':') === false) {
         $callbackHost .= ':' . explode(':', $host)[1];
-    } else {
-        $callbackHost .= ':80'; // Porta default XAMPP
     }
 } else {
     $callbackHost = $host;
 }
 
-$ONLYOFFICE_CALLBACK_URL = $protocol . '://' . $callbackHost . $basePath . '/backend/api/onlyoffice-callback.php';
-
-// Document Server Public URL (quello che il browser deve usare)
-$ONLYOFFICE_DS_PUBLIC_URL = $ONLYOFFICE_SERVER;
-
-// Document Server Internal URL (quello che il server PHP usa per comunicare)
-$ONLYOFFICE_DS_INTERNAL_URL = $ONLYOFFICE_SERVER;
+$ONLYOFFICE_CALLBACK_URL = getenv('ONLYOFFICE_CALLBACK_URL') ?: 
+    $protocol . '://' . $callbackHost . $basePath . '/backend/api/onlyoffice-callback.php';
 
 // ================================================================
-// FUNZIONI UTILITY
+// SECURITY CONFIGURATION
+// ================================================================
+
+// Rate limiting for callbacks (requests per minute)
+$ONLYOFFICE_RATE_LIMIT = intval(getenv('ONLYOFFICE_RATE_LIMIT') ?: 60);
+
+// Allowed callback IPs (empty array = allow all)
+$ONLYOFFICE_ALLOWED_IPS = array_filter(
+    explode(',', getenv('ONLYOFFICE_ALLOWED_IPS') ?: '')
+);
+
+// CORS configuration
+$ONLYOFFICE_CORS_ORIGINS = array_filter(
+    explode(',', getenv('ONLYOFFICE_CORS_ORIGINS') ?: '*')
+);
+
+// Security headers
+$ONLYOFFICE_SECURITY_HEADERS = [
+    'X-Content-Type-Options' => 'nosniff',
+    'X-Frame-Options' => 'SAMEORIGIN',
+    'X-XSS-Protection' => '1; mode=block',
+    'Referrer-Policy' => 'strict-origin-when-cross-origin'
+];
+
+// Session timeout for editing (seconds)
+$ONLYOFFICE_SESSION_TIMEOUT = intval(getenv('ONLYOFFICE_SESSION_TIMEOUT') ?: 3600);
+
+// Enable detailed logging
+$ONLYOFFICE_DEBUG = filter_var(
+    getenv('ONLYOFFICE_DEBUG') ?: (!$isProduction ? 'true' : 'false'),
+    FILTER_VALIDATE_BOOLEAN
+);
+
+// Log file path
+$ONLYOFFICE_LOG_FILE = getenv('ONLYOFFICE_LOG_FILE') ?: 
+    realpath(__DIR__ . '/../../logs') . '/onlyoffice.log';
+
+// ================================================================
+// JWT FUNCTIONS
 // ================================================================
 
 /**
- * Verifica se OnlyOffice è configurato correttamente
+ * Generate JWT token for OnlyOffice
+ */
+function generateOnlyOfficeJWT($payload) {
+    global $ONLYOFFICE_JWT_SECRET, $ONLYOFFICE_JWT_ALGORITHM, $ONLYOFFICE_JWT_ENABLED;
+    
+    if (!$ONLYOFFICE_JWT_ENABLED) {
+        return '';
+    }
+    
+    $header = [
+        'alg' => $ONLYOFFICE_JWT_ALGORITHM,
+        'typ' => 'JWT'
+    ];
+    
+    $headerEncoded = base64UrlEncode(json_encode($header));
+    $payloadEncoded = base64UrlEncode(json_encode($payload));
+    
+    $signature = hash_hmac(
+        $ONLYOFFICE_JWT_ALGORITHM === 'HS256' ? 'sha256' : 'sha512',
+        $headerEncoded . '.' . $payloadEncoded,
+        $ONLYOFFICE_JWT_SECRET,
+        true
+    );
+    $signatureEncoded = base64UrlEncode($signature);
+    
+    return $headerEncoded . '.' . $payloadEncoded . '.' . $signatureEncoded;
+}
+
+/**
+ * Verify JWT token from OnlyOffice callback
+ */
+function verifyOnlyOfficeJWT($token) {
+    global $ONLYOFFICE_JWT_SECRET, $ONLYOFFICE_JWT_ALGORITHM, $ONLYOFFICE_JWT_ENABLED;
+    
+    if (!$ONLYOFFICE_JWT_ENABLED) {
+        return ['valid' => true, 'payload' => []];
+    }
+    
+    $parts = explode('.', $token);
+    if (count($parts) !== 3) {
+        return ['valid' => false, 'error' => 'Invalid token format'];
+    }
+    
+    list($headerEncoded, $payloadEncoded, $signatureEncoded) = $parts;
+    
+    $signature = base64UrlEncode(hash_hmac(
+        $ONLYOFFICE_JWT_ALGORITHM === 'HS256' ? 'sha256' : 'sha512',
+        $headerEncoded . '.' . $payloadEncoded,
+        $ONLYOFFICE_JWT_SECRET,
+        true
+    ));
+    
+    if ($signature !== $signatureEncoded) {
+        return ['valid' => false, 'error' => 'Invalid signature'];
+    }
+    
+    $payload = json_decode(base64UrlDecode($payloadEncoded), true);
+    
+    // Verify expiration if present
+    if (isset($payload['exp']) && $payload['exp'] < time()) {
+        return ['valid' => false, 'error' => 'Token expired'];
+    }
+    
+    return ['valid' => true, 'payload' => $payload];
+}
+
+/**
+ * Extract JWT from request headers
+ */
+function extractJWTFromRequest() {
+    global $ONLYOFFICE_JWT_HEADER;
+    
+    $headers = getallheaders();
+    $authHeader = $headers[$ONLYOFFICE_JWT_HEADER] ?? '';
+    
+    if (preg_match('/Bearer\s+(.+)/', $authHeader, $matches)) {
+        return $matches[1];
+    }
+    
+    // Check in POST body for callback
+    $input = file_get_contents('php://input');
+    $data = json_decode($input, true);
+    return $data['token'] ?? '';
+}
+
+/**
+ * Base64 URL-safe encode
+ */
+function base64UrlEncode($data) {
+    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+}
+
+/**
+ * Base64 URL-safe decode
+ */
+function base64UrlDecode($data) {
+    return base64_decode(strtr($data, '-_', '+/'));
+}
+
+// ================================================================
+// SECURITY FUNCTIONS
+// ================================================================
+
+/**
+ * Apply security headers
+ */
+function applyOnlyOfficeSecurityHeaders() {
+    global $ONLYOFFICE_SECURITY_HEADERS, $ONLYOFFICE_CORS_ORIGINS, $isProduction;
+    
+    // Apply security headers
+    foreach ($ONLYOFFICE_SECURITY_HEADERS as $header => $value) {
+        header("$header: $value");
+    }
+    
+    // CORS headers
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if (in_array('*', $ONLYOFFICE_CORS_ORIGINS) || in_array($origin, $ONLYOFFICE_CORS_ORIGINS)) {
+        header("Access-Control-Allow-Origin: $origin");
+        header("Access-Control-Allow-Credentials: true");
+    }
+    
+    // HTTPS enforcement in production
+    if ($isProduction && (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] !== 'on')) {
+        header("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload");
+    }
+}
+
+/**
+ * Check rate limiting
+ */
+function checkOnlyOfficeRateLimit($identifier = null) {
+    global $ONLYOFFICE_RATE_LIMIT;
+    
+    if (!$ONLYOFFICE_RATE_LIMIT) {
+        return true;
+    }
+    
+    $identifier = $identifier ?: $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $cacheKey = 'onlyoffice_rate_' . md5($identifier);
+    $cacheFile = sys_get_temp_dir() . '/' . $cacheKey;
+    
+    $requests = [];
+    if (file_exists($cacheFile)) {
+        $requests = json_decode(file_get_contents($cacheFile), true) ?: [];
+    }
+    
+    $now = time();
+    $requests = array_filter($requests, function($timestamp) use ($now) {
+        return $timestamp > ($now - 60);
+    });
+    
+    if (count($requests) >= $ONLYOFFICE_RATE_LIMIT) {
+        return false;
+    }
+    
+    $requests[] = $now;
+    file_put_contents($cacheFile, json_encode($requests));
+    
+    return true;
+}
+
+/**
+ * Validate callback IP
+ */
+function validateOnlyOfficeCallbackIP() {
+    global $ONLYOFFICE_ALLOWED_IPS;
+    
+    if (empty($ONLYOFFICE_ALLOWED_IPS)) {
+        return true;
+    }
+    
+    $clientIP = $_SERVER['REMOTE_ADDR'] ?? '';
+    
+    // Check for proxy headers
+    $proxyHeaders = ['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'HTTP_CF_CONNECTING_IP'];
+    foreach ($proxyHeaders as $header) {
+        if (!empty($_SERVER[$header])) {
+            $ips = explode(',', $_SERVER[$header]);
+            $clientIP = trim($ips[0]);
+            break;
+        }
+    }
+    
+    return in_array($clientIP, $ONLYOFFICE_ALLOWED_IPS);
+}
+
+/**
+ * Log OnlyOffice events
+ */
+function logOnlyOfficeEvent($level, $message, $context = []) {
+    global $ONLYOFFICE_DEBUG, $ONLYOFFICE_LOG_FILE;
+    
+    if (!$ONLYOFFICE_DEBUG && $level === 'debug') {
+        return;
+    }
+    
+    $timestamp = date('Y-m-d H:i:s');
+    $contextStr = !empty($context) ? json_encode($context) : '';
+    $logMessage = "[$timestamp] [$level] $message $contextStr\n";
+    
+    error_log($logMessage, 3, $ONLYOFFICE_LOG_FILE);
+    
+    if ($level === 'error' || $level === 'critical') {
+        error_log("OnlyOffice $level: $message");
+    }
+}
+
+// ================================================================
+// CONFIGURATION VALIDATION
+// ================================================================
+
+/**
+ * Verify OnlyOffice configuration
  */
 function checkOnlyOfficeConfig() {
-    global $ONLYOFFICE_SERVER, $ONLYOFFICE_DOCUMENTS_DIR;
+    global $ONLYOFFICE_DS_PUBLIC_URL, $ONLYOFFICE_DOCUMENTS_DIR, 
+           $ONLYOFFICE_JWT_ENABLED, $ONLYOFFICE_JWT_SECRET, $isProduction;
     
     $errors = [];
     
-    // Verifica server
-    if (empty($ONLYOFFICE_SERVER)) {
-        $errors[] = 'ONLYOFFICE_SERVER non configurato';
+    // Check server URL
+    if (empty($ONLYOFFICE_DS_PUBLIC_URL)) {
+        $errors[] = 'ONLYOFFICE_DS_PUBLIC_URL not configured';
     }
     
-    // Verifica directory documenti
+    // Check JWT in production
+    if ($isProduction && !$ONLYOFFICE_JWT_ENABLED) {
+        $errors[] = 'JWT authentication must be enabled in production';
+    }
+    
+    if ($ONLYOFFICE_JWT_ENABLED && empty($ONLYOFFICE_JWT_SECRET)) {
+        $errors[] = 'JWT secret key not configured';
+    }
+    
+    // Check documents directory
     if (!is_dir($ONLYOFFICE_DOCUMENTS_DIR)) {
-        if (!mkdir($ONLYOFFICE_DOCUMENTS_DIR, 0755, true)) {
-            $errors[] = 'Impossibile creare directory documenti: ' . $ONLYOFFICE_DOCUMENTS_DIR;
+        if (!@mkdir($ONLYOFFICE_DOCUMENTS_DIR, 0755, true)) {
+            $errors[] = 'Cannot create documents directory: ' . $ONLYOFFICE_DOCUMENTS_DIR;
         }
     } elseif (!is_writable($ONLYOFFICE_DOCUMENTS_DIR)) {
-        $errors[] = 'Directory documenti non scrivibile: ' . $ONLYOFFICE_DOCUMENTS_DIR;
+        $errors[] = 'Documents directory not writable: ' . $ONLYOFFICE_DOCUMENTS_DIR;
     }
     
     return $errors;
 }
 
 /**
- * Ottiene lo stato del Document Server
+ * Get OnlyOffice server status
  */
 function getOnlyOfficeServerStatus() {
-    global $ONLYOFFICE_DS_INTERNAL_URL, $ONLYOFFICE_TIMEOUT;
+    global $ONLYOFFICE_DS_INTERNAL_URL, $ONLYOFFICE_TIMEOUT, 
+           $ONLYOFFICE_JWT_ENABLED, $ONLYOFFICE_JWT_HEADER;
     
     $healthUrl = $ONLYOFFICE_DS_INTERNAL_URL . '/healthcheck';
+    
+    $headers = [
+        'User-Agent: Nexio OnlyOffice Client/1.0',
+        'Accept: application/json'
+    ];
+    
+    // Add JWT token if enabled
+    if ($ONLYOFFICE_JWT_ENABLED) {
+        $token = generateOnlyOfficeJWT(['iss' => 'nexio-platform']);
+        $headers[] = "$ONLYOFFICE_JWT_HEADER: Bearer $token";
+    }
     
     $context = stream_context_create([
         'http' => [
             'timeout' => $ONLYOFFICE_TIMEOUT,
             'method' => 'GET',
             'ignore_errors' => true,
-            'header' => [
-                'User-Agent: PHP OnlyOffice Client',
-                'Accept: application/json'
-            ]
+            'header' => implode("\r\n", $headers)
+        ],
+        'ssl' => [
+            'verify_peer' => true,
+            'verify_peer_name' => true
         ]
     ]);
     
@@ -127,13 +416,28 @@ function getOnlyOfficeServerStatus() {
 }
 
 // ================================================================
-// LOG CONFIGURAZIONI (solo in debug)
+// INITIALIZATION
 // ================================================================
 
+// Create documents directory if needed
+if (!file_exists($ONLYOFFICE_DOCUMENTS_DIR)) {
+    @mkdir($ONLYOFFICE_DOCUMENTS_DIR, 0755, true);
+}
+
+// Create log file if needed
+if ($ONLYOFFICE_DEBUG && !file_exists($ONLYOFFICE_LOG_FILE)) {
+    @touch($ONLYOFFICE_LOG_FILE);
+    @chmod($ONLYOFFICE_LOG_FILE, 0644);
+}
+
+// Log configuration in debug mode
 if ($ONLYOFFICE_DEBUG && php_sapi_name() !== 'cli') {
-    error_log("OnlyOffice Config - Public Server: $ONLYOFFICE_DS_PUBLIC_URL");
-    error_log("OnlyOffice Config - Internal Server: $ONLYOFFICE_DS_INTERNAL_URL");
-    error_log("OnlyOffice Config - Callback: $ONLYOFFICE_CALLBACK_URL");
-    error_log("OnlyOffice Config - Documents Dir: $ONLYOFFICE_DOCUMENTS_DIR");
+    logOnlyOfficeEvent('info', 'Configuration loaded', [
+        'public_url' => $ONLYOFFICE_DS_PUBLIC_URL,
+        'internal_url' => $ONLYOFFICE_DS_INTERNAL_URL,
+        'callback_url' => $ONLYOFFICE_CALLBACK_URL,
+        'jwt_enabled' => $ONLYOFFICE_JWT_ENABLED,
+        'production' => $isProduction
+    ]);
 }
 ?> 

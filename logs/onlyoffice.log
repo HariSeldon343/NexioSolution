@@ -1,0 +1,1 @@
+[2025-08-18 05:51:59] [info] Configuration loaded {"public_url":"http:\/\/localhost:8082","internal_url":"http:\/\/localhost:8082","callback_url":"http:\/\/host.docker.internal\\\/backend\/api\/onlyoffice-callback.php","jwt_enabled":false,"production":false}

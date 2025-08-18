@@ -7,10 +7,22 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/onlyoffice.config.php';
 
-// Headers CORS
-header('Access-Control-Allow-Origin: *');
+// Headers CORS - SECURITY: Restrict to specific origins
+$allowedOrigins = [
+    'http://localhost',
+    'http://localhost:8082',
+    'https://office.yourdomain.com'
+];
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+} else {
+    header('Access-Control-Allow-Origin: http://localhost');
+}
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Credentials: true');
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -25,12 +37,26 @@ try {
         throw new Exception('File ID mancante');
     }
     
+    // SECURITY: Sanitize file_id to prevent path traversal
+    $file_id = preg_replace('/[^a-zA-Z0-9_-]/', '', $file_id);
+    
+    if (empty($file_id) || strlen($file_id) > 100) {
+        throw new Exception('File ID non valido');
+    }
+    
     // Assicurati che la directory documenti esista
     if (!is_dir($ONLYOFFICE_DOCUMENTS_DIR)) {
         mkdir($ONLYOFFICE_DOCUMENTS_DIR, 0755, true);
     }
     
     $file_path = $ONLYOFFICE_DOCUMENTS_DIR . '/' . $file_id . '.docx';
+    
+    // SECURITY: Verify final path is within allowed directory
+    $realPath = realpath(dirname($file_path));
+    $allowedPath = realpath($ONLYOFFICE_DOCUMENTS_DIR);
+    if ($realPath !== $allowedPath) {
+        throw new Exception('Invalid file path');
+    }
     
     // Se il file non esiste, crea un documento DOCX vuoto
     if (!file_exists($file_path)) {

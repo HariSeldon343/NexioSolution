@@ -17299,3 +17299,12 @@ Stack trace:
 Stack trace:
 #0 {main}
   thrown in C:\xampp\htdocs\piattaforma-collaborativa\logout.php on line 23
+[17-Aug-2025 21:01:32 Europe/Rome] PHP Warning:  Undefined variable $pdo in C:\xampp\htdocs\piattaforma-collaborativa\mobile\api\dashboard-data.php on line 31
+[17-Aug-2025 21:01:32 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to a member function query() on null in C:\xampp\htdocs\piattaforma-collaborativa\mobile\api\dashboard-data.php:31
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\mobile\api\dashboard-data.php on line 31
+[18-Aug-2025 05:51:59 Europe/Rome] PHP Fatal error:  Uncaught Error: Undefined constant "ONLYOFFICE_JWT_ENABLED" in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-jwt.php:74
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-jwt.php on line 74

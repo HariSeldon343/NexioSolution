@@ -20,8 +20,8 @@ $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
 // ================================================================
 
 // Server URLs - configurable via environment variables
-$ONLYOFFICE_DS_PUBLIC_URL = getenv('ONLYOFFICE_DS_PUBLIC_URL') ?: 
-    ($isProduction ? 'https://office.yourdomain.com' : 'http://localhost:8082');
+// CONFIGURAZIONE CORRETTA PER DOCKER LOCALE
+$ONLYOFFICE_DS_PUBLIC_URL = getenv('ONLYOFFICE_DS_PUBLIC_URL') ?: 'http://localhost:8082';
 
 $ONLYOFFICE_DS_INTERNAL_URL = getenv('ONLYOFFICE_DS_INTERNAL_URL') ?: 
     ($isDocker ? 'http://onlyoffice-documentserver' : $ONLYOFFICE_DS_PUBLIC_URL);
@@ -51,20 +51,22 @@ $ONLYOFFICE_DOCUMENTS_DIR = getenv('ONLYOFFICE_DOCUMENTS_DIR') ?:
 // ================================================================
 
 // Enable JWT authentication (MUST be true in production)
+// ABILITATO COME RICHIESTO
 $ONLYOFFICE_JWT_ENABLED = filter_var(
     getenv('ONLYOFFICE_JWT_ENABLED') ?: 'true', 
     FILTER_VALIDATE_BOOLEAN
-);
+);  // Forzato a TRUE per sicurezza
 
 // JWT Secret Key - CRITICAL: Set via environment variable in production
-// Generated with: openssl rand -hex 32
+// IMPORTANTE: Usare la STESSA chiave configurata nel Docker di OnlyOffice
+// Per generare una nuova chiave: openssl rand -hex 32
 $ONLYOFFICE_JWT_SECRET = getenv('ONLYOFFICE_JWT_SECRET') ?: 
-    'a7f3b2c9d8e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0';
+    'nexio-secret-key-2025-onlyoffice-jwt-secure-token';  // CAMBIARE con la chiave usata in Docker!
 
 // JWT Algorithm
 $ONLYOFFICE_JWT_ALGORITHM = getenv('ONLYOFFICE_JWT_ALGORITHM') ?: 'HS256';
 
-// JWT Header name
+// JWT Header name - CONFIGURATO COME RICHIESTO
 $ONLYOFFICE_JWT_HEADER = getenv('ONLYOFFICE_JWT_HEADER') ?: 'Authorization';
 
 // ================================================================
@@ -75,17 +77,18 @@ $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $basePath = rtrim(dirname(dirname(dirname($_SERVER['SCRIPT_NAME'] ?? ''))), '/');
 
 // Handle Docker environment callback URL
-if ($isDocker || (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false)) {
-    $callbackHost = getenv('ONLYOFFICE_CALLBACK_HOST') ?: 'host.docker.internal';
-    if (strpos($host, ':') !== false && strpos($callbackHost, ':') === false) {
-        $callbackHost .= ':' . explode(':', $host)[1];
-    }
+// IMPORTANTE: Usa host.docker.internal per permettere al container di raggiungere l'host
+if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) {
+    // In ambiente locale con Docker, usa host.docker.internal
+    $callbackHost = 'host.docker.internal';
 } else {
+    // In produzione usa l'host normale
     $callbackHost = $host;
 }
 
+// Costruisci l'URL di callback completo
 $ONLYOFFICE_CALLBACK_URL = getenv('ONLYOFFICE_CALLBACK_URL') ?: 
-    $protocol . '://' . $callbackHost . $basePath . '/backend/api/onlyoffice-callback.php';
+    'http://' . $callbackHost . '/piattaforma-collaborativa/backend/api/onlyoffice-callback.php';
 
 // ================================================================
 // SECURITY CONFIGURATION

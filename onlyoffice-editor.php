@@ -130,7 +130,7 @@ $config = [
     'type' => $mode === 'view' ? 'embedded' : 'desktop',
     'documentType' => $documentType,
     'document' => [
-        'title' => $document['nome_file'],
+        'title' => $nomeFile,
         'url' => $documentUrl, // Token will be added by JavaScript
         'fileType' => $extension,
         'key' => $documentKey,
@@ -288,11 +288,11 @@ $logger->log(
     'documento',
     $mode === 'edit' ? 'modifica' : 'visualizzazione',
     $documentId,
-    "Apertura documento in OnlyOffice: {$document['nome_file']}"
+    "Apertura documento in OnlyOffice: " . $nomeFile
 );
 
 // Page setup
-$pageTitle = ($mode === 'edit' ? 'Modifica' : 'Visualizza') . ': ' . htmlspecialchars($document['nome_file']);
+$pageTitle = ($mode === 'edit' ? 'Modifica' : 'Visualizza') . ': ' . htmlspecialchars($nomeFile);
 $customCSS = [];
 $customJS = [];
 ?>
@@ -451,7 +451,7 @@ $customJS = [];
         <div class="document-info">
             <i class="document-icon fas fa-file-<?php echo $documentType; ?>"></i>
             <div>
-                <h1 class="document-title"><?php echo htmlspecialchars($document['nome_file']); ?></h1>
+                <h1 class="document-title"><?php echo htmlspecialchars($nomeFile); ?></h1>
                 <p class="document-status">
                     <?php if ($mode === 'edit'): ?>
                         <span class="badge bg-success">Modalità modifica</span>

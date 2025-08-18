@@ -1,0 +1,17 @@
+# Allow direct access to OnlyOffice documents
+Options -Indexes
+Order allow,deny
+Allow from all
+
+# Allow specific file types
+<FilesMatch "\.(docx|xlsx|pptx|doc|xls|ppt|odt|ods|odp|rtf|txt|pdf|csv)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# Set CORS headers for OnlyOffice
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, HEAD"
+    Header set Access-Control-Allow-Headers "Range"
+</IfModule>

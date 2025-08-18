@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OnlyOffice Test - 45.docx</title>
+    <meta charset="UTF-8">
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+        h1 { color: #333; }
+        #onlyoffice-editor { border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>OnlyOffice Editor Test</h1>
+    <p>Document: 45.docx</p>
+    <div id="onlyoffice-editor" style="width:100%; height:600px;"></div>
+    <script src="http://localhost:8082/web-apps/apps/api/documents/api.js"></script>
+    <script>
+        var config = {"document":{"fileType":"docx","key":"test_1755542961_5957","title":"45.docx","url":"http:\/\/host.docker.internal\/piattaforma-collaborativa\/documents\/onlyoffice\/45.docx","permissions":{"edit":true,"download":true,"print":true}},"editorConfig":{"mode":"edit","lang":"it","user":{"id":"test_user","name":"Test User"},"customization":{"forcesave":true,"autosave":true}}};
+        config.token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkb2N1bWVudCI6eyJmaWxlVHlwZSI6ImRvY3giLCJrZXkiOiJ0ZXN0XzE3NTU1NDI5NjFfNTk1NyIsInRpdGxlIjoiNDUuZG9jeCIsInVybCI6Imh0dHA6XC9cL2hvc3QuZG9ja2VyLmludGVybmFsXC9waWF0dGFmb3JtYS1jb2xsYWJvcmF0aXZhXC9kb2N1bWVudHNcL29ubHlvZmZpY2VcLzQ1LmRvY3giLCJwZXJtaXNzaW9ucyI6eyJlZGl0Ijp0cnVlLCJkb3dubG9hZCI6dHJ1ZSwicHJpbnQiOnRydWV9fSwiZWRpdG9yQ29uZmlnIjp7Im1vZGUiOiJlZGl0IiwibGFuZyI6Iml0IiwidXNlciI6eyJpZCI6InRlc3RfdXNlciIsIm5hbWUiOiJUZXN0IFVzZXIifSwiY3VzdG9taXphdGlvbiI6eyJmb3JjZXNhdmUiOnRydWUsImF1dG9zYXZlIjp0cnVlfX19.CwVJifc3ZRZr4SoSO7qjGcHZaTBpaaPAg0ILdEzjhes";
+        config.type = "desktop";
+        
+        console.log('OnlyOffice Config:', config);
+        
+        try {
+            var docEditor = new DocsAPI.DocEditor("onlyoffice-editor", config);
+            console.log('Editor initialized successfully');
+        } catch(e) {
+            console.error('Failed to initialize editor:', e);
+            document.getElementById('onlyoffice-editor').innerHTML = 
+                '<p style="color:red;">Error: ' + e.message + '</p>';
+        }
+    </script>
+</body>
+</html>

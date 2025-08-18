@@ -17592,3 +17592,47 @@ Stack trace:
 #1 C:\xampp\htdocs\piattaforma-collaborativa\dashboard.php(338): db_query('\n            SE...')
 #2 {main}
 [18-Aug-2025 19:56:30 Europe/Rome] User ID: 2, Azienda ID: null, Is Super Admin: yes
+[18-Aug-2025 20:43:18 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:43:33 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:47:10 Europe/Rome] Dashboard error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'd.file_type' in 'field list' - Trace: #0 C:\xampp\htdocs\piattaforma-collaborativa\backend\config\config.php(104): PDO->prepare('\n            SE...')
+#1 C:\xampp\htdocs\piattaforma-collaborativa\dashboard.php(338): db_query('\n            SE...')
+#2 {main}
+[18-Aug-2025 20:47:10 Europe/Rome] User ID: 2, Azienda ID: null, Is Super Admin: yes
+[18-Aug-2025 20:47:17 Europe/Rome] deleteItem called with data: {"action":"delete","type":"file","id":25}
+[18-Aug-2025 20:47:17 Europe/Rome] Delete request - Type: file, ID: 25
+[18-Aug-2025 20:52:04 Europe/Rome] PHP Warning:  Undefined array key "user_nome" in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-open-document.php on line 52
+[18-Aug-2025 20:52:04 Europe/Rome] PHP Warning:  Undefined array key "user_cognome" in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-open-document.php on line 52
+[18-Aug-2025 20:52:04 Europe/Rome] PHP Warning:  Undefined array key "user_nome" in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-open-document.php on line 169
+[18-Aug-2025 20:52:04 Europe/Rome] PHP Warning:  Undefined array key "user_cognome" in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-open-document.php on line 169
+[18-Aug-2025 20:52:20 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:52:24 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:52:26 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:52:27 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:52:27 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:53:15 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:53:15 Europe/Rome] PHP Warning:  Undefined array key "user_nome" in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-open-document.php on line 169
+[18-Aug-2025 20:53:15 Europe/Rome] PHP Warning:  Undefined array key "user_cognome" in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-open-document.php on line 169

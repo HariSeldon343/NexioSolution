@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Test URL Fix OnlyOffice</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #333; text-align: center; }
+        .success-box {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .btn-test {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            transition: all 0.3s;
+        }
+        .btn-test:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+        .code-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+        .url-display {
+            background: #343a40;
+            color: #4ec9b0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Test URL Fix OnlyOffice</h1>
+        
+        <div class="success-box">
+            <h2>🔧 Fix Applicato!</h2>
+            <p>L'URL ora viene costruito correttamente usando il percorso relativo alla directory corrente:</p>
+            <div class="code-box">
+                const currentPath = window.location.pathname;<br>
+                const basePath = currentPath.substring(0, currentPath.lastIndexOf('/'));<br>
+                const url = window.location.origin + basePath + '/onlyoffice-editor.php?id=' + fileId;
+            </div>
+        </div>
+
+        <h2>Test URL Generation:</h2>
+        <div id="url-info" class="url-display"></div>
+
+        <button class="btn-test" onclick="testEditDocument(22)">
+            📝 Test Apertura OnlyOffice (ID: 22)
+        </button>
+
+        <h2>Debug Output:</h2>
+        <div id="debug" class="code-box"></div>
+    </div>
+
+    <script>
+        // Mostra info URL corrente
+        function showUrlInfo() {
+            const currentPath = window.location.pathname;
+            const basePath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+            const expectedUrl = window.location.origin + basePath + '/onlyoffice-editor.php?id=22';
+            
+            document.getElementById('url-info').innerHTML = `
+                <strong>Current Path:</strong> ${currentPath}<br>
+                <strong>Base Path:</strong> ${basePath}<br>
+                <strong>Origin:</strong> ${window.location.origin}<br>
+                <strong>Expected URL:</strong> ${expectedUrl}
+            `;
+        }
+
+        // Funzione editDocument corretta
+        function editDocument(event, fileId) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            if (!fileId) {
+                console.error('editDocument: fileId is missing or invalid');
+                alert('Errore: ID documento non valido');
+                return;
+            }
+            
+            // Costruisci l'URL corretto relativo alla directory corrente
+            const currentPath = window.location.pathname;
+            const basePath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+            const url = window.location.origin + basePath + '/onlyoffice-editor.php?id=' + fileId;
+            
+            const debug = document.getElementById('debug');
+            debug.innerHTML = `
+                <strong>✅ URL Generato Correttamente!</strong><br>
+                <strong>URL:</strong> ${url}<br>
+                <strong>File ID:</strong> ${fileId}<br>
+                <strong>Timestamp:</strong> ${new Date().toLocaleTimeString()}<br>
+            `;
+            
+            console.log('Opening OnlyOffice editor for document ID:', fileId);
+            console.log('Opening URL:', url);
+            
+            try {
+                const newWindow = window.open(url, '_blank');
+                if (!newWindow) {
+                    if (confirm('Il popup potrebbe essere stato bloccato. Vuoi aprire OnlyOffice nella stessa finestra?')) {
+                        window.location.href = url;
+                    }
+                } else {
+                    debug.innerHTML += '<br><strong style="color: green">✅ Finestra aperta con successo!</strong>';
+                }
+            } catch (error) {
+                console.error('Error opening OnlyOffice editor:', error);
+                debug.innerHTML += `<br><strong style="color: red">❌ Errore: ${error.message}</strong>`;
+            }
+        }
+
+        function testEditDocument(fileId) {
+            editDocument(null, fileId);
+        }
+
+        // Mostra info al caricamento
+        window.addEventListener('DOMContentLoaded', function() {
+            showUrlInfo();
+            document.getElementById('debug').innerHTML = 'Pronto per il test. Clicca il bottone sopra.';
+        });
+
+        // Esponi globalmente
+        window.editDocument = editDocument;
+    </script>
+</body>
+</html>

@@ -277,23 +277,31 @@ include 'components/header.php';
     display: flex;
 }
 
-/* Pulsante OnlyOffice evidenziato */
-.action-btn.btn-onlyoffice {
+/* Pulsante OnlyOffice evidenziato - supporta sia button che link */
+.action-btn.btn-onlyoffice,
+a.action-btn.btn-onlyoffice {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
     color: white !important;
     border: 2px solid #28a745 !important;
     font-weight: bold !important;
     box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
     transition: all 0.3s ease;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-.action-btn.btn-onlyoffice:hover {
+.action-btn.btn-onlyoffice:hover,
+a.action-btn.btn-onlyoffice:hover {
     background: linear-gradient(135deg, #20c997 0%, #28a745 100%) !important;
     transform: scale(1.1);
     box-shadow: 0 4px 8px rgba(40, 167, 69, 0.5);
+    color: white !important;
+    text-decoration: none !important;
 }
 
-/* Pulsanti più grandi e visibili */
+/* Pulsanti più grandi e visibili - supporta sia button che link */
 .action-btn {
     width: 28px;
     height: 28px;
@@ -303,10 +311,15 @@ include 'components/header.php';
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     color: #6b7280;
     cursor: pointer;
-    display: flex;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+}
+
+/* Link stilizzati come bottoni */
+a.action-btn {
+    text-decoration: none !important;
 }
 
 /* Icone dentro i pulsanti - più piccole e ben proporzionate */
@@ -727,39 +740,13 @@ let selectedItems = new Set(); // Per tracciare elementi selezionati
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Filesystem JS initialized');
     
-    // Event delegation per bottoni OnlyOffice caricati dinamicamente
-    document.addEventListener('click', function(e) {
-        // Verifica se il click è su un bottone OnlyOffice o suoi figli
-        const button = e.target.closest('.btn-onlyoffice');
-        if (button) {
-            console.log('OnlyOffice button clicked via delegation');
-            e.stopPropagation();
-            e.preventDefault();
-            
-            // Estrai l'ID del file dall'onclick attribute
-            const onclickAttr = button.getAttribute('onclick');
-            if (onclickAttr) {
-                const match = onclickAttr.match(/editDocument\([^,]+,\s*(\d+)\)/);
-                if (match && match[1]) {
-                    const fileId = parseInt(match[1]);
-                    console.log('Delegated click - extracted fileId:', fileId);
-                    editDocument(e, fileId);
-                } else {
-                    console.error('Could not extract fileId from onclick attribute:', onclickAttr);
-                }
-            } else {
-                console.error('No onclick attribute found on button');
-            }
-            return false; // Previeni ulteriore propagazione
-        }
-    }, true); // Use capture phase
+    // Non serve più event delegation per OnlyOffice - ora è un link diretto
     
     loadFolder(null);
     loadFolderTree();
     
     // Verify functions are available
     console.log('confirmDeleteFS exists:', typeof confirmDeleteFS === 'function');
-    console.log('editDocument exists:', typeof editDocument === 'function');
 });
 
 // Load folder contents
@@ -861,13 +848,16 @@ function renderFiles(data) {
                 <div class="company-info">(${escapeHtml(companyName)})</div>
                 <div class="file-card-actions-bottom">
                     ${isDocumentEditable(file) ? `
-                    <button type="button" class="action-btn btn-onlyoffice" 
-                            onclick="event.stopPropagation(); editDocument(event, ${file.id})" 
-                            title="Apri con OnlyOffice" 
-                            aria-label="Apri con OnlyOffice ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
-                            tabindex="0">
+                    <a href="/piattaforma-collaborativa/onlyoffice-editor.php?id=${file.id}" 
+                       target="_blank"
+                       class="action-btn btn-onlyoffice"
+                       title="Apri con OnlyOffice" 
+                       aria-label="Apri con OnlyOffice ${escapeHtml(file.nome)}"
+                       onclick="event.stopPropagation(); return true;"
+                       tabindex="0"
+                       style="display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
                         <i class="fas fa-file-word" aria-hidden="true"></i>
-                    </button>` : ''}
+                    </a>` : ''}
                     <button type="button" class="action-btn" 
                             onclick="event.stopPropagation(); handleRename(${file.id}, 'file', '${escapeHtml(file.nome).replace(/'/g, '\\\'')}')" 
                             title="Rinomina" 
@@ -1254,43 +1244,8 @@ function isDocumentEditable(file) {
     return isEditable;
 }
 
-// Funzione per aprire l'editor di documenti
-function editDocument(event, fileId) {
-    // Debug log per verificare che la funzione venga chiamata
-    console.log('editDocument called with fileId:', fileId);
-    
-    // Previeni la propagazione dell'evento per evitare refresh
-    if (event) {
-        event.stopPropagation();
-        event.preventDefault();
-    }
-    
-    // Verifica che fileId sia valido
-    if (!fileId) {
-        console.error('editDocument: fileId is missing or invalid');
-        alert('Errore: ID documento non valido');
-        return;
-    }
-    
-    // Apri l'editor OnlyOffice in una nuova scheda
-    console.log('Opening OnlyOffice editor for document ID:', fileId);
-    const url = 'onlyoffice-editor.php?id=' + fileId;
-    console.log('Opening URL:', url);
-    
-    try {
-        const newWindow = window.open(url, '_blank');
-        if (!newWindow) {
-            console.error('Popup blocked or window.open failed');
-            // Fallback: prova a navigare direttamente
-            if (confirm('Il popup potrebbe essere stato bloccato. Vuoi aprire OnlyOffice nella stessa finestra?')) {
-                window.location.href = url;
-            }
-        }
-    } catch (error) {
-        console.error('Error opening OnlyOffice editor:', error);
-        alert('Errore nell\'apertura dell\'editor OnlyOffice');
-    }
-}
+// La funzione editDocument non è più necessaria - usiamo link diretti HTML
+// Il bottone OnlyOffice è ora un tag <a> che apre direttamente onlyoffice-editor.php
 
 function searchFiles() {
     const query = document.getElementById('searchInput').value.trim();
@@ -1574,15 +1529,12 @@ function deleteSelected() {
     });
 }
 
-// Esponi le funzioni per l'editor di documenti nello scope globale
-// IMPORTANTE: Questo deve essere fatto DOPO la definizione delle funzioni
-window.editDocument = editDocument;
+// Esponi solo le funzioni necessarie nello scope globale
 window.isDocumentEditable = isDocumentEditable;
 window.openFile = openFile;
 
 // Debug: verifica che le funzioni siano disponibili
-console.log('OnlyOffice functions loaded:', {
-    editDocument: typeof window.editDocument,
+console.log('Functions loaded:', {
     isDocumentEditable: typeof window.isDocumentEditable,
     openFile: typeof window.openFile
 });

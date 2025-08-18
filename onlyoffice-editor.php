@@ -50,13 +50,20 @@ if (!$document) {
     exit;
 }
 
-// Check file existence
-$percorsoFile = $document['percorso_file'] ?? '';
+// Check file existence - try both file_path and percorso_file fields
+$percorsoFile = $document['percorso_file'] ?? $document['file_path'] ?? '';
 if (empty($percorsoFile)) {
     $_SESSION['error'] = "Percorso file non valido.";
     header('Location: filesystem.php');
     exit;
 }
+
+// Handle different path formats
+if (strpos($percorsoFile, 'uploads/') === false && strpos($percorsoFile, 'documents/') === false) {
+    // Add uploads/documenti/ prefix if not present
+    $percorsoFile = 'uploads/documenti/' . $percorsoFile;
+}
+
 $filePath = __DIR__ . '/' . $percorsoFile;
 if (!file_exists($filePath)) {
     $_SESSION['error'] = "File non trovato sul server.";
@@ -65,7 +72,18 @@ if (!file_exists($filePath)) {
 }
 
 // Determine document type for OnlyOffice
+// Try nome_file first, then fallback to titolo or extract from file_path
 $nomeFile = $document['nome_file'] ?? '';
+if (empty($nomeFile)) {
+    if (!empty($document['file_path'])) {
+        // Extract filename from file_path (remove hash prefix if present)
+        $nomeFile = preg_replace('/^[a-f0-9]+_/', '', basename($document['file_path']));
+    } elseif (!empty($document['titolo'])) {
+        // Use titolo with extension from file_path
+        $ext = pathinfo($document['file_path'] ?? '', PATHINFO_EXTENSION);
+        $nomeFile = $document['titolo'] . ($ext ? '.' . $ext : '');
+    }
+}
 $extension = $nomeFile ? strtolower(pathinfo($nomeFile, PATHINFO_EXTENSION)) : '';
 $documentType = 'word'; // Default
 

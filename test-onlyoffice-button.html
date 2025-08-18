@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test OnlyOffice Button</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .test-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .test-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #e83e8c;
+        }
+        .implementation {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .implementation pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-section">
+        <h1>✅ Test OnlyOffice Button - Soluzione Implementata</h1>
+        
+        <div class="status success">
+            <strong>Stato:</strong> Il bottone OnlyOffice è stato convertito in un link HTML diretto!
+        </div>
+        
+        <div class="status info">
+            <strong>Problema Risolto:</strong> Il bottone non ricarica più la pagina. Ora apre direttamente l'editor in una nuova scheda.
+        </div>
+        
+        <h2>📋 Modifiche Applicate:</h2>
+        <ol>
+            <li><strong>Convertito &lt;button&gt; in &lt;a&gt;:</strong> Rimosso il bottone JavaScript, sostituito con un link diretto</li>
+            <li><strong>Rimossa funzione editDocument():</strong> Eliminata tutta la complessità JavaScript non necessaria</li>
+            <li><strong>Aggiunto onclick handler semplice:</strong> Solo <code>event.stopPropagation(); return true;</code></li>
+            <li><strong>Stili CSS aggiornati:</strong> Il link è stilizzato come un bottone</li>
+        </ol>
+        
+        <h2>🎯 Test del Bottone:</h2>
+        <p>Ecco come appare e funziona il nuovo bottone OnlyOffice:</p>
+        
+        <div style="text-align: center; padding: 20px; background: #f8f9fa; border-radius: 4px;">
+            <a href="onlyoffice-editor.php?id=123" 
+               target="_blank"
+               class="test-button"
+               onclick="event.stopPropagation(); alert('Click intercettato! Il link aprirà OnlyOffice in una nuova scheda.'); return true;">
+                📝 Apri con OnlyOffice (Test)
+            </a>
+        </div>
+        
+        <h2>💻 Implementazione nel Codice:</h2>
+        <div class="implementation">
+            <pre>&lt;a href="onlyoffice-editor.php?id=${file.id}" 
+   target="_blank"
+   class="action-btn btn-onlyoffice"
+   title="Apri con OnlyOffice" 
+   aria-label="Apri con OnlyOffice ${escapeHtml(file.nome)}"
+   onclick="event.stopPropagation(); return true;"
+   tabindex="0"&gt;
+    &lt;i class="fas fa-file-word" aria-hidden="true"&gt;&lt;/i&gt;
+&lt;/a&gt;</pre>
+        </div>
+        
+        <h2>✨ Vantaggi della Soluzione:</h2>
+        <ul>
+            <li>✅ <strong>Semplicità:</strong> Nessun JavaScript complesso</li>
+            <li>✅ <strong>Affidabilità:</strong> Funziona sempre, anche con JS disabilitato</li>
+            <li>✅ <strong>Performance:</strong> Nessun overhead di event listener</li>
+            <li>✅ <strong>Accessibilità:</strong> Link nativo = migliore supporto screen reader</li>
+            <li>✅ <strong>UX:</strong> Gli utenti possono fare click destro → "Apri in nuova scheda"</li>
+            <li>✅ <strong>Manutenibilità:</strong> Codice molto più semplice da capire e mantenere</li>
+        </ul>
+        
+        <h2>🔍 Come Verificare:</h2>
+        <ol>
+            <li>Vai su <a href="filesystem.php" target="_blank">filesystem.php</a></li>
+            <li>Trova un file Word/Excel/PowerPoint</li>
+            <li>Passa il mouse sopra il file</li>
+            <li>Clicca sul bottone verde OnlyOffice</li>
+            <li>Il file si aprirà direttamente nell'editor in una nuova scheda!</li>
+        </ol>
+        
+        <div class="status success" style="margin-top: 30px;">
+            <strong>✅ Implementazione Completata!</strong><br>
+            Il bottone OnlyOffice ora funziona correttamente senza ricaricare la pagina.
+        </div>
+    </div>
+</body>
+</html>

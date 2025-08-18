@@ -15,7 +15,8 @@
       "Bash(/mnt/c/xampp/php/php.exe test-onlyoffice-jwt.php)",
       "Bash(/mnt/c/xampp/php/php.exe:*)",
       "Bash(curl:*)",
-      "Bash(/mnt/c/xampp/mysql/bin/mysql.exe:*)"
+      "Bash(/mnt/c/xampp/mysql/bin/mysql.exe:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

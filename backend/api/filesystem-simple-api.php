@@ -177,7 +177,7 @@ function listFiles() {
                     ORDER BY c.nome")->fetchAll();
                 
                 $files = db_query("
-                    SELECT d.id, d.titolo as nome, d.mime_type, d.tipo_documento,
+                    SELECT d.id, d.titolo as nome, d.file_path, d.mime_type, d.tipo_documento,
                            COALESCE(d.dimensione_file, d.file_size, 0) as dimensione_file,
                            d.azienda_id, a.nome as azienda_nome
                     FROM documenti d

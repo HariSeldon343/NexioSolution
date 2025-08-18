@@ -834,7 +834,7 @@ function renderFiles(data) {
                 <div class="file-card-actions-bottom">
                     ${isDocumentEditable(file) ? `
                     <button class="action-btn btn-onlyoffice" 
-                            onclick="event.stopPropagation(); editDocument(${file.id})" 
+                            onclick="event.stopPropagation(); editDocument(event, ${file.id})" 
                             title="Apri con OnlyOffice" 
                             aria-label="Apri con OnlyOffice ${escapeHtml(file.nome).replace(/'/g, '\\\'')}"
                             tabindex="0">
@@ -1154,9 +1154,35 @@ function openFile(fileId) {
 
 // Funzione per verificare se un file è modificabile online
 function isDocumentEditable(file) {
-    // Verifica se abbiamo il nome del file o il percorso
-    const fileName = file.nome || file.file_path || '';
-    if (!fileName) return false;
+    // Debug per capire la struttura del file
+    console.log('Checking if editable:', file);
+    
+    // Prova a ottenere il nome del file da varie sorgenti
+    let fileName = file.file_path || file.nome || file.titolo || '';
+    
+    // Se non troviamo un'estensione nel nome/path, proviamo a dedurla dal mime_type
+    if (!fileName.includes('.') && file.mime_type) {
+        const mimeToExt = {
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+            'application/msword': 'doc',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+            'application/vnd.ms-excel': 'xls',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+            'application/vnd.ms-powerpoint': 'ppt',
+            'application/vnd.oasis.opendocument.text': 'odt',
+            'application/vnd.oasis.opendocument.spreadsheet': 'ods',
+            'application/vnd.oasis.opendocument.presentation': 'odp',
+            'text/plain': 'txt',
+            'text/csv': 'csv',
+            'application/rtf': 'rtf'
+        };
+        
+        const ext = mimeToExt[file.mime_type];
+        if (ext) {
+            console.log('File is editable based on mime_type:', file.mime_type, '->', ext);
+            return true;
+        }
+    }
     
     // Estrai l'estensione dal nome o percorso
     const extension = fileName.toLowerCase().split('.').pop();
@@ -1171,12 +1197,22 @@ function isDocumentEditable(file) {
         'pptx', 'ppt', 'odp'
     ];
     
-    return supportedFormats.includes(extension);
+    const isEditable = supportedFormats.includes(extension);
+    console.log('File editable check:', fileName, 'extension:', extension, 'editable:', isEditable);
+    
+    return isEditable;
 }
 
 // Funzione per aprire l'editor di documenti
-function editDocument(fileId) {
+function editDocument(event, fileId) {
+    // Previeni la propagazione dell'evento per evitare refresh
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    
     // Apri l'editor OnlyOffice in una nuova scheda
+    console.log('Opening OnlyOffice editor for document ID:', fileId);
     window.open('onlyoffice-editor.php?id=' + fileId, '_blank');
 }
 

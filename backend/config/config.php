@@ -151,6 +151,35 @@ function json_response($data) {
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 }
 
+// Redirect helper function
+function redirect($url) {
+    if (!headers_sent()) {
+        header("Location: " . $url);
+        exit();
+    } else {
+        echo '<script>window.location.href="' . $url . '";</script>';
+        echo '<noscript><meta http-equiv="refresh" content="0;url=' . $url . '"></noscript>';
+        exit();
+    }
+}
+
+// Get client IP address helper function
+function get_client_ip() {
+    // Check for IP behind proxy
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        return $_SERVER['HTTP_CLIENT_IP'];
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        // Can contain multiple IPs, get the first one
+        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        return trim($ips[0]);
+    } elseif (!empty($_SERVER['HTTP_X_REAL_IP'])) {
+        return $_SERVER['HTTP_X_REAL_IP'];
+    } elseif (!empty($_SERVER['REMOTE_ADDR'])) {
+        return $_SERVER['REMOTE_ADDR'];
+    }
+    return '0.0.0.0';
+}
+
 // Include Auth middleware
 if (file_exists(ROOT_PATH . '/backend/middleware/Auth.php')) {
     require_once ROOT_PATH . '/backend/middleware/Auth.php';

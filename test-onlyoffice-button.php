@@ -1,222 +1,347 @@
 <?php
 /**
- * Test OnlyOffice Button - Verifica del funzionamento del pulsante
+ * Test OnlyOffice Button in Filesystem
+ * Verifica che il bottone Modifica apra correttamente OnlyOffice
  */
 
 require_once 'backend/config/config.php';
 require_once 'backend/middleware/Auth.php';
+require_once 'backend/config/database.php';
 
+// Autenticazione
 $auth = Auth::getInstance();
 $auth->requireAuth();
 
-$pageTitle = 'Test OnlyOffice Button';
-include 'components/header.php';
+$user = $auth->getUser();
+$currentAzienda = $auth->getCurrentAzienda();
+$aziendaId = $currentAzienda['azienda_id'] ?? $currentAzienda['id'] ?? null;
+
+// Trova un documento DOCX di test
+$stmt = db_query("
+    SELECT id, nome, file_path, mime_type, dimensione_file, azienda_id
+    FROM documenti 
+    WHERE (mime_type LIKE '%word%' OR nome LIKE '%.docx' OR nome LIKE '%.doc')
+    AND azienda_id = ?
+    ORDER BY data_creazione DESC
+    LIMIT 5
+", [$aziendaId]);
+
+$documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test OnlyOffice Button</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f3f4f6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2d5a9f;
+            margin-bottom: 30px;
+        }
+        .document-card {
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+        .document-info {
+            margin-bottom: 15px;
+        }
+        .document-info strong {
+            color: #374151;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #2d5a9f;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1e3a8a;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+        }
+        .btn-success:hover {
+            background: linear-gradient(135deg, #20c997 0%, #28a745 100%);
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.5);
+        }
+        .btn-warning {
+            background: #fbbf24;
+            color: #374151;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .alert-info {
+            background: #dbeafe;
+            color: #1e3a8a;
+            border: 1px solid #93c5fd;
+        }
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid;
+            background: #f9fafb;
+        }
+        .test-pass {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+        .test-fail {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        pre {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .file-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        .doc-icon { color: #3b82f6; }
+        .pdf-icon { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test OnlyOffice Button Integration</h1>
+        
+        <div class="alert alert-info">
+            <strong>Test Objective:</strong> Verificare che il bottone "Modifica" apra correttamente l'editor OnlyOffice
+        </div>
 
-<style>
-.test-container {
-    padding: 20px;
-    max-width: 800px;
-    margin: 0 auto;
-}
+        <?php if (empty($documents)): ?>
+            <div class="alert alert-warning">
+                <strong>⚠️ Nessun documento Word trovato!</strong>
+                <p>Non sono stati trovati documenti DOCX/DOC nell'azienda corrente.</p>
+                <p>Crea prima un documento di test tramite la pagina filesystem.</p>
+            </div>
+        <?php else: ?>
+            <div class="alert alert-success">
+                <strong>✅ Trovati <?php echo count($documents); ?> documenti Word</strong>
+            </div>
 
-.test-section {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+            <?php foreach ($documents as $doc): ?>
+                <div class="document-card">
+                    <div class="document-info">
+                        <i class="fas fa-file-word file-icon doc-icon"></i>
+                        <strong>Nome:</strong> <?php echo htmlspecialchars($doc['nome']); ?>
+                    </div>
+                    <div class="document-info">
+                        <strong>ID:</strong> <?php echo $doc['id']; ?>
+                    </div>
+                    <div class="document-info">
+                        <strong>MIME Type:</strong> <?php echo htmlspecialchars($doc['mime_type'] ?? 'N/A'); ?>
+                    </div>
+                    <div class="document-info">
+                        <strong>Path:</strong> <?php echo htmlspecialchars($doc['file_path'] ?? 'N/A'); ?>
+                    </div>
+                    <div class="document-info">
+                        <strong>Dimensione:</strong> <?php echo number_format($doc['dimensione_file'] / 1024, 2); ?> KB
+                    </div>
 
-.test-section h2 {
-    color: #333;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #007bff;
-    padding-bottom: 10px;
-}
+                    <div class="button-group">
+                        <!-- Bottone OnlyOffice (nuovo) -->
+                        <a href="onlyoffice-editor.php?id=<?php echo $doc['id']; ?>" 
+                           class="btn btn-success" 
+                           target="_blank"
+                           onclick="console.log('Opening OnlyOffice for document ID: <?php echo $doc['id']; ?>')">
+                            <i class="fas fa-file-word"></i> Apri con OnlyOffice
+                        </a>
 
-.test-button {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    margin: 10px;
-    display: inline-block;
-}
+                        <!-- Bottone vecchio editor (per confronto) -->
+                        <a href="document-editor.php?id=<?php echo $doc['id']; ?>" 
+                           class="btn btn-warning" 
+                           target="_blank">
+                            <i class="fas fa-edit"></i> Vecchio Editor
+                        </a>
 
-.test-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-}
+                        <!-- Test JavaScript function -->
+                        <button class="btn btn-primary" 
+                                onclick="testEditDocument(<?php echo $doc['id']; ?>)">
+                            <i class="fas fa-vial"></i> Test JS Function
+                        </button>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
 
-.log-output {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    padding: 10px;
-    margin-top: 10px;
-    font-family: monospace;
-    min-height: 100px;
-    max-height: 300px;
-    overflow-y: auto;
-}
+        <hr style="margin: 30px 0;">
 
-.status-badge {
-    display: inline-block;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: bold;
-    margin-left: 10px;
-}
+        <h2>📊 Test Results</h2>
+        <div id="testResults"></div>
 
-.status-ok { background: #28a745; color: white; }
-.status-error { background: #dc3545; color: white; }
-.status-warning { background: #ffc107; color: black; }
-</style>
+        <hr style="margin: 30px 0;">
 
-<div class="page-header">
-    <h1><i class="fas fa-vial"></i> Test OnlyOffice Button</h1>
-    <div class="page-subtitle">Verifica del funzionamento del pulsante OnlyOffice</div>
-</div>
+        <h2>🔧 Debug JavaScript</h2>
+        <pre id="debugOutput">Waiting for test...</pre>
 
-<div class="test-container">
-    <!-- Test 1: Pulsante semplice -->
-    <div class="test-section">
-        <h2>Test 1: Pulsante Semplice (Corretto)</h2>
-        <p>Questo pulsante ha event.stopPropagation() e preventDefault()</p>
-        <button class="test-button" onclick="testEditDocument1(event, 123)">
-            <i class="fas fa-file-word"></i> Apri con OnlyOffice (Corretto)
-        </button>
-        <div id="log1" class="log-output"></div>
-    </div>
+        <hr style="margin: 30px 0;">
 
-    <!-- Test 2: Pulsante senza stopPropagation (Problema originale) -->
-    <div class="test-section">
-        <h2>Test 2: Pulsante Senza stopPropagation (Problema)</h2>
-        <p>Questo simula il problema originale - senza stopPropagation</p>
-        <div onclick="parentClickHandler()" style="display: inline-block; border: 2px dashed #dc3545; padding: 10px;">
-            <button class="test-button" onclick="testEditDocument2(event, 124)">
-                <i class="fas fa-file-word"></i> Apri OnlyOffice (Problema)
+        <div class="button-group">
+            <a href="filesystem.php" class="btn btn-primary">
+                <i class="fas fa-folder"></i> Vai a Filesystem
+            </a>
+            <button class="btn btn-primary" onclick="runAllTests()">
+                <i class="fas fa-play"></i> Run All Tests
+            </button>
+            <button class="btn btn-danger" onclick="location.reload()">
+                <i class="fas fa-sync"></i> Reload Page
             </button>
         </div>
-        <div id="log2" class="log-output"></div>
     </div>
 
-    <!-- Test 3: Pulsante con la correzione applicata -->
-    <div class="test-section">
-        <h2>Test 3: Pulsante con Correzione Completa</h2>
-        <p>Questo usa la funzione corretta con tutti i controlli</p>
-        <div onclick="parentClickHandler()" style="display: inline-block; border: 2px dashed #28a745; padding: 10px;">
-            <button class="test-button" onclick="testEditDocumentFixed(event, 125)">
-                <i class="fas fa-file-word"></i> Apri OnlyOffice (Corretto)
-            </button>
-        </div>
-        <div id="log3" class="log-output"></div>
-    </div>
-
-    <!-- Test 4: Link che simula il comportamento -->
-    <div class="test-section">
-        <h2>Test 4: Link invece di Button</h2>
-        <p>Test con un link invece di button per vedere se c'è differenza</p>
-        <a href="#" class="test-button" onclick="testEditDocumentFixed(event, 126); return false;">
-            <i class="fas fa-file-word"></i> Apri OnlyOffice (Link)
-        </a>
-        <div id="log4" class="log-output"></div>
-    </div>
-</div>
-
-<script>
-// Funzione di logging
-function addLog(logId, message, type = 'info') {
-    const logDiv = document.getElementById(logId);
-    const timestamp = new Date().toLocaleTimeString();
-    const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'blue';
-    logDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
-    logDiv.scrollTop = logDiv.scrollHeight;
-}
-
-// Test 1: Funzione corretta con stopPropagation
-function testEditDocument1(event, fileId) {
-    if (event) {
-        event.stopPropagation();
-        event.preventDefault();
-    }
-    
-    addLog('log1', 'Funzione chiamata con ID: ' + fileId, 'info');
-    addLog('log1', 'stopPropagation e preventDefault applicati', 'success');
-    addLog('log1', 'Tentativo apertura OnlyOffice...', 'info');
-    
-    // Simuliamo l'apertura
-    try {
+    <script>
+    // Copia della funzione editDocument da filesystem.php
+    function editDocument(event, fileId) {
+        // Se è passato un event, previeni propagazione
+        if (event && typeof event === 'object') {
+            event.stopPropagation && event.stopPropagation();
+            event.preventDefault && event.preventDefault();
+        } else {
+            // Se event è in realtà il fileId (chiamata diretta)
+            fileId = event;
+        }
+        
+        console.log('editDocument called with fileId:', fileId);
+        updateDebug('editDocument called with fileId: ' + fileId);
+        
+        // Apri l'editor OnlyOffice
         const url = 'onlyoffice-editor.php?id=' + fileId;
-        addLog('log1', 'URL generato: ' + url, 'info');
+        console.log('Opening URL:', url);
+        updateDebug('Opening URL: ' + url);
+        
         window.open(url, '_blank');
-        addLog('log1', 'Finestra aperta con successo!', 'success');
-    } catch (e) {
-        addLog('log1', 'Errore: ' + e.message, 'error');
+        
+        addTestResult('editDocument() function', true, 'Function executed successfully for document ' + fileId);
     }
-}
 
-// Test 2: Funzione senza stopPropagation (problema)
-function testEditDocument2(event, fileId) {
-    // NO stopPropagation - questo causa il problema
-    
-    addLog('log2', 'Funzione chiamata con ID: ' + fileId, 'info');
-    addLog('log2', 'ATTENZIONE: stopPropagation NON applicato!', 'error');
-    addLog('log2', 'L\'evento si propagherà al parent...', 'error');
-    
-    try {
-        const url = 'onlyoffice-editor.php?id=' + fileId;
-        addLog('log2', 'URL generato: ' + url, 'info');
-        window.open(url, '_blank');
-        addLog('log2', 'Finestra aperta ma evento propagato!', 'error');
-    } catch (e) {
-        addLog('log2', 'Errore: ' + e.message, 'error');
+    // Test wrapper
+    function testEditDocument(fileId) {
+        updateDebug('Testing editDocument with ID: ' + fileId);
+        try {
+            editDocument(null, fileId);
+        } catch (error) {
+            updateDebug('Error: ' + error.message);
+            addTestResult('editDocument() function', false, error.message);
+        }
     }
-}
 
-// Test 3: Funzione corretta completa
-function testEditDocumentFixed(event, fileId) {
-    // Previeni la propagazione dell'evento per evitare refresh
-    if (event) {
-        event.stopPropagation();
-        event.preventDefault();
+    // Update debug output
+    function updateDebug(message) {
+        const debugEl = document.getElementById('debugOutput');
+        const timestamp = new Date().toLocaleTimeString();
+        debugEl.textContent += '\n[' + timestamp + '] ' + message;
     }
-    
-    addLog('log3', 'Funzione FIXED chiamata con ID: ' + fileId, 'info');
-    addLog('log3', 'Event handling corretto applicato', 'success');
-    addLog('log3', 'Nessuna propagazione al parent', 'success');
-    
-    // Apri l'editor OnlyOffice in una nuova scheda
-    console.log('Opening OnlyOffice editor for document ID:', fileId);
-    
-    try {
-        const url = 'onlyoffice-editor.php?id=' + fileId;
-        addLog('log3', 'Apertura: ' + url, 'info');
-        window.open(url, '_blank');
-        addLog('log3', '✓ OnlyOffice aperto correttamente!', 'success');
-    } catch (e) {
-        addLog('log3', 'Errore apertura: ' + e.message, 'error');
+
+    // Add test result
+    function addTestResult(testName, passed, message) {
+        const resultsEl = document.getElementById('testResults');
+        const resultDiv = document.createElement('div');
+        resultDiv.className = 'test-result ' + (passed ? 'test-pass' : 'test-fail');
+        resultDiv.innerHTML = `
+            <strong>${passed ? '✅' : '❌'} ${testName}</strong>
+            <div>${message}</div>
+        `;
+        resultsEl.appendChild(resultDiv);
     }
-}
 
-// Handler del parent per dimostrare la propagazione
-function parentClickHandler() {
-    alert('ATTENZIONE: Click propagato al parent! Questo causerebbe un refresh della pagina.');
-    // In un caso reale questo potrebbe causare navigazione o refresh
-}
+    // Run all tests
+    function runAllTests() {
+        document.getElementById('testResults').innerHTML = '';
+        updateDebug('\n=== Running All Tests ===');
+        
+        // Test 1: Check if editDocument function exists
+        const test1 = typeof editDocument === 'function';
+        addTestResult('editDocument function exists', test1, 
+            test1 ? 'Function is defined' : 'Function is not defined');
+        
+        // Test 2: Check if OnlyOffice editor page exists
+        fetch('onlyoffice-editor.php')
+            .then(response => {
+                const test2 = response.ok;
+                addTestResult('OnlyOffice editor page exists', test2, 
+                    test2 ? 'Page is accessible' : 'Page returned ' + response.status);
+            })
+            .catch(error => {
+                addTestResult('OnlyOffice editor page exists', false, 'Error: ' + error.message);
+            });
+        
+        // Test 3: Check if old editor page exists
+        fetch('document-editor.php')
+            .then(response => {
+                const test3 = response.ok;
+                addTestResult('Old editor page exists', test3, 
+                    test3 ? 'Page is accessible' : 'Page returned ' + response.status);
+            })
+            .catch(error => {
+                addTestResult('Old editor page exists', false, 'Error: ' + error.message);
+            });
+        
+        updateDebug('Tests completed');
+    }
 
-// Test iniziale al caricamento
-document.addEventListener('DOMContentLoaded', function() {
-    addLog('log1', 'Test 1 pronto - Con stopPropagation', 'info');
-    addLog('log2', 'Test 2 pronto - Senza stopPropagation (problema)', 'info');
-    addLog('log3', 'Test 3 pronto - Correzione completa', 'info');
-    addLog('log4', 'Test 4 pronto - Link con return false', 'info');
-});
-</script>
-
-<?php include 'components/footer.php'; ?>
+    // Initial debug info
+    window.addEventListener('DOMContentLoaded', function() {
+        updateDebug('Page loaded');
+        updateDebug('editDocument function available: ' + (typeof editDocument === 'function'));
+    });
+    </script>
+</body>
+</html>

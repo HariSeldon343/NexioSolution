@@ -6,7 +6,7 @@
 
 // Configurazione corretta - usa HTTP su porta 8080
 $ONLYOFFICE_URL = 'http://localhost:8080';
-$FILE_SERVER_URL = 'http://localhost:8083';
+$FILE_SERVER_URL = 'http://localhost:8081';
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'];
 $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');

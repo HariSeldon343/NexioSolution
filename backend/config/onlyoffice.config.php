@@ -11,27 +11,30 @@ if (!defined('APP_PATH')) {
 
 class OnlyOfficeConfig {
     /**
-     * URL del Document Server OnlyOffice (Docker)
-     * Container nexio-onlyoffice su porta 8080 (HTTP)
-     * Nota: OnlyOffice Community Edition ascolta su HTTP internamente
+     * CONFIGURAZIONE HTTP PER SVILUPPO LOCALE
+     * OnlyOffice Document Server con HTTP per evitare problemi SSL in sviluppo
+     * NOTA: Per produzione, configurare HTTPS con certificati validi
      */
-    const DOCUMENT_SERVER_URL = 'http://localhost:8080';
     
-    /**
-     * URL del File Server Nginx (per servire i documenti)
-     * Container nexio-fileserver su porta 8083 (HTTP)
-     */
-    const FILE_SERVER_URL = 'http://localhost:8083';
+    // URL pubblici (accessibili dal browser) - HTTP per sviluppo
+    const ONLYOFFICE_DS_PUBLIC_URL = 'http://localhost:8082/';   // HTTP su porta 8082 (come da docker-compose)
+    const FILESERVER_PUBLIC_URL = 'http://localhost:8083/';      // HTTP su porta 8083 (nginx fileserver)
     
-    /**
-     * URL interno per comunicazione container-to-container
-     */
-    const INTERNAL_FILE_SERVER_URL = 'http://nexio-fileserver:80';
+    // URL interni Docker (comunicazione container-to-container)
+    const ONLYOFFICE_DS_INTERNAL_URL = 'http://nexio-onlyoffice/';   // HTTP per comunicazione interna
+    const FILESERVER_INTERNAL_URL = 'http://nexio-fileserver/';      // Nome host del container
     
-    /**
-     * URL pubblico dell'applicazione (per callback)
-     */
+    // URL applicazione
     const APP_PUBLIC_URL = 'http://localhost/piattaforma-collaborativa';
+    const APP_INTERNAL_URL = 'http://host.docker.internal/piattaforma-collaborativa'; // Per Docker su Windows
+    
+    // Configurazione produzione (Cloudflare)
+    const PRODUCTION_URL = 'https://app.nexiosolution.it/piattaforma-collaborativa';
+    const PRODUCTION_DS_URL = 'https://app.nexiosolution.it/onlyoffice/';
+    
+    // Legacy aliases per retrocompatibilità
+    const DOCUMENT_SERVER_URL = self::ONLYOFFICE_DS_PUBLIC_URL;
+    const FILE_SERVER_URL = self::FILESERVER_PUBLIC_URL;
     
     /**
      * Percorso locale documenti
@@ -152,36 +155,79 @@ class OnlyOfficeConfig {
     ];
     
     /**
-     * Ottieni URL completo del Document Server
+     * Verifica se siamo in ambiente di produzione
+     */
+    public static function isProduction() {
+        return isset($_SERVER['HTTP_HOST']) && 
+               strpos($_SERVER['HTTP_HOST'], 'nexiosolution.it') !== false;
+    }
+    
+    /**
+     * Ottieni URL del Document Server per il browser (pubblico)
      */
     public static function getDocumentServerUrl() {
-        return self::DOCUMENT_SERVER_URL;
+        if (self::isProduction()) {
+            return self::PRODUCTION_DS_URL;
+        }
+        return self::ONLYOFFICE_DS_PUBLIC_URL;
     }
     
     /**
-     * Ottieni URL completo del File Server
+     * Ottieni URL del Document Server per comunicazione interna
+     */
+    public static function getDocumentServerInternalUrl() {
+        // I container Docker comunicano sempre via hostname interno
+        return self::ONLYOFFICE_DS_INTERNAL_URL;
+    }
+    
+    /**
+     * Ottieni URL del File Server per il browser (pubblico)
      */
     public static function getFileServerUrl() {
-        return self::FILE_SERVER_URL;
+        if (self::isProduction()) {
+            return self::PRODUCTION_URL . '/';
+        }
+        return self::FILESERVER_PUBLIC_URL;
     }
     
     /**
-     * Ottieni URL per un documento specifico
+     * Ottieni URL documento per OnlyOffice Document Server (interno)
+     * Questo URL verrà usato da OnlyOffice per scaricare il documento
+     */
+    public static function getDocumentUrlForDS($filename) {
+        // OnlyOffice deve usare l'URL interno del fileserver
+        return self::FILESERVER_INTERNAL_URL . 'piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=' . urlencode($filename);
+    }
+    
+    /**
+     * Ottieni URL documento per il browser (debug/preview)
+     * Questo URL può essere usato per verificare che il documento sia accessibile
+     */
+    public static function getDocumentUrlForBrowser($filename) {
+        if (self::isProduction()) {
+            return self::PRODUCTION_URL . '/backend/api/onlyoffice-document-public.php?doc=' . urlencode($filename);
+        }
+        return self::FILESERVER_PUBLIC_URL . 'piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=' . urlencode($filename);
+    }
+    
+    /**
+     * Ottieni URL per un documento specifico (legacy - usa URL per DS)
      */
     public static function getDocumentUrl($filename) {
-        // Se usiamo il file server Nginx
-        if (self::FILE_SERVER_URL) {
-            return self::FILE_SERVER_URL . '/documents/onlyoffice/' . $filename;
-        }
-        // Altrimenti usa l'URL dell'app
-        return self::APP_PUBLIC_URL . '/' . self::DOCUMENTS_RELATIVE_PATH . '/' . $filename;
+        return self::getDocumentUrlForDS($filename);
     }
     
     /**
      * Ottieni URL di callback per OnlyOffice
+     * Il callback deve essere raggiungibile da OnlyOffice container
      */
     public static function getCallbackUrl($documentId) {
-        return self::APP_PUBLIC_URL . '/backend/api/onlyoffice-callback.php?id=' . $documentId;
+        // OnlyOffice container deve poter raggiungere l'app
+        if (self::isProduction()) {
+            return self::PRODUCTION_URL . '/backend/api/onlyoffice-callback.php?id=' . $documentId;
+        }
+        // In sviluppo, usa host.docker.internal per Windows Docker
+        return self::APP_INTERNAL_URL . '/backend/api/onlyoffice-callback.php?id=' . $documentId;
     }
     
     /**
@@ -296,15 +342,18 @@ class OnlyOfficeConfig {
      * Test connessione al Document Server
      */
     public static function testConnection() {
-        $url = self::DOCUMENT_SERVER_URL . '/healthcheck';
+        $url = self::getDocumentServerUrl() . 'healthcheck';
         
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 5);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        // Ignora certificati SSL per localhost (solo per sviluppo!)
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        
+        // Per HTTPS su localhost, ignora certificati SSL (solo per sviluppo!)
+        if (strpos($url, 'https://localhost') === 0) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        }
         
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -316,7 +365,8 @@ class OnlyOfficeConfig {
             'http_code' => $httpCode,
             'response' => $response,
             'error' => $error,
-            'url' => $url
+            'url' => $url,
+            'is_https' => strpos($url, 'https://') === 0
         ];
     }
     

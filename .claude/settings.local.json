@@ -21,7 +21,9 @@
       "Bash(bash:*)",
       "Bash(touch:*)",
       "Bash(ss:*)",
-      "Bash(wget:*)"
+      "Bash(wget:*)",
+      "Bash(chmod:*)",
+      "Bash(./setup-onlyoffice-https.sh:*)"
     ],
     "deny": []
   }

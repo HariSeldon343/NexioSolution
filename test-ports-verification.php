@@ -229,7 +229,7 @@ header('Content-Type: text/html; charset=utf-8');
             // Test File Server (porta 8083)
             addLog('Testing File Server su porta 8083...', 'info');
             try {
-                const response = await fetch('http://localhost:8083/', { 
+                const response = await fetch('http://localhost:8081/', { 
                     mode: 'no-cors',
                     cache: 'no-cache' 
                 });

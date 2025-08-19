@@ -15,7 +15,7 @@ ini_set('display_errors', 1);
 
 // CONFIGURAZIONE DEFINITIVA DELLE PORTE
 define('ONLYOFFICE_URL', 'https://localhost:8443');     // HTTPS su porta 8443
-define('FILESERVER_URL', 'http://localhost:8083');      // HTTP su porta 8083
+define('FILESERVER_URL', 'http://localhost:8081');      // HTTP su porta 8081
 define('APP_URL', 'http://localhost/piattaforma-collaborativa');
 
 // Simula utente per test

@@ -12,7 +12,7 @@ ini_set('display_errors', 1);
 
 // Configurazione corretta delle porte (verificate con docker ps)
 define('ONLYOFFICE_DS_URL', 'https://localhost:8443');  // HTTPS su porta 8443
-define('ONLYOFFICE_FS_URL', 'http://localhost:8083');   // File server Nginx su porta 8083
+define('ONLYOFFICE_FS_URL', 'http://localhost:8081');   // File server Nginx su porta 8081
 define('APP_BASE_URL', 'http://localhost/piattaforma-collaborativa');
 
 // Simula utente autenticato per test

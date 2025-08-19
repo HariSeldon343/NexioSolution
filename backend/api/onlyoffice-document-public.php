@@ -5,10 +5,12 @@
  * Accessibile via file server su porta 8083
  */
 
-// Abilita CORS per OnlyOffice
+// Abilita CORS per OnlyOffice con supporto completo
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, HEAD, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Methods: GET, HEAD, OPTIONS, POST');
+header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Authorization, Range');
+header('Access-Control-Expose-Headers: Content-Length, Content-Range');
+header('Access-Control-Max-Age: 3600');
 
 // Gestisci richieste OPTIONS per CORS preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {

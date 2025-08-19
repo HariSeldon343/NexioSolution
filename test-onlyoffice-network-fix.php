@@ -42,7 +42,7 @@ $config = [
             "modifyFilter" => true,
             "modifyContentControl" => true,
             "review" => true,
-            "chat" => false,
+            "chat" => false,  // Moved from customization
             "print" => true
         ]
     ],
@@ -56,7 +56,7 @@ $config = [
         ],
         "customization" => [
             "autosave" => true,
-            "chat" => false,
+            // "chat" => false,  // REMOVED - now in permissions
             "comments" => true,
             "compactHeader" => false,
             "compactToolbar" => false,
@@ -206,7 +206,8 @@ $debugInfo = [
         </div>
     </div>
 
-    <script type="text/javascript" src="<?php echo $onlyofficeUrl; ?>/web-apps/apps/api/documents/api.js"></script>
+    <!-- CRITICAL FIX: Use full URL directly, not PHP variable -->
+    <script type="text/javascript" src="http://localhost:8082/web-apps/apps/api/documents/api.js"></script>
     <script>
         const config = <?php echo json_encode($config, JSON_PRETTY_PRINT); ?>;
         let docEditor = null;

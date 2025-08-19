@@ -16,7 +16,10 @@
       "Bash(/mnt/c/xampp/php/php.exe:*)",
       "Bash(curl:*)",
       "Bash(/mnt/c/xampp/mysql/bin/mysql.exe:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(docker:*)",
+      "Bash(bash:*)",
+      "Bash(touch:*)"
     ],
     "deny": []
   }

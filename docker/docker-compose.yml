@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: nexio-onlyoffice
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      - "8443:443"
+    environment:
+      # Disabilita JWT per semplificare il testing iniziale
+      - JWT_ENABLED=false
+      - JWT_SECRET=disabled
+      
+      # Configurazione base
+      - USE_UNAUTHORIZED_STORAGE=true
+      - WOPI_ENABLED=false
+      
+      # Database interno (PostgreSQL embedded)
+      - DB_TYPE=postgres
+      - DB_HOST=localhost
+      - DB_PORT=5432
+      - DB_NAME=onlyoffice
+      - DB_USER=onlyoffice
+      
+      # RabbitMQ interno
+      - AMQP_TYPE=rabbitmq
+      - AMQP_URI=amqp://guest:guest@localhost
+      
+      # Redis interno
+      - REDIS_SERVER_HOST=localhost
+      - REDIS_SERVER_PORT=6379
+      
+      # Limiti e performance
+      - DOC_SERV_CONVERTER_MAX_DOWNLOAD_BYTES=104857600
+      - FILE_SIZE_MAX=104857600
+      - DOC_SERV_TIMEOUT_MS=120000
+      
+      # Logging
+      - LOG_LEVEL=WARNING
+      
+    volumes:
+      # Volume per i documenti - mappa direttamente la cartella locale
+      - /mnt/c/xampp/htdocs/piattaforma-collaborativa/documents/onlyoffice:/var/www/onlyoffice/documentserver/App_Data/cache/files:rw
+      
+      # Volume per i font personalizzati (opzionale)
+      - onlyoffice_fonts:/usr/share/fonts/truetype/custom
+      
+      # Volume per i logs
+      - onlyoffice_logs:/var/log/onlyoffice
+      
+      # Volume per PostgreSQL data
+      - onlyoffice_postgresql:/var/lib/postgresql
+      
+      # Volume per RabbitMQ data
+      - onlyoffice_rabbitmq:/var/lib/rabbitmq
+      
+      # Volume per Redis data  
+      - onlyoffice_redis:/var/lib/redis
+      
+    networks:
+      - nexio-network
+      
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+      
+    # Risorse limitate per evitare sovraccarico
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # Nginx file server per servire i documenti (opzionale ma consigliato)
+  fileserver:
+    image: nginx:alpine
+    container_name: nexio-fileserver
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    volumes:
+      - /mnt/c/xampp/htdocs/piattaforma-collaborativa/documents:/usr/share/nginx/html/documents:ro
+      - /mnt/c/xampp/htdocs/piattaforma-collaborativa/docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - nexio-network
+    depends_on:
+      - onlyoffice
+
+networks:
+  nexio-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  onlyoffice_fonts:
+    driver: local
+  onlyoffice_logs:
+    driver: local
+  onlyoffice_postgresql:
+    driver: local
+  onlyoffice_rabbitmq:
+    driver: local
+  onlyoffice_redis:
+    driver: local

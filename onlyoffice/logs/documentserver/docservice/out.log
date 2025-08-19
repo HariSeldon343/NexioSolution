@@ -45,3 +45,19 @@
 [2025-08-19T05:34:47.309] [WARN] [localhost] [docId] [userId] nodeJS - notifyLicenseExpiration(): expiration date is not defined
 [2025-08-19T05:34:47.310] [WARN] [localhost] [docId] [userId] nodeJS - notifyLicenseExpiration(): expiration date is not defined
 [2025-08-19T05:34:47.427] [WARN] [localhost] [docId] [userId] nodeJS - Express server listening on port 8000 in production-linux mode. Version: 9.0.4. Build: 50
+[2025-08-19T07:30:56.407] [ERROR] [localhost] [test_1755588653_7539] [test_user_rkdvbeko092e8er9iu49mlggad] nodeJS - postData error: url = http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=22;data = {"key":"test_1755588653_7539","status":1,"users":["test_user_rkdvbeko092e8er9iu49mlggad"],"actions":[{"type":1,"userid":"test_user_rkdvbeko092e8er9iu49mlggad"}]} Error: DNS lookup 192.168.65.254(family:4, host:host.docker.internal) is not allowed. Because, It is private IP address.
+    at Function.from (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.handleRequestError (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.emit (node:events:536:35)
+    at ClientRequest.<anonymous> (/snapshot/server/Common/node_modules/follow-redirects/index.js:49:24)
+    at ClientRequest.emit (node:events:524:28)
+    at emitErrorEvent (node:_http_client:101:11)
+    at Socket.socketErrorListener (node:_http_client:504:5)
+    at Socket.emit (node:events:524:28)
+    at emitErrorNT (node:internal/streams/destroy:169:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:128:3)
+    at Axios.request (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.postRequestPromise (/snapshot/server/Common/sources/utils.js)
+    at async sendServerRequest (/snapshot/server/DocService/sources/DocsCoServer.js)
+    at async sendStatusDocument (/snapshot/server/DocService/sources/DocsCoServer.js)

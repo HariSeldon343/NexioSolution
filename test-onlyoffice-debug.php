@@ -4,8 +4,11 @@
  * Bypassa JWT e autenticazione per isolare il problema
  */
 
+
+// Include OnlyOffice configuration
+require_once __DIR__ . '/backend/config/onlyoffice.config.php';
 // Configurazione diretta - nessuna dipendenza
-$ONLYOFFICE_DS_URL = 'http://localhost:8082';  // URL corretto del container Docker
+$ONLYOFFICE_DS_URL = $ONLYOFFICE_DS_PUBLIC_URL;  // URL corretto del container Docker
 
 // File di test - usa uno esistente
 $testFile = 'documents/onlyoffice/new.docx';

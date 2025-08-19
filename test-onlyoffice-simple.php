@@ -3,8 +3,11 @@
  * Test semplificato OnlyOffice - Apre direttamente il documento senza autenticazione complessa
  */
 
+
+// Include OnlyOffice configuration
+require_once __DIR__ . '/backend/config/onlyoffice.config.php';
 // Configurazione diretta
-$ONLYOFFICE_SERVER = 'http://localhost:8082';
+$ONLYOFFICE_SERVER = $ONLYOFFICE_DS_PUBLIC_URL;
 $documentId = 22; // ID del documento nel database con file DOCX valido
 
 // Configurazione minima per test

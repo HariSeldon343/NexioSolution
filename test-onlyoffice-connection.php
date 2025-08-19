@@ -4,9 +4,12 @@
  * Verifica la connessione e funzionalità di OnlyOffice
  */
 
+
+// Include OnlyOffice configuration
+require_once __DIR__ . '/backend/config/onlyoffice.config.php';
 header('Content-Type: text/html; charset=UTF-8');
 
-$onlyofficeUrl = 'http://localhost:8082';
+$onlyofficeUrl = $ONLYOFFICE_DS_PUBLIC_URL;
 $results = [];
 
 // Test 1: Check if container is reachable

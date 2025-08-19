@@ -40,3 +40,8 @@
 [2025-08-19T05:34:26.603] [WARN] [localhost] [docId] [userId] nodeJS - notifyLicenseExpiration(): expiration date is not defined
 [2025-08-19T05:34:26.604] [WARN] [localhost] [docId] [userId] nodeJS - notifyLicenseExpiration(): expiration date is not defined
 [2025-08-19T05:34:26.748] [WARN] [localhost] [docId] [userId] nodeJS - Express server listening on port 8000 in production-linux mode. Version: 9.0.4. Build: 50
+[2025-08-19T05:34:47.303] [WARN] [localhost] [docId] [userId] nodeJS - Express server starting...
+[2025-08-19T05:34:47.304] [WARN] [localhost] [docId] [userId] nodeJS - Set services.CoAuthoring.token.enable.browser, services.CoAuthoring.token.enable.request.inbox, services.CoAuthoring.token.enable.request.outbox in the Document Server config to prevent an unauthorized access to your documents and the substitution of important parameters in Document Server requests.
+[2025-08-19T05:34:47.309] [WARN] [localhost] [docId] [userId] nodeJS - notifyLicenseExpiration(): expiration date is not defined
+[2025-08-19T05:34:47.310] [WARN] [localhost] [docId] [userId] nodeJS - notifyLicenseExpiration(): expiration date is not defined
+[2025-08-19T05:34:47.427] [WARN] [localhost] [docId] [userId] nodeJS - Express server listening on port 8000 in production-linux mode. Version: 9.0.4. Build: 50

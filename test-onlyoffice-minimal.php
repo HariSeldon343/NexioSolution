@@ -4,8 +4,11 @@
  * NO JWT, NO AUTH, solo test basico di connettività
  */
 
-// URL diretto a OnlyOffice
-$ONLYOFFICE_URL = 'http://localhost:8082';
+// Include OnlyOffice configuration
+require_once __DIR__ . '/backend/config/onlyoffice.config.php';
+
+// Use configuration URL
+$ONLYOFFICE_URL = $ONLYOFFICE_DS_PUBLIC_URL;
 
 // Test con un documento pubblico di esempio
 $testDocumentUrl = 'https://api.onlyoffice.com/editors/assets/docs/samples/sample.docx';

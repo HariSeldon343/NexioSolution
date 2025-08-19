@@ -6,6 +6,9 @@
 
 session_start();
 
+// Include OnlyOffice configuration
+require_once __DIR__ . '/backend/config/onlyoffice.config.php';
+
 // Generate test token
 $_SESSION['onlyoffice_test_token'] = bin2hex(random_bytes(16));
 
@@ -19,8 +22,8 @@ $documentUrl = "http://host.docker.internal/piattaforma-collaborativa/backend/ap
 // Callback URL (also public for testing)
 $callbackUrl = "http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=" . $docId;
 
-// OnlyOffice server URL (accessible from browser)
-$onlyofficeUrl = "http://localhost:8080";
+// Use configuration from onlyoffice.config.php
+$onlyofficeUrl = $ONLYOFFICE_DS_PUBLIC_URL;
 
 // Configuration for OnlyOffice
 $config = [

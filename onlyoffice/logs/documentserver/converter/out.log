@@ -60,3 +60,149 @@
     at Axios.request (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
     at async Object.downloadUrlPromise (/snapshot/server/Common/sources/utils.js)
+[2025-08-18T19:20:01.725] [ERROR] [localhost] [8ffce7f02df089be6e9ace7d476523bd] [2] nodeJS - error downloadFile:url=http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-document.php?id=22&token=;attempt=1;code:ERR_BAD_REQUEST;connect:undefined AxiosError: Request failed with status code 404
+    at settle (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.handleResponse (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.emit (node:events:536:35)
+    at RedirectableRequest._processResponse (/snapshot/server/Common/node_modules/follow-redirects/index.js:409:10)
+    at ClientRequest.<anonymous> (/snapshot/server/Common/node_modules/follow-redirects/index.js:102:12)
+    at Object.onceWrapper (node:events:639:26)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at Socket.socketOnData (node:_http_client:544:22)
+    at Axios.request (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.downloadUrlPromise (/snapshot/server/Common/sources/utils.js)
+[2025-08-18T19:20:02.729] [ERROR] [localhost] [8ffce7f02df089be6e9ace7d476523bd] [2] nodeJS - error downloadFile:url=http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-document.php?id=22&token=;attempt=2;code:ERR_BAD_REQUEST;connect:undefined AxiosError: Request failed with status code 404
+    at settle (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.handleResponse (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.emit (node:events:536:35)
+    at RedirectableRequest._processResponse (/snapshot/server/Common/node_modules/follow-redirects/index.js:409:10)
+    at ClientRequest.<anonymous> (/snapshot/server/Common/node_modules/follow-redirects/index.js:102:12)
+    at Object.onceWrapper (node:events:639:26)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at Socket.socketOnData (node:_http_client:544:22)
+    at Axios.request (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.downloadUrlPromise (/snapshot/server/Common/sources/utils.js)
+[2025-08-18T19:20:03.733] [ERROR] [localhost] [8ffce7f02df089be6e9ace7d476523bd] [2] nodeJS - error downloadFile:url=http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-document.php?id=22&token=;attempt=3;code:ERR_BAD_REQUEST;connect:undefined AxiosError: Request failed with status code 404
+    at settle (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.handleResponse (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.emit (node:events:536:35)
+    at RedirectableRequest._processResponse (/snapshot/server/Common/node_modules/follow-redirects/index.js:409:10)
+    at ClientRequest.<anonymous> (/snapshot/server/Common/node_modules/follow-redirects/index.js:102:12)
+    at Object.onceWrapper (node:events:639:26)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at Socket.socketOnData (node:_http_client:544:22)
+    at Axios.request (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.downloadUrlPromise (/snapshot/server/Common/sources/utils.js)
+[2025-08-18T19:20:39.955] [ERROR] [localhost] [8ffce7f02df089be6e9ace7d476523bd] [2] nodeJS - error downloadFile:url=http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-document.php?id=22&token=;attempt=1;code:ERR_BAD_REQUEST;connect:undefined AxiosError: Request failed with status code 404
+    at settle (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.handleResponse (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.emit (node:events:536:35)
+    at RedirectableRequest._processResponse (/snapshot/server/Common/node_modules/follow-redirects/index.js:409:10)
+    at ClientRequest.<anonymous> (/snapshot/server/Common/node_modules/follow-redirects/index.js:102:12)
+    at Object.onceWrapper (node:events:639:26)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at Socket.socketOnData (node:_http_client:544:22)
+    at Axios.request (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.downloadUrlPromise (/snapshot/server/Common/sources/utils.js)
+[2025-08-18T19:20:40.969] [ERROR] [localhost] [8ffce7f02df089be6e9ace7d476523bd] [2] nodeJS - error downloadFile:url=http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-document.php?id=22&token=;attempt=2;code:ERR_BAD_REQUEST;connect:undefined AxiosError: Request failed with status code 404
+    at settle (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.handleResponse (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.emit (node:events:536:35)
+    at RedirectableRequest._processResponse (/snapshot/server/Common/node_modules/follow-redirects/index.js:409:10)
+    at ClientRequest.<anonymous> (/snapshot/server/Common/node_modules/follow-redirects/index.js:102:12)
+    at Object.onceWrapper (node:events:639:26)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at Socket.socketOnData (node:_http_client:544:22)
+    at Axios.request (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.downloadUrlPromise (/snapshot/server/Common/sources/utils.js)
+[2025-08-18T19:20:41.974] [ERROR] [localhost] [8ffce7f02df089be6e9ace7d476523bd] [2] nodeJS - error downloadFile:url=http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-document.php?id=22&token=;attempt=3;code:ERR_BAD_REQUEST;connect:undefined AxiosError: Request failed with status code 404
+    at settle (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.handleResponse (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.emit (node:events:536:35)
+    at RedirectableRequest._processResponse (/snapshot/server/Common/node_modules/follow-redirects/index.js:409:10)
+    at ClientRequest.<anonymous> (/snapshot/server/Common/node_modules/follow-redirects/index.js:102:12)
+    at Object.onceWrapper (node:events:639:26)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at Socket.socketOnData (node:_http_client:544:22)
+    at Axios.request (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.downloadUrlPromise (/snapshot/server/Common/sources/utils.js)
+[2025-08-18T19:49:24.058] [ERROR] [localhost] [616f9134c5b16d30095075450ca45a3b] [2] nodeJS - error downloadFile:url=http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-document.php?id=22&token=;attempt=1;code:ERR_BAD_REQUEST;connect:undefined AxiosError: Request failed with status code 404
+    at settle (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.handleResponse (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.emit (node:events:536:35)
+    at RedirectableRequest._processResponse (/snapshot/server/Common/node_modules/follow-redirects/index.js:409:10)
+    at ClientRequest.<anonymous> (/snapshot/server/Common/node_modules/follow-redirects/index.js:102:12)
+    at Object.onceWrapper (node:events:639:26)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at Socket.socketOnData (node:_http_client:544:22)
+    at Axios.request (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.downloadUrlPromise (/snapshot/server/Common/sources/utils.js)
+[2025-08-18T19:49:25.063] [ERROR] [localhost] [616f9134c5b16d30095075450ca45a3b] [2] nodeJS - error downloadFile:url=http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-document.php?id=22&token=;attempt=2;code:ERR_BAD_REQUEST;connect:undefined AxiosError: Request failed with status code 404
+    at settle (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.handleResponse (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.emit (node:events:536:35)
+    at RedirectableRequest._processResponse (/snapshot/server/Common/node_modules/follow-redirects/index.js:409:10)
+    at ClientRequest.<anonymous> (/snapshot/server/Common/node_modules/follow-redirects/index.js:102:12)
+    at Object.onceWrapper (node:events:639:26)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at Socket.socketOnData (node:_http_client:544:22)
+    at Axios.request (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.downloadUrlPromise (/snapshot/server/Common/sources/utils.js)
+[2025-08-18T19:49:26.067] [ERROR] [localhost] [616f9134c5b16d30095075450ca45a3b] [2] nodeJS - error downloadFile:url=http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-document.php?id=22&token=;attempt=3;code:ERR_BAD_REQUEST;connect:undefined AxiosError: Request failed with status code 404
+    at settle (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.handleResponse (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at RedirectableRequest.emit (node:events:536:35)
+    at RedirectableRequest._processResponse (/snapshot/server/Common/node_modules/follow-redirects/index.js:409:10)
+    at ClientRequest.<anonymous> (/snapshot/server/Common/node_modules/follow-redirects/index.js:102:12)
+    at Object.onceWrapper (node:events:639:26)
+    at ClientRequest.emit (node:events:524:28)
+    at HTTPParser.parserOnIncomingClient (node:_http_client:702:27)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:118:17)
+    at Socket.socketOnData (node:_http_client:544:22)
+    at Axios.request (/snapshot/server/Common/node_modules/axios/dist/node/axios.cjs)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Object.downloadUrlPromise (/snapshot/server/Common/sources/utils.js)
+[2025-08-19T03:51:24.712] [WARN] [localhost] [docId] [userId] nodeJS - num of CPUs: 20; availableParallelism: 20
+[2025-08-19T03:51:24.715] [WARN] [localhost] [docId] [userId] nodeJS - update cluster with 1 workers
+[2025-08-19T03:51:24.719] [WARN] [localhost] [docId] [userId] nodeJS - worker 879 started.
+[2025-08-19T03:51:24.720] [WARN] [localhost] [docId] [userId] nodeJS - num of CPUs: 20; availableParallelism: 20
+[2025-08-19T03:51:24.720] [WARN] [localhost] [docId] [userId] nodeJS - update cluster with 1 workers
+[2025-08-19T03:51:49.345] [WARN] [localhost] [docId] [userId] nodeJS - num of CPUs: 20; availableParallelism: 20
+[2025-08-19T03:51:49.347] [WARN] [localhost] [docId] [userId] nodeJS - update cluster with 1 workers
+[2025-08-19T03:51:49.351] [WARN] [localhost] [docId] [userId] nodeJS - worker 1217 started.
+[2025-08-19T03:51:49.352] [WARN] [localhost] [docId] [userId] nodeJS - num of CPUs: 20; availableParallelism: 20
+[2025-08-19T03:51:49.352] [WARN] [localhost] [docId] [userId] nodeJS - update cluster with 1 workers
+[2025-08-19T03:55:49.627] [WARN] [localhost] [docId] [userId] nodeJS - num of CPUs: 20; availableParallelism: 20
+[2025-08-19T03:55:49.630] [WARN] [localhost] [docId] [userId] nodeJS - update cluster with 1 workers
+[2025-08-19T03:55:49.637] [WARN] [localhost] [docId] [userId] nodeJS - worker 879 started.
+[2025-08-19T03:55:49.640] [WARN] [localhost] [docId] [userId] nodeJS - num of CPUs: 20; availableParallelism: 20
+[2025-08-19T03:55:49.640] [WARN] [localhost] [docId] [userId] nodeJS - update cluster with 1 workers
+[2025-08-19T03:56:14.585] [WARN] [localhost] [docId] [userId] nodeJS - num of CPUs: 20; availableParallelism: 20
+[2025-08-19T03:56:14.587] [WARN] [localhost] [docId] [userId] nodeJS - update cluster with 1 workers
+[2025-08-19T03:56:14.592] [WARN] [localhost] [docId] [userId] nodeJS - worker 1218 started.
+[2025-08-19T03:56:14.593] [WARN] [localhost] [docId] [userId] nodeJS - num of CPUs: 20; availableParallelism: 20
+[2025-08-19T03:56:14.593] [WARN] [localhost] [docId] [userId] nodeJS - update cluster with 1 workers

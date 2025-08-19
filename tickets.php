@@ -491,7 +491,7 @@ include 'components/header.php';
                                     <?php echo ucfirst(str_replace('-', ' ', $ticket['stato'])); ?>
                                 </span>
                             </td>
-                            <td><?php echo htmlspecialchars($ticket['nome'] . ' ' . $ticket['cognome']); ?></td>
+                            <td><?php echo htmlspecialchars(($ticket['nome'] ?? '') . ' ' . ($ticket['cognome'] ?? '')); ?></td>
                             <td><?php echo date('d/m/Y H:i', strtotime($ticket['creato_il'])); ?></td>
                             <td>
                                 <div class="btn-group" role="group">
@@ -640,8 +640,8 @@ include 'components/header.php';
                                 ?>
                                 <label style="display: block; padding: 8px 0; border-bottom: 1px solid #eee;">
                                     <input type="checkbox" name="destinatari[]" value="<?php echo $admin['id']; ?>">
-                                    <?php echo htmlspecialchars($admin['nome'] . ' ' . $admin['cognome']); ?>
-                                    <small>(<?php echo htmlspecialchars($admin['email']); ?>)</small>
+                                    <?php echo htmlspecialchars(($admin['nome'] ?? '') . ' ' . ($admin['cognome'] ?? '')); ?>
+                                    <small>(<?php echo htmlspecialchars($admin['email'] ?? ''); ?>)</small>
                                     <?php if ($admin['ruolo'] === 'super_admin'): ?>
                                         <span class="badge badge-alta" style="background: #2d5a9f; color: white;">Super Admin Globale</span>
                                     <?php elseif ($admin['ruolo_azienda'] === 'proprietario'): ?>
@@ -767,21 +767,21 @@ include 'components/header.php';
                     </div>
                     <div>
                         <strong>Priorità:</strong><br>
-                        <span class="badge badge-<?php echo $ticket['priorita']; ?>">
-                            <?php echo ucfirst($ticket['priorita']); ?>
+                        <span class="badge badge-<?php echo $ticket['priorita'] ?? 'media'; ?>">
+                            <?php echo ucfirst($ticket['priorita'] ?? 'media'); ?>
                         </span>
                     </div>
                     <div>
                         <strong>Categoria:</strong><br>
-                        <?php echo ucfirst($ticket['categoria']); ?>
+                        <?php echo ucfirst($ticket['categoria'] ?? ''); ?>
                     </div>
                     <div>
                         <strong>Azienda:</strong><br>
-                        <?php echo htmlspecialchars($ticket['azienda_nome']); ?>
+                        <?php echo htmlspecialchars($ticket['azienda_nome'] ?? 'N/A'); ?>
                     </div>
                     <div>
                         <strong>Creato da:</strong><br>
-                        <?php echo htmlspecialchars($ticket['creatore_nome'] . ' ' . $ticket['creatore_cognome']); ?>
+                        <?php echo htmlspecialchars(($ticket['creatore_nome'] ?? '') . ' ' . ($ticket['creatore_cognome'] ?? '')); ?>
                     </div>
                     <div>
                         <strong>Data creazione:</strong><br>
@@ -794,7 +794,7 @@ include 'components/header.php';
                     <strong>Destinatari:</strong>
                     <?php foreach ($destinatari as $dest): ?>
                         <span style="margin-left: 10px;">
-                            <?php echo htmlspecialchars($dest['nome'] . ' ' . $dest['cognome']); ?>
+                            <?php echo htmlspecialchars(($dest['nome'] ?? '') . ' ' . ($dest['cognome'] ?? '')); ?>
                             <?php if (isset($dest['tipo_destinatario']) && $dest['tipo_destinatario'] === 'assegnato'): ?>
                                 <span class="badge badge-alta">Assegnato</span>
                             <?php elseif (isset($dest['tipo_destinatario']) && $dest['tipo_destinatario'] === 'cc'): ?>
@@ -813,7 +813,7 @@ include 'components/header.php';
                 <div class="content-card" style="background: #f9fafb; border-left: 4px solid #2d5a9f;">
                     <div class="message-header">
                         <div class="message-author">
-                            <?php echo htmlspecialchars($ticket['creatore_nome'] . ' ' . $ticket['creatore_cognome']); ?>
+                            <?php echo htmlspecialchars(($ticket['creatore_nome'] ?? '') . ' ' . ($ticket['creatore_cognome'] ?? '')); ?>
                         </div>
                         <div>
                             <?php echo date('d/m/Y H:i', strtotime($ticket['creato_il'])); ?>
@@ -831,7 +831,7 @@ include 'components/header.php';
                     <div class="content-card" style="background: #f9fafb; border-left: 4px solid #2d5a9f;">
                         <div class="message-header">
                             <div class="message-author">
-                                <?php echo htmlspecialchars($risposta['nome'] . ' ' . $risposta['cognome']); ?>
+                                <?php echo htmlspecialchars(($risposta['nome'] ?? '') . ' ' . ($risposta['cognome'] ?? '')); ?>
                             </div>
                             <div>
                                 <?php echo date('d/m/Y H:i', strtotime($risposta['data_creazione'])); ?>

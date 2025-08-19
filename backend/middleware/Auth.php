@@ -74,16 +74,32 @@ class Auth {
     
     public function requireAuth() {
         if (!$this->isAuthenticated()) {
-            // Se siamo in una chiamata API, restituisci errore JSON
+            // SEMPRE restituisci JSON per le API, evita redirect loop
             $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+            $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+            
+            // Check if this is an API call by path or script name
             if (strpos($requestUri, '/api/') !== false || 
-                (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)) {
+                strpos($scriptName, '/api/') !== false ||
+                (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
+                (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest')) {
+                
+                // Prevent any output before headers
+                if (ob_get_level()) ob_clean();
+                
                 header('Content-Type: application/json');
                 http_response_code(401);
                 echo json_encode(['success' => false, 'error' => 'Non autenticato']);
                 exit;
             }
-            redirect(APP_PATH . '/login.php');
+            
+            // Only redirect for normal web pages
+            if (!headers_sent()) {
+                redirect(APP_PATH . '/login.php');
+            } else {
+                // If headers are sent, at least give an error message
+                die('Authentication required. Please <a href="' . APP_PATH . '/login.php">login</a>.');
+            }
         }
         
         // Controlla se è necessario il cambio password (solo se non siamo già nella pagina di cambio password)

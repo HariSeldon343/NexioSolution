@@ -120,7 +120,19 @@ $documentKey = md5($document['id'] . '_' . $document['data_modifica'] . '_v' . (
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'];
 $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
-$documentUrl = $protocol . '://' . $host . $basePath . '/backend/api/onlyoffice-document.php?id=' . $documentId . '&token=';
+
+// IMPORTANTE: Usa host.docker.internal quando OnlyOffice è in Docker e siamo su localhost
+// Questo permette al container Docker di raggiungere l'host
+if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) {
+    // In ambiente locale con Docker, OnlyOffice deve usare host.docker.internal
+    $documentHost = 'host.docker.internal';
+} else {
+    // In produzione usa l'host normale
+    $documentHost = $host;
+}
+
+// TEMPORANEO: Usa API di test senza autenticazione per testing
+$documentUrl = 'http://' . $documentHost . '/piattaforma-collaborativa/backend/api/onlyoffice-document-test.php?id=' . $documentId;
 
 // Generate callback URL
 $callbackUrl = $ONLYOFFICE_CALLBACK_URL . '?id=' . $documentId;

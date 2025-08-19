@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test OnlyOffice SEMPLICE - Versione Definitiva</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .status {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-item {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+            background: #ecf0f1;
+        }
+        .success { border-left-color: #27ae60; background: #d5f4e6; }
+        .error { border-left-color: #e74c3c; background: #fadbd8; }
+        .warning { border-left-color: #f39c12; background: #fef5e7; }
+        #editor-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: 700px;
+            position: relative;
+        }
+        #onlyoffice-editor {
+            width: 100%;
+            height: 700px;
+            border: none;
+            border-radius: 8px;
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: #3498db;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .button:hover {
+            background: #2980b9;
+        }
+        .button.danger {
+            background: #e74c3c;
+        }
+        .button.danger:hover {
+            background: #c0392b;
+        }
+        .config-display {
+            background: #2c3e50;
+            color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Test OnlyOffice - Versione SEMPLICE e DEFINITIVA</h1>
+        <p>JWT Disabilitato | Configurazione Minima | Test Diretto</p>
+    </div>
+
+    <div class="status" id="status-container">
+        <h2>📊 Stato del Sistema</h2>
+        <div id="status-list">
+            <div class="status-item">⏳ Verifico configurazione...</div>
+        </div>
+        
+        <h3>⚙️ Configurazione Attuale:</h3>
+        <div class="config-display" id="config-display">
+            Caricamento configurazione...
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button class="button" onclick="testDirectConnection()">🔍 Test Connessione Diretta</button>
+            <button class="button" onclick="loadEditor()">📝 Carica Editor</button>
+            <button class="button danger" onclick="resetAll()">🔄 Reset Completo</button>
+        </div>
+    </div>
+
+    <div id="editor-container">
+        <div class="loading" id="loading-message">
+            ⏳ Pronto per caricare l'editor...
+        </div>
+        <div id="onlyoffice-editor" style="display: none;"></div>
+    </div>
+
+    <!-- Script API OnlyOffice -->
+    <script type="text/javascript" src="http://localhost:8082/web-apps/apps/api/documents/api.js"></script>
+
+    <script>
+        // Configurazione SEMPLICE e DIRETTA
+        const config = {
+            documentServerUrl: 'http://localhost:8082',
+            documentUrl: 'http://localhost/piattaforma-collaborativa/documents/test/sample.docx',
+            callbackUrl: 'http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php',
+            jwtEnabled: false
+        };
+
+        // Genera un key unico per il documento
+        const documentKey = 'test_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+        // Funzione per mostrare lo stato
+        function updateStatus(message, type = 'info') {
+            const statusList = document.getElementById('status-list');
+            const item = document.createElement('div');
+            item.className = 'status-item ' + type;
+            item.innerHTML = message;
+            statusList.appendChild(item);
+        }
+
+        // Mostra configurazione
+        function showConfig() {
+            const configDisplay = document.getElementById('config-display');
+            configDisplay.textContent = `
+CONFIGURAZIONE ONLYOFFICE:
+==========================
+Server URL: ${config.documentServerUrl}
+Document URL: ${config.documentUrl}
+Callback URL: ${config.callbackUrl}
+JWT Enabled: ${config.jwtEnabled}
+Document Key: ${documentKey}
+
+TEST URLS:
+==========
+API Check: ${config.documentServerUrl}/web-apps/apps/api/documents/api.js
+Healthcheck: ${config.documentServerUrl}/healthcheck
+Document: ${config.documentUrl}
+`;
+        }
+
+        // Test connessione diretta
+        async function testDirectConnection() {
+            updateStatus('🔍 Test connessione diretta al server OnlyOffice...', 'warning');
+            
+            try {
+                // Test 1: Verifica se l'API JavaScript è accessibile
+                const apiResponse = await fetch(config.documentServerUrl + '/web-apps/apps/api/documents/api.js', {
+                    method: 'HEAD'
+                });
+                
+                if (apiResponse.ok) {
+                    updateStatus('✅ API JavaScript OnlyOffice accessibile', 'success');
+                } else {
+                    updateStatus('❌ API JavaScript non accessibile (Status: ' + apiResponse.status + ')', 'error');
+                }
+
+                // Test 2: Verifica healthcheck
+                try {
+                    const healthResponse = await fetch(config.documentServerUrl + '/healthcheck');
+                    const healthText = await healthResponse.text();
+                    
+                    if (healthText.includes('true')) {
+                        updateStatus('✅ Server OnlyOffice attivo e funzionante', 'success');
+                    } else {
+                        updateStatus('⚠️ Server OnlyOffice risponde ma con stato: ' + healthText, 'warning');
+                    }
+                } catch (e) {
+                    updateStatus('⚠️ Healthcheck non raggiungibile (normale se JWT è richiesto)', 'warning');
+                }
+
+                // Test 3: Verifica documento
+                const docResponse = await fetch(config.documentUrl, {
+                    method: 'HEAD'
+                });
+                
+                if (docResponse.ok) {
+                    updateStatus('✅ Documento di test accessibile', 'success');
+                } else {
+                    updateStatus('❌ Documento non accessibile (Status: ' + docResponse.status + ')', 'error');
+                }
+
+            } catch (error) {
+                updateStatus('❌ Errore di connessione: ' + error.message, 'error');
+            }
+        }
+
+        // Carica l'editor
+        function loadEditor() {
+            updateStatus('🚀 Avvio editor OnlyOffice...', 'warning');
+            
+            // Nascondi il messaggio di caricamento
+            document.getElementById('loading-message').style.display = 'none';
+            document.getElementById('onlyoffice-editor').style.display = 'block';
+
+            try {
+                // Configurazione MINIMA per OnlyOffice
+                const docEditorConfig = {
+                    // Documento
+                    document: {
+                        fileType: "docx",
+                        key: documentKey,
+                        title: "Test Document",
+                        url: config.documentUrl,
+                        permissions: {
+                            edit: true,
+                            download: true,
+                            print: true
+                        }
+                    },
+                    
+                    // Tipo di documento
+                    documentType: "word",
+                    
+                    // Configurazione editor
+                    editorConfig: {
+                        mode: "edit",
+                        lang: "it",
+                        callbackUrl: config.callbackUrl,
+                        user: {
+                            id: "test_user",
+                            name: "Test User"
+                        },
+                        customization: {
+                            autosave: false,  // Disabilita autosave per test
+                            forcesave: false,  // Disabilita forcesave per test
+                            chat: false,
+                            comments: false,
+                            help: true,
+                            hideRightMenu: false,
+                            logo: {
+                                url: "http://localhost/piattaforma-collaborativa/assets/images/nexio-logo.svg"
+                            }
+                        }
+                    },
+                    
+                    // Dimensioni
+                    width: "100%",
+                    height: "700px",
+                    
+                    // Tipo di editor
+                    type: "desktop",
+                    
+                    // Eventi
+                    events: {
+                        onReady: function() {
+                            updateStatus('✅ Editor caricato con successo!', 'success');
+                            console.log('OnlyOffice Editor Ready');
+                        },
+                        onError: function(event) {
+                            updateStatus('❌ Errore editor: ' + JSON.stringify(event), 'error');
+                            console.error('OnlyOffice Error:', event);
+                        },
+                        onWarning: function(event) {
+                            updateStatus('⚠️ Warning: ' + JSON.stringify(event), 'warning');
+                            console.warn('OnlyOffice Warning:', event);
+                        },
+                        onInfo: function(event) {
+                            console.log('OnlyOffice Info:', event);
+                        }
+                    }
+                };
+
+                // Log della configurazione
+                console.log('Configurazione editor:', docEditorConfig);
+                updateStatus('📋 Configurazione inviata all\'editor', 'info');
+
+                // Inizializza l'editor
+                if (typeof DocsAPI !== 'undefined') {
+                    window.docEditor = new DocsAPI.DocEditor("onlyoffice-editor", docEditorConfig);
+                    updateStatus('🎯 DocEditor inizializzato', 'success');
+                } else {
+                    updateStatus('❌ DocsAPI non disponibile! Verifica che il server OnlyOffice sia attivo', 'error');
+                    
+                    // Riprova a caricare l'API
+                    const script = document.createElement('script');
+                    script.src = config.documentServerUrl + '/web-apps/apps/api/documents/api.js';
+                    script.onload = function() {
+                        updateStatus('📥 API ricaricata, riprova a caricare l\'editor', 'warning');
+                    };
+                    script.onerror = function() {
+                        updateStatus('❌ Impossibile caricare API da ' + config.documentServerUrl, 'error');
+                    };
+                    document.head.appendChild(script);
+                }
+
+            } catch (error) {
+                updateStatus('❌ Errore critico: ' + error.message, 'error');
+                console.error('Errore inizializzazione:', error);
+            }
+        }
+
+        // Reset completo
+        function resetAll() {
+            if (confirm('Vuoi ricaricare completamente la pagina?')) {
+                location.reload();
+            }
+        }
+
+        // Test automatico all'avvio
+        window.onload = function() {
+            showConfig();
+            updateStatus('✅ Pagina caricata', 'success');
+            updateStatus('🔍 Verifica se DocsAPI è disponibile...', 'info');
+            
+            // Verifica se l'API è caricata
+            setTimeout(function() {
+                if (typeof DocsAPI !== 'undefined') {
+                    updateStatus('✅ DocsAPI disponibile e pronto', 'success');
+                } else {
+                    updateStatus('⚠️ DocsAPI non ancora disponibile, potrebbe essere un problema di connessione', 'warning');
+                }
+            }, 2000);
+            
+            // Test automatico della connessione
+            setTimeout(function() {
+                testDirectConnection();
+            }, 1000);
+        };
+
+        // Debug: intercetta errori globali
+        window.onerror = function(msg, url, line, col, error) {
+            updateStatus('❌ Errore JavaScript: ' + msg + ' (Line: ' + line + ')', 'error');
+            console.error('Global error:', {msg, url, line, col, error});
+            return false;
+        };
+    </script>
+</body>
+</html>

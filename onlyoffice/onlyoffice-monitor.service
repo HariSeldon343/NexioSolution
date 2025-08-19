@@ -1,0 +1,17 @@
+[Unit]
+Description=OnlyOffice Document Server Monitor
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=30
+User=root
+ExecStartPre=/usr/bin/docker network create nexio-network 2>/dev/null || true
+ExecStart=/mnt/c/xampp/htdocs/piattaforma-collaborativa/onlyoffice/docker-onlyoffice-manager.sh start
+ExecStop=/mnt/c/xampp/htdocs/piattaforma-collaborativa/onlyoffice/docker-onlyoffice-manager.sh stop
+ExecReload=/mnt/c/xampp/htdocs/piattaforma-collaborativa/onlyoffice/docker-onlyoffice-manager.sh restart
+
+[Install]
+WantedBy=multi-user.target

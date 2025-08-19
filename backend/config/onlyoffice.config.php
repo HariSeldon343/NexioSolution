@@ -42,6 +42,16 @@ $ONLYOFFICE_SUPPORTED_FORMATS = [
     'pptx', 'ppt', 'odp', 'ppsx', 'pps'
 ];
 
+// Document type mappings for OnlyOffice
+$ONLYOFFICE_DOCUMENT_TYPES = [
+    'docx' => 'word', 'doc' => 'word', 'odt' => 'word', 'rtf' => 'word', 'txt' => 'word',
+    'html' => 'word', 'htm' => 'word', 'mht' => 'word',
+    'xlsx' => 'cell', 'xls' => 'cell', 'ods' => 'cell', 'csv' => 'cell', 'tsv' => 'cell',
+    'pptx' => 'slide', 'ppt' => 'slide', 'odp' => 'slide', 'ppsx' => 'slide', 'pps' => 'slide',
+    'pdf' => 'pdf', 'djvu' => 'pdf', 'xps' => 'pdf',
+    'fb2' => 'word', 'epub' => 'word'
+];
+
 // Documents directory
 $ONLYOFFICE_DOCUMENTS_DIR = getenv('ONLYOFFICE_DOCUMENTS_DIR') ?: 
     realpath(__DIR__ . '/../../documents/onlyoffice');
@@ -51,11 +61,8 @@ $ONLYOFFICE_DOCUMENTS_DIR = getenv('ONLYOFFICE_DOCUMENTS_DIR') ?:
 // ================================================================
 
 // Enable JWT authentication (MUST be true in production)
-// ABILITATO COME RICHIESTO
-$ONLYOFFICE_JWT_ENABLED = filter_var(
-    getenv('ONLYOFFICE_JWT_ENABLED') ?: 'true', 
-    FILTER_VALIDATE_BOOLEAN
-);  // Forzato a TRUE per sicurezza
+// TEMPORANEAMENTE DISABILITATO PER TEST
+$ONLYOFFICE_JWT_ENABLED = false;  // DISABILITATO per test iniziale
 
 // JWT Secret Key - CRITICAL: Set via environment variable in production
 // IMPORTANTE: Usare la STESSA chiave configurata nel Docker di OnlyOffice

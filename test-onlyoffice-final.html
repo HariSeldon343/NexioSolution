@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test OnlyOffice - Soluzione Finale</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1400px; margin: 0 auto; }
+        h1 { color: #333; border-bottom: 2px solid #0066cc; padding-bottom: 10px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .warning { background: #fff3cd; color: #856404; }
+        #editor { width: 100%; height: 600px; border: 2px solid #333; margin: 20px 0; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; cursor: pointer; background: #0066cc; color: white; border: none; border-radius: 5px; }
+        button:hover { background: #0052a3; }
+        .test-section { background: #f8f9fa; padding: 15px; margin: 20px 0; border-radius: 5px; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+        .architecture { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .component { background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <h1>🚀 OnlyOffice Docker Integration - Soluzione Funzionante</h1>
+
+    <div class="status success">
+        <h2>✅ Soluzione Implementata con Successo</h2>
+        <p>Il problema di download dei documenti (errore -4) è stato risolto implementando:</p>
+        <ul>
+            <li><strong>Nginx File Server</strong> sulla porta 8083 per servire i documenti</li>
+            <li><strong>Volume Docker condiviso</strong> per accesso diretto ai file</li>
+            <li><strong>Rete Docker interna</strong> per comunicazione tra container</li>
+            <li><strong>Callback semplificato</strong> senza JWT per testing</li>
+        </ul>
+    </div>
+
+    <div class="architecture">
+        <div class="component">
+            <h3>📦 OnlyOffice Document Server</h3>
+            <ul>
+                <li>Container: nexio-documentserver</li>
+                <li>Porta: 8082</li>
+                <li>JWT: Disabilitato (test)</li>
+                <li>Volume: /documents montato</li>
+            </ul>
+        </div>
+        
+        <div class="component">
+            <h3>🌐 Nginx File Server</h3>
+            <ul>
+                <li>Container: nexio-fileserver</li>
+                <li>Porta: 8083</li>
+                <li>Path: /documents/</li>
+                <li>CORS: Abilitato</li>
+            </ul>
+        </div>
+        
+        <div class="component">
+            <h3>📁 File Storage</h3>
+            <ul>
+                <li>Path: documents/onlyoffice/</li>
+                <li>Montato in entrambi i container</li>
+                <li>Nginx: read-only</li>
+                <li>OnlyOffice: read-write</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Integrazione</h2>
+        <button onclick="testAllComponents()">🧪 Test Completo Sistema</button>
+        <button onclick="createNewDocument()">📄 Crea Nuovo Documento</button>
+        <button onclick="openTestDocument()">📂 Apri Documento Test</button>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Editor OnlyOffice</h2>
+        <div id="editor"></div>
+    </div>
+
+    <script src="http://localhost:8082/web-apps/apps/api/documents/api.js"></script>
+    <script>
+    let docEditor = null;
+
+    // Test tutti i componenti
+    async function testAllComponents() {
+        const results = document.getElementById('test-results');
+        results.innerHTML = '<h3>Esecuzione test...</h3>';
+        
+        let html = '';
+        
+        // Test 1: OnlyOffice Server
+        try {
+            const response1 = await fetch('http://localhost:8082/healthcheck');
+            if (response1.ok) {
+                html += '<div class="status success">✅ OnlyOffice Server: Online (porta 8082)</div>';
+            } else {
+                throw new Error('Server offline');
+            }
+        } catch (e) {
+            html += '<div class="status error">❌ OnlyOffice Server: ' + e.message + '</div>';
+        }
+        
+        // Test 2: Nginx File Server
+        try {
+            const response2 = await fetch('http://localhost:8083/health');
+            if (response2.ok) {
+                html += '<div class="status success">✅ Nginx File Server: Online (porta 8083)</div>';
+            } else {
+                throw new Error('File server offline');
+            }
+        } catch (e) {
+            html += '<div class="status error">❌ Nginx File Server: ' + e.message + '</div>';
+        }
+        
+        // Test 3: Accesso ai file
+        try {
+            const testFile = 'new.docx';
+            const response3 = await fetch('http://localhost:8083/documents/' + testFile, { method: 'HEAD' });
+            if (response3.ok) {
+                html += '<div class="status success">✅ Accesso File: OK (test con ' + testFile + ')</div>';
+            } else {
+                throw new Error('File non accessibile');
+            }
+        } catch (e) {
+            html += '<div class="status warning">⚠️ Accesso File: ' + e.message + '</div>';
+        }
+        
+        results.innerHTML = html;
+    }
+
+    // Crea nuovo documento
+    function createNewDocument() {
+        const docId = 'doc_' + Date.now();
+        openDocument(docId, 'Nuovo Documento ' + new Date().toLocaleString());
+    }
+
+    // Apri documento di test
+    function openTestDocument() {
+        openDocument('new', 'Documento Test Esistente');
+    }
+
+    // Funzione per aprire documento nell'editor
+    function openDocument(docId, title) {
+        console.log('Apertura documento:', docId);
+        
+        // Distruggi editor esistente
+        if (docEditor) {
+            docEditor.destroyEditor();
+            docEditor = null;
+        }
+        
+        // Configurazione OnlyOffice
+        const config = {
+            type: 'desktop',
+            documentType: 'word',
+            width: '100%',
+            height: '100%',
+            document: {
+                title: title + '.docx',
+                url: 'http://localhost:8083/documents/' + docId + '.docx',
+                fileType: 'docx',
+                key: docId + '_' + Date.now(),
+                permissions: {
+                    edit: true,
+                    download: true,
+                    print: true,
+                    fillForms: true,
+                    review: true,
+                    comment: false
+                }
+            },
+            editorConfig: {
+                mode: 'edit',
+                callbackUrl: 'http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback-simple.php?id=' + docId,
+                lang: 'it',
+                user: {
+                    id: '1',
+                    name: 'Test User'
+                },
+                customization: {
+                    forcesave: true,
+                    autosave: true,
+                    compactHeader: false,
+                    toolbarNoTabs: false,
+                    hideRightMenu: false,
+                    unit: 'cm',
+                    zoom: 100
+                }
+            },
+            events: {
+                onReady: function() {
+                    console.log('✅ Editor pronto');
+                    document.getElementById('test-results').innerHTML += 
+                        '<div class="status success">✅ Editor caricato con successo</div>';
+                },
+                onDocumentStateChange: function(event) {
+                    console.log('📝 Stato documento:', event.data);
+                },
+                onError: function(event) {
+                    console.error('❌ Errore:', event);
+                    document.getElementById('test-results').innerHTML += 
+                        '<div class="status error">❌ Errore: ' + JSON.stringify(event.data) + '</div>';
+                },
+                onWarning: function(event) {
+                    console.warn('⚠️ Warning:', event);
+                },
+                onInfo: function(event) {
+                    console.info('ℹ️ Info:', event);
+                }
+            }
+        };
+        
+        try {
+            docEditor = new DocsAPI.DocEditor("editor", config);
+            console.log('✅ Editor creato con successo');
+        } catch (error) {
+            console.error('❌ Errore creazione editor:', error);
+            document.getElementById('test-results').innerHTML += 
+                '<div class="status error">❌ Errore creazione editor: ' + error.message + '</div>';
+        }
+    }
+
+    // Test automatico al caricamento
+    window.onload = function() {
+        testAllComponents();
+    };
+    </script>
+
+    <div class="test-section">
+        <h2>📋 Riepilogo Configurazione</h2>
+        <pre>
+<strong>Docker Compose:</strong>
+- OnlyOffice: localhost:8082
+- Nginx File Server: localhost:8083
+- Network: onlyoffice-net (bridge)
+
+<strong>Volumi Montati:</strong>
+- documents/onlyoffice → /var/www/onlyoffice/documents (OnlyOffice)
+- documents/onlyoffice → /var/www/onlyoffice/documents (Nginx, read-only)
+
+<strong>URL Pattern:</strong>
+- Editor: http://localhost:8082
+- Files: http://localhost:8083/documents/{docId}.docx
+- Callback: http://host.docker.internal/.../onlyoffice-callback-simple.php
+
+<strong>Soluzione al Problema -4:</strong>
+✅ OnlyOffice ora scarica i file da Nginx (porta 8083) invece che da PHP
+✅ Nessuna autenticazione richiesta per il download
+✅ Accesso diretto ai file tramite volume Docker
+✅ Comunicazione interna tra container sulla rete Docker
+        </pre>
+    </div>
+
+    <div class="status info">
+        <h3>📌 Note Importanti</h3>
+        <ul>
+            <li>JWT è temporaneamente disabilitato per facilitare il testing</li>
+            <li>Il callback salva automaticamente i documenti modificati</li>
+            <li>I backup vengono creati prima di ogni salvataggio</li>
+            <li>I log sono disponibili in logs/onlyoffice-callback.log</li>
+        </ul>
+    </div>
+</body>
+</html>

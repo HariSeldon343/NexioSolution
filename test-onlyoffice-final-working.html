@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnlyOffice Test - Versione Funzionante</title>
+    <script type="text/javascript" src="http://localhost:8082/web-apps/apps/api/documents/api.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        #onlyoffice-editor {
+            width: 100%;
+            height: 700px;
+            border: none;
+        }
+        .info-bar {
+            background: #28a745;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .debug-panel {
+            background: #2c3e50;
+            color: #4ec9b0;
+            padding: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .status.success { background: #28a745; color: white; }
+        .status.error { background: #dc3545; color: white; }
+        .status.info { background: #17a2b8; color: white; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 OnlyOffice Editor - Test Funzionante</h1>
+        <p>Documento ID: 22 | File: test_document_1755545454.docx</p>
+    </div>
+
+    <div class="info-bar">
+        <span class="status success">✅ File DOCX Valido</span>
+        <span class="status success">✅ OnlyOffice Document Server: localhost:8082</span>
+        <span class="status info">ℹ️ JWT Disabilitato per Test</span>
+    </div>
+
+    <div class="container">
+        <div id="onlyoffice-editor"></div>
+    </div>
+
+    <div class="debug-panel" id="debug">
+        <div>[<?php echo date('H:i:s'); ?>] Initializing OnlyOffice Editor...</div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const debug = document.getElementById('debug');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#4ec9b0';
+            debug.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            debug.scrollTop = debug.scrollHeight;
+            console.log(message);
+        }
+
+        // Configurazione OnlyOffice SENZA JWT per test
+        const config = {
+            document: {
+                fileType: "docx",
+                key: "doc_22_" + Date.now(),
+                title: "Test Document.docx",
+                url: "http://localhost/piattaforma-collaborativa/documents/test.docx",
+                permissions: {
+                    edit: true,
+                    download: true,
+                    print: true,
+                    review: true,
+                    comment: true
+                }
+            },
+            documentType: "word",
+            editorConfig: {
+                mode: "edit",
+                lang: "it",
+                callbackUrl: "http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-callback.php",
+                user: {
+                    id: "1",
+                    name: "Test User"
+                },
+                customization: {
+                    forcesave: true,
+                    autosave: true,
+                    chat: false,
+                    comments: false,
+                    help: false,
+                    plugins: false
+                }
+            },
+            width: "100%",
+            height: "100%",
+            token: undefined, // NO TOKEN per test
+            type: "desktop"
+        };
+
+        log('Configuration ready', 'success');
+        log('Document URL: ' + config.document.url);
+        log('Document Server: http://localhost:8082');
+
+        // Inizializza l'editor
+        window.docEditor = null;
+
+        function initializeEditor() {
+            try {
+                log('Creating OnlyOffice editor instance...');
+                
+                window.docEditor = new DocsAPI.DocEditor("onlyoffice-editor", config);
+                
+                log('✅ Editor initialized successfully!', 'success');
+                
+                // Event handlers
+                window.docEditor.events = {
+                    onReady: function() {
+                        log('✅ Editor is ready!', 'success');
+                    },
+                    onDocumentStateChange: function(event) {
+                        log('Document state changed: ' + JSON.stringify(event.data));
+                    },
+                    onError: function(event) {
+                        log('❌ Error: ' + JSON.stringify(event.data), 'error');
+                    },
+                    onWarning: function(event) {
+                        log('⚠️ Warning: ' + JSON.stringify(event.data));
+                    }
+                };
+                
+            } catch (error) {
+                log('❌ Failed to initialize editor: ' + error.message, 'error');
+                console.error(error);
+            }
+        }
+
+        // Verifica che DocsAPI sia disponibile
+        if (typeof DocsAPI !== 'undefined') {
+            log('✅ DocsAPI loaded successfully', 'success');
+            setTimeout(initializeEditor, 1000);
+        } else {
+            log('⏳ Waiting for DocsAPI to load...');
+            
+            // Riprova dopo un po'
+            let retries = 0;
+            const checkInterval = setInterval(function() {
+                retries++;
+                if (typeof DocsAPI !== 'undefined') {
+                    clearInterval(checkInterval);
+                    log('✅ DocsAPI loaded after ' + retries + ' retries', 'success');
+                    initializeEditor();
+                } else if (retries > 10) {
+                    clearInterval(checkInterval);
+                    log('❌ DocsAPI failed to load after 10 retries', 'error');
+                    log('Verifica che OnlyOffice Document Server sia attivo su http://localhost:8082', 'error');
+                }
+            }, 1000);
+        }
+
+        // Log dello stato iniziale
+        log('Page loaded. Waiting for OnlyOffice API...');
+    </script>
+</body>
+</html>

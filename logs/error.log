@@ -17636,3 +17636,39 @@ Stack trace:
   thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
 [18-Aug-2025 20:53:15 Europe/Rome] PHP Warning:  Undefined array key "user_nome" in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-open-document.php on line 169
 [18-Aug-2025 20:53:15 Europe/Rome] PHP Warning:  Undefined array key "user_cognome" in C:\xampp\htdocs\piattaforma-collaborativa\test-onlyoffice-open-document.php on line 169
+[18-Aug-2025 20:55:49 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:55:55 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:56:02 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:56:20 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined method CSRFTokenManager::validateRequest() in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:26
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 26
+[18-Aug-2025 20:57:37 Europe/Rome] Dashboard error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'd.file_type' in 'field list' - Trace: #0 C:\xampp\htdocs\piattaforma-collaborativa\backend\config\config.php(104): PDO->prepare('\n            SE...')
+#1 C:\xampp\htdocs\piattaforma-collaborativa\dashboard.php(338): db_query('\n            SE...')
+#2 {main}
+[18-Aug-2025 20:57:37 Europe/Rome] User ID: 2, Azienda ID: null, Is Super Admin: yes
+[18-Aug-2025 20:57:43 Europe/Rome] Mailer config loaded: {"smtp_enabled":"1","smtp_host":"mail.nexiosolution.it","smtp_port":"465","smtp_from_email":"info@nexiosolution.it","smtp_from_name":"Nexio Solution","smtp_username":"info@nexiosolution.it","smtp_password":"***HIDDEN***","smtp_encryption":"ssl","email_fallback_enabled":"1","email_fallback_method":"mail","email_queue_enabled":"1","notify_file_uploaded":"1","notify_file_replaced":"1","notify_file_deleted":"1","notify_folder_created":"1","notify_ticket_created":"1","notify_ticket_status_changed":"1","notify_event_created":"1","notify_event_modified":"1","notify_user_created":"1","notify_document_created":"1","notify_document_modified":"1","notify_document_shared":"1","notify_password_reset":"1"}
+[18-Aug-2025 20:57:44 Europe/Rome] Mailer config loaded: {"smtp_enabled":"1","smtp_host":"mail.nexiosolution.it","smtp_port":"465","smtp_from_email":"info@nexiosolution.it","smtp_from_name":"Nexio Solution","smtp_username":"info@nexiosolution.it","smtp_password":"***HIDDEN***","smtp_encryption":"ssl","email_fallback_enabled":"1","email_fallback_method":"mail","email_queue_enabled":"1","notify_file_uploaded":"1","notify_file_replaced":"1","notify_file_deleted":"1","notify_folder_created":"1","notify_ticket_created":"1","notify_ticket_status_changed":"1","notify_event_created":"1","notify_event_modified":"1","notify_user_created":"1","notify_document_created":"1","notify_document_modified":"1","notify_document_shared":"1","notify_password_reset":"1"}
+[18-Aug-2025 20:57:44 Europe/Rome] PHP Deprecated:  ucfirst(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\piattaforma-collaborativa\tickets.php on line 776
+[18-Aug-2025 20:57:44 Europe/Rome] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\piattaforma-collaborativa\tickets.php on line 780
+[18-Aug-2025 21:05:45 Europe/Rome] PHP Fatal error:  Maximum execution time of 120 seconds exceeded in C:\xampp\htdocs\piattaforma-collaborativa\backend\middleware\Auth.php on line 20
+[18-Aug-2025 21:09:23 Europe/Rome] PHP Fatal error:  Maximum execution time of 120 seconds exceeded in C:\xampp\htdocs\piattaforma-collaborativa\backend\middleware\Auth.php on line 20
+[18-Aug-2025 21:10:50 Europe/Rome] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in C:\xampp\htdocs\piattaforma-collaborativa\test-debug-step.php on line 58
+[18-Aug-2025 21:10:50 Europe/Rome] PHP Warning:  session_start(): Session cannot be started after headers have already been sent in C:\xampp\htdocs\piattaforma-collaborativa\backend\middleware\Auth.php on line 17
+[18-Aug-2025 21:13:21 Europe/Rome] OnlyOffice Auth Error: Access denied to document in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:148
+[18-Aug-2025 21:13:52 Europe/Rome] PHP Warning:  Undefined array key "role" in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php on line 204
+[18-Aug-2025 21:49:19 Europe/Rome] OnlyOffice Auth Error: Invalid action in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:116
+[18-Aug-2025 21:49:21 Europe/Rome] OnlyOffice Auth Error: Invalid action in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\onlyoffice-auth.php:116
+[18-Aug-2025 21:56:51 Europe/Rome] OnlyOffice Document API Error: Invalid or expired access token
+[18-Aug-2025 21:57:54 Europe/Rome] OnlyOffice Document API Error: Invalid or expired access token
+[18-Aug-2025 21:58:04 Europe/Rome] OnlyOffice Document API Error: Invalid or expired access token
+[18-Aug-2025 21:59:52 Europe/Rome] OnlyOffice TEST API: Document 22 accessed successfully

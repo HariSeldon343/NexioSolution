@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  onlyoffice-documentserver:
+    image: onlyoffice/documentserver:latest
+    container_name: onlyoffice-documentserver
+    ports:
+      - "8082:80"
+    environment:
+      # DISABILITA JWT per test iniziale
+      - JWT_ENABLED=false
+      - JWT_SECRET=
+      - JWT_HEADER=
+      - JWT_IN_BODY=false
+      
+      # Altre configurazioni
+      - USE_UNAUTHORIZED_STORAGE=true
+      - WOPI_ENABLED=false
+      
+      # Logging
+      - LOG_LEVEL=DEBUG
+      
+    volumes:
+      # Volume per i font
+      - onlyoffice_fonts:/usr/share/fonts/truetype/custom
+      # Volume per i dati
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      # Volume per i log
+      - onlyoffice_logs:/var/log/onlyoffice
+      
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  onlyoffice_fonts:
+  onlyoffice_data:
+  onlyoffice_logs:

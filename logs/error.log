@@ -17740,3 +17740,7 @@ Stack trace:
 [19-Aug-2025 14:37:16 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 292
 [19-Aug-2025 14:37:16 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_DS_PUBLIC_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 517
 [19-Aug-2025 14:37:16 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 525
+[19-Aug-2025 14:58:27 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_CALLBACK_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 138
+[19-Aug-2025 14:58:27 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 292
+[19-Aug-2025 14:58:27 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_DS_PUBLIC_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 517
+[19-Aug-2025 14:58:27 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 525

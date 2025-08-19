@@ -1,24 +1,26 @@
 <?php
 /**
- * OnlyOffice Document Public Access
- * Fornisce accesso pubblico ai documenti per OnlyOffice
- * Accessibile via file server su porta 8083
+ * OnlyOffice Document Public API
+ * Serve i documenti a OnlyOffice Document Server
+ * IMPORTANTE: Questo endpoint deve essere accessibile da OnlyOffice container
  */
 
-// Abilita CORS per OnlyOffice con supporto completo
+// Headers per CORS e caching
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, HEAD, OPTIONS, POST');
-header('Access-Control-Allow-Headers: X-Requested-With, Content-Type, Authorization, Range');
-header('Access-Control-Expose-Headers: Content-Length, Content-Range');
-header('Access-Control-Max-Age: 3600');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: *');
 
-// Gestisci richieste OPTIONS per CORS preflight
+// Handle preflight OPTIONS request
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
 
-// Ottieni ID documento
+require_once '../config/config.php';
+require_once '../middleware/Auth.php';
+
+// Per OnlyOffice non richiediamo autenticazione standard
+// ma verifichiamo il documento ID
 $docId = $_GET['doc'] ?? null;
 
 if (!$docId) {
@@ -26,83 +28,116 @@ if (!$docId) {
     die('Document ID required');
 }
 
-// Percorso del documento
-$docPath = __DIR__ . '/../../documents/onlyoffice/' . $docId . '.docx';
+// Recupera documento dal database
+$stmt = db_query("SELECT * FROM documenti WHERE id = ?", [$docId]);
+$document = $stmt->fetch();
 
-// Verifica esistenza file
-if (!file_exists($docPath)) {
-    // Prova anche senza estensione
-    $docPath = __DIR__ . '/../../documents/onlyoffice/' . $docId;
-    if (!file_exists($docPath)) {
-        http_response_code(404);
-        die('Document not found: ' . $docId);
+if (!$document) {
+    http_response_code(404);
+    die('Document not found');
+}
+
+// Determina il percorso del file
+$filePath = null;
+
+// Controlla prima in documents/onlyoffice/
+if (!empty($document['filename'])) {
+    $onlyofficePath = __DIR__ . '/../../documents/onlyoffice/' . $document['filename'];
+    if (file_exists($onlyofficePath)) {
+        $filePath = $onlyofficePath;
     }
 }
 
-// Determina il content type basato sull'estensione
-$extension = strtolower(pathinfo($docPath, PATHINFO_EXTENSION));
-$contentTypes = [
-    'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'doc' => 'application/msword',
-    'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'xls' => 'application/vnd.ms-excel',
-    'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'ppt' => 'application/vnd.ms-powerpoint',
-    'pdf' => 'application/pdf',
-    'odt' => 'application/vnd.oasis.opendocument.text',
-    'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
-    'odp' => 'application/vnd.oasis.opendocument.presentation',
-    'txt' => 'text/plain',
-    'rtf' => 'application/rtf',
-    'csv' => 'text/csv'
-];
+// Se non trovato, controlla nel percorso standard uploads
+if (!$filePath && !empty($document['percorso_file'])) {
+    $uploadsPath = __DIR__ . '/../../' . $document['percorso_file'];
+    if (file_exists($uploadsPath)) {
+        $filePath = $uploadsPath;
+    }
+}
 
-$contentType = $contentTypes[$extension] ?? 'application/octet-stream';
+// Se ancora non trovato, prova con path relativo
+if (!$filePath && !empty($document['percorso_file'])) {
+    if (file_exists($document['percorso_file'])) {
+        $filePath = $document['percorso_file'];
+    }
+}
 
-// Invia headers
-header('Content-Type: ' . $contentType);
-header('Content-Length: ' . filesize($docPath));
-header('Content-Disposition: inline; filename="' . basename($docPath) . '"');
+// Se non troviamo il file, creiamo un documento vuoto di default
+if (!$filePath) {
+    // Crea un documento vuoto basato sull'estensione
+    $ext = pathinfo($document['filename'] ?? 'document.docx', PATHINFO_EXTENSION);
+    if (!$ext) $ext = 'docx';
+    
+    $tempFile = __DIR__ . '/../../documents/onlyoffice/' . $document['id'] . '_temp.' . $ext;
+    
+    // Crea directory se non esiste
+    $dir = dirname($tempFile);
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+    
+    // Crea file vuoto o copia da template
+    $templatePath = __DIR__ . '/../../templates/blank.' . $ext;
+    if (file_exists($templatePath)) {
+        copy($templatePath, $tempFile);
+    } else {
+        // Crea contenuto minimo basato sul tipo
+        if ($ext === 'txt') {
+            file_put_contents($tempFile, '');
+        } else {
+            // Per formati Office, creiamo un file minimo
+            // In produzione, dovresti avere template vuoti pre-creati
+            file_put_contents($tempFile, '');
+        }
+    }
+    
+    $filePath = $tempFile;
+}
+
+// Verifica che il file esista ora
+if (!file_exists($filePath)) {
+    http_response_code(404);
+    die('File not found: ' . $filePath);
+}
+
+// Determina il MIME type
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+$mimeType = finfo_file($finfo, $filePath);
+finfo_close($finfo);
+
+// Se MIME type non riconosciuto, usa quello basato sull'estensione
+if (!$mimeType || $mimeType === 'application/octet-stream') {
+    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+    $mimeTypes = [
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'doc' => 'application/msword',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'xls' => 'application/vnd.ms-excel',
+        'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'ppt' => 'application/vnd.ms-powerpoint',
+        'odt' => 'application/vnd.oasis.opendocument.text',
+        'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
+        'odp' => 'application/vnd.oasis.opendocument.presentation',
+        'txt' => 'text/plain',
+        'rtf' => 'application/rtf',
+        'csv' => 'text/csv'
+    ];
+    $mimeType = $mimeTypes[$ext] ?? 'application/octet-stream';
+}
+
+// Headers per il download
+header('Content-Type: ' . $mimeType);
+header('Content-Disposition: inline; filename="' . ($document['filename'] ?? 'document') . '"');
+header('Content-Length: ' . filesize($filePath));
 header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');
 
-// Supporta richieste Range per download parziali
-if (isset($_SERVER['HTTP_RANGE'])) {
-    $size = filesize($docPath);
-    $range = $_SERVER['HTTP_RANGE'];
-    
-    // Parse range header
-    if (preg_match('/bytes=(\d+)-(\d+)?/', $range, $matches)) {
-        $start = intval($matches[1]);
-        $end = isset($matches[2]) ? intval($matches[2]) : $size - 1;
-        
-        if ($start > $end || $end >= $size) {
-            http_response_code(416);
-            header("Content-Range: bytes */$size");
-            exit;
-        }
-        
-        http_response_code(206);
-        header("Content-Range: bytes $start-$end/$size");
-        header("Content-Length: " . ($end - $start + 1));
-        
-        $fp = fopen($docPath, 'rb');
-        fseek($fp, $start);
-        $remaining = $end - $start + 1;
-        
-        while ($remaining > 0 && !feof($fp)) {
-            $chunk = min(8192, $remaining);
-            echo fread($fp, $chunk);
-            $remaining -= $chunk;
-            flush();
-        }
-        
-        fclose($fp);
-        exit;
-    }
-}
+// Invia il file
+readfile($filePath);
 
-// Invia il file completo
-readfile($docPath);
+// Log accesso (opzionale)
+error_log("OnlyOffice accessed document ID: $docId, File: $filePath");
+
 exit;

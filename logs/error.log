@@ -17704,3 +17704,39 @@ Stack trace:
 [19-Aug-2025 13:04:35 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 292
 [19-Aug-2025 13:04:35 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_DS_PUBLIC_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 517
 [19-Aug-2025 13:04:35 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 525
+[19-Aug-2025 14:02:34 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_CALLBACK_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 138
+[19-Aug-2025 14:02:34 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 292
+[19-Aug-2025 14:02:34 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_DS_PUBLIC_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 517
+[19-Aug-2025 14:02:34 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 525
+[19-Aug-2025 14:05:03 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_CALLBACK_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 138
+[19-Aug-2025 14:05:03 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 292
+[19-Aug-2025 14:05:03 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_DS_PUBLIC_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 517
+[19-Aug-2025 14:05:03 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 525
+[19-Aug-2025 14:24:17 Europe/Rome] DEBUG LOG-ATTIVITA: Where clause: 1=1 AND DATE(data_azione) >= :data_da AND DATE(data_azione) <= :data_a
+[19-Aug-2025 14:24:17 Europe/Rome] DEBUG LOG-ATTIVITA: Params: Array
+(
+    [data_da] => 2025-08-12
+    [data_a] => 2025-08-19
+)
+
+[19-Aug-2025 14:24:17 Europe/Rome] DEBUG LOG-ATTIVITA: Total count: 64
+[19-Aug-2025 14:24:17 Europe/Rome] DEBUG LOG-ATTIVITA: SQL finale: SELECT l.*, u.nome, u.cognome, u.email, a.nome as azienda_nome
+        FROM log_attivita l
+        LEFT JOIN utenti u ON l.utente_id = u.id
+        LEFT JOIN aziende a ON l.azienda_id = a.id
+        WHERE 1=1 AND DATE(data_azione) >= :data_da AND DATE(data_azione) <= :data_a 
+        ORDER BY l.data_azione DESC 
+        LIMIT 50 OFFSET 0
+[19-Aug-2025 14:24:17 Europe/Rome] DEBUG LOG-ATTIVITA: Logs trovati: 50
+[19-Aug-2025 14:24:17 Europe/Rome] PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\piattaforma-collaborativa\log-attivita.php on line 553
+[19-Aug-2025 14:24:23 Europe/Rome] Mailer config loaded: {"smtp_enabled":"1","smtp_host":"mail.nexiosolution.it","smtp_port":"465","smtp_from_email":"info@nexiosolution.it","smtp_from_name":"Nexio Solution","smtp_username":"info@nexiosolution.it","smtp_password":"***HIDDEN***","smtp_encryption":"ssl","email_fallback_enabled":"1","email_fallback_method":"mail","email_queue_enabled":"1","notify_file_uploaded":"1","notify_file_replaced":"1","notify_file_deleted":"1","notify_folder_created":"1","notify_ticket_created":"1","notify_ticket_status_changed":"1","notify_event_created":"1","notify_event_modified":"1","notify_user_created":"1","notify_document_created":"1","notify_document_modified":"1","notify_document_shared":"1","notify_password_reset":"1"}
+[19-Aug-2025 14:24:24 Europe/Rome] Mailer config loaded: {"smtp_enabled":"1","smtp_host":"mail.nexiosolution.it","smtp_port":"465","smtp_from_email":"info@nexiosolution.it","smtp_from_name":"Nexio Solution","smtp_username":"info@nexiosolution.it","smtp_password":"***HIDDEN***","smtp_encryption":"ssl","email_fallback_enabled":"1","email_fallback_method":"mail","email_queue_enabled":"1","notify_file_uploaded":"1","notify_file_replaced":"1","notify_file_deleted":"1","notify_folder_created":"1","notify_ticket_created":"1","notify_ticket_status_changed":"1","notify_event_created":"1","notify_event_modified":"1","notify_user_created":"1","notify_document_created":"1","notify_document_modified":"1","notify_document_shared":"1","notify_password_reset":"1"}
+[19-Aug-2025 14:24:32 Europe/Rome] Mailer config loaded: {"smtp_enabled":"1","smtp_host":"mail.nexiosolution.it","smtp_port":"465","smtp_from_email":"info@nexiosolution.it","smtp_from_name":"Nexio Solution","smtp_username":"info@nexiosolution.it","smtp_password":"***HIDDEN***","smtp_encryption":"ssl","email_fallback_enabled":"1","email_fallback_method":"mail","email_queue_enabled":"1","notify_file_uploaded":"1","notify_file_replaced":"1","notify_file_deleted":"1","notify_folder_created":"1","notify_ticket_created":"1","notify_ticket_status_changed":"1","notify_event_created":"1","notify_event_modified":"1","notify_user_created":"1","notify_document_created":"1","notify_document_modified":"1","notify_document_shared":"1","notify_password_reset":"1"}
+[19-Aug-2025 14:24:32 Europe/Rome] Mailer config loaded: {"smtp_enabled":"1","smtp_host":"mail.nexiosolution.it","smtp_port":"465","smtp_from_email":"info@nexiosolution.it","smtp_from_name":"Nexio Solution","smtp_username":"info@nexiosolution.it","smtp_password":"***HIDDEN***","smtp_encryption":"ssl","email_fallback_enabled":"1","email_fallback_method":"mail","email_queue_enabled":"1","notify_file_uploaded":"1","notify_file_replaced":"1","notify_file_deleted":"1","notify_folder_created":"1","notify_ticket_created":"1","notify_ticket_status_changed":"1","notify_event_created":"1","notify_event_modified":"1","notify_user_created":"1","notify_document_created":"1","notify_document_modified":"1","notify_document_shared":"1","notify_password_reset":"1"}
+[19-Aug-2025 14:24:37 Europe/Rome] PHP Warning:  Undefined array key "aggiornato_il" in C:\xampp\htdocs\piattaforma-collaborativa\backend\api\delete-ticket.php on line 71
+[19-Aug-2025 14:24:37 Europe/Rome] PHP Warning:  Array to string conversion in C:\xampp\htdocs\piattaforma-collaborativa\backend\config\config.php on line 105
+[19-Aug-2025 14:24:43 Europe/Rome] Mailer config loaded: {"smtp_enabled":"1","smtp_host":"mail.nexiosolution.it","smtp_port":"465","smtp_from_email":"info@nexiosolution.it","smtp_from_name":"Nexio Solution","smtp_username":"info@nexiosolution.it","smtp_password":"***HIDDEN***","smtp_encryption":"ssl","email_fallback_enabled":"1","email_fallback_method":"mail","email_queue_enabled":"1","notify_file_uploaded":"1","notify_file_replaced":"1","notify_file_deleted":"1","notify_folder_created":"1","notify_ticket_created":"1","notify_ticket_status_changed":"1","notify_event_created":"1","notify_event_modified":"1","notify_user_created":"1","notify_document_created":"1","notify_document_modified":"1","notify_document_shared":"1","notify_password_reset":"1"}
+[19-Aug-2025 14:37:16 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_CALLBACK_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 138
+[19-Aug-2025 14:37:16 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 292
+[19-Aug-2025 14:37:16 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_DS_PUBLIC_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 517
+[19-Aug-2025 14:37:16 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 525

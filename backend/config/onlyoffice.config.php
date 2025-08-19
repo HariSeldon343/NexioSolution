@@ -28,6 +28,9 @@ class OnlyOfficeConfig {
     const APP_PUBLIC_URL = 'http://localhost/piattaforma-collaborativa';
     const APP_INTERNAL_URL = 'http://host.docker.internal/piattaforma-collaborativa'; // Per Docker su Windows
     
+    // Host per Docker Desktop (Windows/Mac)
+    const DOCUMENT_HOST_INTERNAL = 'http://host.docker.internal'; // CRITICO: Obbligatorio per Docker Desktop
+    
     // Configurazione produzione (Cloudflare)
     const PRODUCTION_URL = 'https://app.nexiosolution.it/piattaforma-collaborativa';
     const PRODUCTION_DS_URL = 'https://app.nexiosolution.it/onlyoffice/';
@@ -163,6 +166,31 @@ class OnlyOfficeConfig {
     }
     
     /**
+     * Verifica se stiamo usando Docker Desktop (Windows/Mac)
+     * Docker Desktop richiede host.docker.internal per comunicazione container->host
+     */
+    public static function isDockerDesktop() {
+        // Su Docker Desktop, l'ambiente WSL2 o il fatto che stiamo su Windows indica Docker Desktop
+        return !self::isProduction() && 
+               (PHP_OS_FAMILY === 'Windows' || 
+                (isset($_SERVER['WSL_DISTRO_NAME']) || 
+                 file_exists('/.dockerenv')));
+    }
+    
+    /**
+     * Ottieni URL documento per OnlyOffice container su Docker Desktop
+     * CRITICO: Su Docker Desktop DEVE usare host.docker.internal
+     */
+    public static function getDocumentUrlForContainer($path) {
+        if (self::isDockerDesktop()) {
+            // Docker Desktop Windows/Mac richiede host.docker.internal
+            return self::DOCUMENT_HOST_INTERNAL . $path;
+        }
+        // Linux nativo può usare IP host o hostname del servizio
+        return 'http://localhost' . $path;
+    }
+    
+    /**
      * Ottieni URL del Document Server per il browser (pubblico)
      */
     public static function getDocumentServerUrl() {
@@ -193,8 +221,13 @@ class OnlyOfficeConfig {
     /**
      * Ottieni URL documento per OnlyOffice Document Server (interno)
      * Questo URL verrà usato da OnlyOffice per scaricare il documento
+     * CRITICO: Su Docker Desktop deve usare host.docker.internal
      */
     public static function getDocumentUrlForDS($filename) {
+        if (self::isDockerDesktop()) {
+            // Docker Desktop RICHIEDE host.docker.internal
+            return self::DOCUMENT_HOST_INTERNAL . '/piattaforma-collaborativa/documents/onlyoffice/' . $filename;
+        }
         // OnlyOffice deve usare l'URL interno del fileserver
         return self::FILESERVER_INTERNAL_URL . 'piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=' . urlencode($filename);
     }

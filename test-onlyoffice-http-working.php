@@ -279,7 +279,11 @@
                         fileType: "docx",
                         key: "test_" + Date.now(),
                         title: "Test Document HTTP.docx",
-                        url: "http://localhost:8083/documents/onlyoffice/new.docx",
+                        // CRITICO: Per Docker Desktop Windows, OnlyOffice DEVE usare host.docker.internal
+                        // Dal container Docker, "localhost" punta al container stesso, NON all'host!
+                        url: "http://host.docker.internal/piattaforma-collaborativa/documents/onlyoffice/test_document_1755605547.docx",
+                        // NOTA IMPORTANTE: host.docker.internal è OBBLIGATORIO per Docker Desktop su Windows
+                        // NON usare: localhost, 127.0.0.1, o IP locali - questi non funzioneranno dal container
                         permissions: {
                             edit: true,
                             download: true,
@@ -288,7 +292,8 @@
                     },
                     documentType: "word",
                     editorConfig: {
-                        callbackUrl: "http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-callback.php",
+                        // CRITICO: Anche il callback DEVE usare host.docker.internal per Docker Desktop
+                        callbackUrl: "http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php",
                         lang: "it-IT",
                         mode: "edit",
                         user: {
@@ -317,8 +322,67 @@
                             logStatus('✅ Documento caricato', 'success');
                         },
                         onError: function(event) {
-                            logStatus(`❌ Errore: ${event.data || 'Errore sconosciuto'}`, 'error');
-                            console.error('OnlyOffice Error:', event);
+                            console.error('OnlyOffice Error Details:', event);
+                            
+                            let errorMessage = 'Errore sconosciuto';
+                            let errorDetails = '';
+                            
+                            if (event && event.data) {
+                                console.error('Error Code:', event.data.errorCode);
+                                console.error('Error Description:', event.data.errorDescription);
+                                
+                                // Interpretazione codici errore OnlyOffice
+                                switch(event.data.errorCode) {
+                                    case -1: 
+                                        errorMessage = 'Unknown error';
+                                        errorDetails = 'Errore generico del server';
+                                        break;
+                                    case -2: 
+                                        errorMessage = 'Callback URL error';
+                                        errorDetails = 'Il server non può raggiungere l\'URL di callback';
+                                        break;
+                                    case -3: 
+                                        errorMessage = 'Internal server error';
+                                        errorDetails = 'Errore interno del Document Server';
+                                        break;
+                                    case -4: 
+                                        errorMessage = 'Cannot download document';
+                                        errorDetails = 'Il server non può scaricare il documento dall\'URL fornito';
+                                        break;
+                                    case -5: 
+                                        errorMessage = 'Unsupported document format';
+                                        errorDetails = 'Formato documento non supportato';
+                                        break;
+                                    case -6: 
+                                        errorMessage = 'Invalid document key';
+                                        errorDetails = 'La chiave del documento non è valida o è duplicata';
+                                        break;
+                                    case -20: 
+                                        errorMessage = 'Too many connections';
+                                        errorDetails = 'Troppe connessioni al server';
+                                        break;
+                                    case -21: 
+                                        errorMessage = 'Password required';
+                                        errorDetails = 'Il documento richiede una password';
+                                        break;
+                                    case -22: 
+                                        errorMessage = 'Database error';
+                                        errorDetails = 'Errore database nel Document Server';
+                                        break;
+                                    default:
+                                        if (event.data.errorCode) {
+                                            errorMessage = `Error code: ${event.data.errorCode}`;
+                                        }
+                                        if (event.data.errorDescription) {
+                                            errorDetails = event.data.errorDescription;
+                                        }
+                                }
+                                
+                                logStatus(`❌ ${errorMessage}: ${errorDetails}`, 'error');
+                                logStatus(`📋 Error Data: ${JSON.stringify(event.data)}`, 'error');
+                            } else {
+                                logStatus(`❌ OnlyOffice Error: ${JSON.stringify(event)}`, 'error');
+                            }
                         },
                         onWarning: function(event) {
                             logStatus(`⚠️ Avviso: ${event.data}`, 'warning');
@@ -332,11 +396,29 @@
                     height: "100%"
                 };
                 
+                logStatus('📋 Document URL: ' + config.document.url, 'warning');
+                logStatus('🔑 Document Key: ' + config.document.key, 'info');
                 logStatus('Configurazione HTTP: ' + JSON.stringify({
                     documentServer: 'http://localhost:8082',
-                    fileServer: 'http://localhost:8083',
+                    documentUrl: config.document.url,
+                    callbackUrl: config.editorConfig.callbackUrl,
                     mode: 'HTTP'
                 }), 'info');
+                
+                // Test accesso documento prima di caricare editor
+                fetch(config.document.url)
+                    .then(response => {
+                        if (response.ok) {
+                            logStatus('✅ Documento accessibile dal browser', 'success');
+                        } else {
+                            logStatus('❌ Documento non accessibile dal browser: HTTP ' + response.status, 'error');
+                            logStatus('⚠️ OnlyOffice potrebbe non riuscire a caricare il documento', 'warning');
+                        }
+                    })
+                    .catch(error => {
+                        logStatus('❌ Errore accesso documento dal browser: ' + error.message, 'error');
+                        logStatus('⚠️ Verifica che il percorso del documento sia corretto', 'warning');
+                    });
                 
                 // Inizializza editor
                 docEditor = new DocsAPI.DocEditor("editor-container", config);
@@ -402,7 +484,8 @@
                 },
                 documentType: "word",
                 editorConfig: {
-                    callbackUrl: "http://localhost/piattaforma-collaborativa/backend/api/onlyoffice-callback.php",
+                    // CRITICO: Docker Desktop Windows richiede host.docker.internal
+                    callbackUrl: "http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php",
                     lang: "it-IT",
                     mode: "edit",
                     user: {

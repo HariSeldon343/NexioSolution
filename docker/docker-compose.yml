@@ -6,8 +6,9 @@ services:
     container_name: nexio-onlyoffice
     restart: unless-stopped
     ports:
+      # Porta 8080 per HTTP (OnlyOffice ascolta su porta 80 internamente)
       - "8080:80"
-      - "8443:443"
+      # Nota: OnlyOffice Community Edition non supporta HTTPS direttamente
     environment:
       # Disabilita JWT per semplificare il testing iniziale
       - JWT_ENABLED=false
@@ -85,7 +86,7 @@ services:
     container_name: nexio-fileserver
     restart: unless-stopped
     ports:
-      - "8081:80"
+      - "8083:80"  # Porta corretta 8083 per il file server
     volumes:
       - /mnt/c/xampp/htdocs/piattaforma-collaborativa/documents:/usr/share/nginx/html/documents:ro
       - /mnt/c/xampp/htdocs/piattaforma-collaborativa/docker/nginx.conf:/etc/nginx/nginx.conf:ro

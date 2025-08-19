@@ -4,20 +4,19 @@
  * Usa API semplificata per bypassare autenticazione
  */
 
-// Include OnlyOffice configuration
-require_once __DIR__ . '/backend/config/onlyoffice.config.php';
-
-// Use configuration URL
-$ONLYOFFICE_URL = $ONLYOFFICE_DS_PUBLIC_URL;
+// Configurazione corretta - usa HTTP su porta 8080
+$ONLYOFFICE_URL = 'http://localhost:8080';
+$FILE_SERVER_URL = 'http://localhost:8083';
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'];
 $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
 
-// URL per il documento - usa l'API di test che bypassa auth
-$documentUrl = $protocol . '://' . $host . $basePath . '/backend/api/onlyoffice-document-test.php?id=1';
+// URL per il documento - usa il file server nginx su porta 8083
+$test_document = '45.docx'; // Documento di test esistente
+$documentUrl = $FILE_SERVER_URL . '/documents/onlyoffice/' . $test_document;
 
-// Per OnlyOffice nel container Docker, deve usare host.docker.internal
-$dockerDocumentUrl = 'http://host.docker.internal' . $basePath . '/backend/api/onlyoffice-document-test.php?id=1';
+// URL alternativo usando localhost dell'app
+$appDocumentUrl = $protocol . '://' . $host . $basePath . '/documents/onlyoffice/' . $test_document;
 
 ?>
 <!DOCTYPE html>
@@ -175,19 +174,20 @@ $dockerDocumentUrl = 'http://host.docker.internal' . $basePath . '/backend/api/o
             
             <div class="config">
                 <strong>Configuration:</strong><br>
-                OnlyOffice Server: <?php echo $ONLYOFFICE_URL; ?><br>
-                Document URL (Browser): <?php echo $documentUrl; ?><br>
-                Document URL (Docker): <?php echo $dockerDocumentUrl; ?><br>
-                JWT: DISABLED<br>
-                Auth: BYPASSED (test mode)
+                OnlyOffice Server: <?php echo $ONLYOFFICE_URL; ?> (HTTP porta 8080)<br>
+                File Server: <?php echo $FILE_SERVER_URL; ?> (Nginx porta 8083)<br>
+                Document: <?php echo $test_document; ?><br>
+                Document URL: <?php echo $documentUrl; ?><br>
+                Alt URL: <?php echo $appDocumentUrl; ?><br>
+                JWT: DISABLED
             </div>
             
             <div class="controls">
                 <button onclick="initEditor()" class="success">
                     ✅ Initialize Editor (Recommended)
                 </button>
-                <button onclick="initEditorWithDocker()">
-                    🐳 Initialize with Docker URL
+                <button onclick="initEditorWithAppUrl()">
+                    🌐 Initialize with App URL
                 </button>
                 <button onclick="testDirectUrl()">
                     🔗 Test Document URL
@@ -221,7 +221,7 @@ $dockerDocumentUrl = 'http://host.docker.internal' . $basePath . '/backend/api/o
         // Configuration
         const onlyofficeUrl = '<?php echo $ONLYOFFICE_URL; ?>';
         const documentUrl = '<?php echo $documentUrl; ?>';
-        const dockerDocumentUrl = '<?php echo $dockerDocumentUrl; ?>';
+        const appDocumentUrl = '<?php echo $appDocumentUrl; ?>';
         let docEditor = null;
         
         // Logging
@@ -318,10 +318,10 @@ $dockerDocumentUrl = 'http://host.docker.internal' . $basePath . '/backend/api/o
                         log(`❌ Error: ${JSON.stringify(event.data)}`, 'error');
                         setStatus('Error', 'error');
                         
-                        // If browser URL fails, try Docker URL
+                        // If file server URL fails, try app URL
                         if (event.data.errorCode === -1) {
-                            log('Retrying with Docker URL...', 'warning');
-                            setTimeout(() => initEditorWithDocker(), 1000);
+                            log('Retrying with App URL...', 'warning');
+                            setTimeout(() => initEditorWithAppUrl(), 1000);
                         }
                     },
                     onWarning: function(event) {
@@ -342,9 +342,9 @@ $dockerDocumentUrl = 'http://host.docker.internal' . $basePath . '/backend/api/o
             }
         }
         
-        // Initialize with Docker URL
-        function initEditorWithDocker() {
-            log('Initializing editor with Docker URL (host.docker.internal)...', 'info');
+        // Initialize with App URL
+        function initEditorWithAppUrl() {
+            log('Initializing editor with App URL...', 'info');
             
             if (typeof DocsAPI === 'undefined') {
                 alert('OnlyOffice API not loaded!');
@@ -357,10 +357,10 @@ $dockerDocumentUrl = 'http://host.docker.internal' . $basePath . '/backend/api/o
             const config = {
                 documentType: 'word',
                 document: {
-                    title: 'Test Document (Docker)',
-                    url: dockerDocumentUrl,
+                    title: 'Test Document (App)',
+                    url: appDocumentUrl,
                     fileType: 'docx',
-                    key: 'docker_' + Date.now(),
+                    key: 'app_' + Date.now(),
                     permissions: {
                         edit: true,
                         download: true,
@@ -381,26 +381,26 @@ $dockerDocumentUrl = 'http://host.docker.internal' . $basePath . '/backend/api/o
                 events: {
                     onAppReady: function() {
                         hideLoading();
-                        log('✅ Editor ready with Docker URL!', 'success');
-                        setStatus('Editor Active (Docker)', 'success');
+                        log('✅ Editor ready with App URL!', 'success');
+                        setStatus('Editor Active (App)', 'success');
                     },
                     onError: function(event) {
                         hideLoading();
-                        log(`❌ Docker URL Error: ${JSON.stringify(event.data)}`, 'error');
-                        setStatus('Docker Error', 'error');
+                        log(`❌ App URL Error: ${JSON.stringify(event.data)}`, 'error');
+                        setStatus('App Error', 'error');
                     }
                 }
             };
             
-            log('Docker config: ' + JSON.stringify(config, null, 2), 'info');
+            log('App config: ' + JSON.stringify(config, null, 2), 'info');
             
             try {
                 docEditor = new DocsAPI.DocEditor('editor', config);
-                log('Docker editor instance created', 'success');
+                log('App editor instance created', 'success');
             } catch (e) {
                 hideLoading();
-                log(`Failed with Docker: ${e.message}`, 'error');
-                setStatus('Docker Failed', 'error');
+                log(`Failed with App URL: ${e.message}`, 'error');
+                setStatus('App Failed', 'error');
             }
         }
         

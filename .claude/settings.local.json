@@ -19,7 +19,9 @@
       "Bash(grep:*)",
       "Bash(docker:*)",
       "Bash(bash:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(ss:*)",
+      "Bash(wget:*)"
     ],
     "deny": []
   }

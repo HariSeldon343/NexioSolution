@@ -6,8 +6,8 @@
 
 // Include OnlyOffice configuration
 require_once __DIR__ . '/backend/config/onlyoffice.config.php';
-// Configurazione diretta - use port 8080
-$ONLYOFFICE_SERVER = 'http://localhost:8080';
+// Configurazione diretta - use port 8443 (HTTPS)
+$ONLYOFFICE_SERVER = 'https://localhost:8443';
 $documentId = 22; // ID del documento nel database con file DOCX valido
 
 // Configurazione minima per test
@@ -16,7 +16,7 @@ $config = [
     'documentType' => 'word',
     'document' => [
         'title' => 'Test Document.docx',
-        'url' => 'http://localhost:8081/documents/onlyoffice/new.docx',
+        'url' => 'http://localhost:8083/documents/onlyoffice/new.docx',
         'fileType' => 'docx',
         'key' => 'test_' . time(), // Chiave unica per evitare cache
         'permissions' => [

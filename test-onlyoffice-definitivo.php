@@ -26,7 +26,7 @@ $documentUrl = "http://host.docker.internal/piattaforma-collaborativa/backend/ap
 $callbackUrl = "http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=" . $docId;
 
 // OnlyOffice server URL (hardcoded for clarity)
-$onlyofficeServerUrl = "http://localhost:8080";
+$onlyofficeServerUrl = "https://localhost:8443";
 
 // Complete configuration with correct structure
 $config = [
@@ -393,7 +393,7 @@ $debugInfo = [
     </div>
 
     <!-- CRITICAL: Full URL hardcoded, NOT using PHP variable -->
-    <script type="text/javascript" src="http://localhost:8080/web-apps/apps/api/documents/api.js"></script>
+    <script type="text/javascript" src="https://localhost:8443/web-apps/apps/api/documents/api.js"></script>
     
     <script>
         // Configuration from PHP
@@ -473,7 +473,7 @@ $debugInfo = [
             // Check if API is loaded
             if (typeof DocsAPI === 'undefined') {
                 showStatus('❌ DocsAPI is not defined! OnlyOffice script not loaded.', 'error');
-                showStatus('📍 Expected script URL: http://localhost:8080/web-apps/apps/api/documents/api.js', 'error');
+                showStatus('📍 Expected script URL: https://localhost:8443/web-apps/apps/api/documents/api.js', 'error');
                 return;
             }
             
@@ -580,7 +580,7 @@ $debugInfo = [
                     showStatus('✅ OnlyOffice API detected!', 'success');
                     setTimeout(loadEditor, 1000);
                 } else {
-                    showStatus('❌ OnlyOffice API not found. Is the server running on port 8080?', 'error');
+                    showStatus('❌ OnlyOffice API not found. Is the server running on port 8443?', 'error');
                     showStatus('💡 Try: docker ps to check if container is running', 'warning');
                 }
             }, 2000);
@@ -588,7 +588,7 @@ $debugInfo = [
         
         // Debug: Log configuration
         console.log('OnlyOffice Configuration:', config);
-        console.log('OnlyOffice Server URL: http://localhost:8080');
+        console.log('OnlyOffice Server URL: https://localhost:8443');
         console.log('Document URL:', '<?php echo $documentUrl; ?>');
         console.log('Callback URL:', '<?php echo $callbackUrl; ?>');
     </script>

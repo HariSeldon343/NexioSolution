@@ -374,7 +374,7 @@ Test direct access: <a href="<?php echo $documentUrl; ?>" target="_blank"><?php 
             // Note about OnlyOffice
             addLog('NOTE: If OnlyOffice Document Server is running in Docker, make sure:', 'warning');
             addLog('  1. Container is running: docker ps', 'warning');
-            addLog('  2. Port 8080 is accessible: http://localhost:8080', 'warning');
+            addLog('  2. Port 8443 is accessible: https://localhost:8443', 'warning');
             addLog('  3. No firewall blocking connections', 'warning');
         });
     </script>

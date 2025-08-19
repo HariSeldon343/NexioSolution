@@ -12,13 +12,21 @@ if (!defined('APP_PATH')) {
 class OnlyOfficeConfig {
     /**
      * URL del Document Server OnlyOffice (Docker)
+     * Container nexio-onlyoffice su porta 8080 (HTTP)
+     * Nota: OnlyOffice Community Edition ascolta su HTTP internamente
      */
     const DOCUMENT_SERVER_URL = 'http://localhost:8080';
     
     /**
      * URL del File Server Nginx (per servire i documenti)
+     * Container nexio-fileserver su porta 8083 (HTTP)
      */
-    const FILE_SERVER_URL = 'http://localhost:8081';
+    const FILE_SERVER_URL = 'http://localhost:8083';
+    
+    /**
+     * URL interno per comunicazione container-to-container
+     */
+    const INTERNAL_FILE_SERVER_URL = 'http://nexio-fileserver:80';
     
     /**
      * URL pubblico dell'applicazione (per callback)
@@ -79,7 +87,6 @@ class OnlyOfficeConfig {
         'modifyFilter' => true,
         'modifyContentControl' => true,
         'review' => true,
-        'chat' => true,
         'commentGroups' => [],
         'userInfoGroups' => []
     ];
@@ -95,7 +102,6 @@ class OnlyOfficeConfig {
         'user' => null, // Impostato dinamicamente
         'customization' => [
             'autosave' => true,
-            'chat' => true,
             'commentAuthorOnly' => false,
             'comments' => true,
             'compactHeader' => false,
@@ -296,6 +302,9 @@ class OnlyOfficeConfig {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 5);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        // Ignora certificati SSL per localhost (solo per sviluppo!)
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

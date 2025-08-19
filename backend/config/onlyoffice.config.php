@@ -11,33 +11,27 @@ if (!defined('APP_PATH')) {
 
 class OnlyOfficeConfig {
     /**
-     * CONFIGURAZIONE HTTP PER SVILUPPO LOCALE
-     * OnlyOffice Document Server con HTTP per evitare problemi SSL in sviluppo
-     * NOTA: Per produzione, configurare HTTPS con certificati validi
+     * CONFIGURAZIONE DINAMICA PER AMBIENTI MULTIPLI
+     * Rileva automaticamente l'ambiente e configura gli URL appropriati
      */
     
-    // URL pubblici (accessibili dal browser) - HTTP per sviluppo
-    const ONLYOFFICE_DS_PUBLIC_URL = 'http://localhost:8082/';   // HTTP su porta 8082 (come da docker-compose)
-    const FILESERVER_PUBLIC_URL = 'http://localhost:8083/';      // HTTP su porta 8083 (nginx fileserver)
+    // Configurazione per ambiente di sviluppo locale
+    const DEV_ONLYOFFICE_PUBLIC_URL = 'http://localhost:8082/';
+    const DEV_FILESERVER_PUBLIC_URL = 'http://localhost/';
+    const DEV_APP_PUBLIC_URL = 'http://localhost/piattaforma-collaborativa';
+    
+    // Configurazione per produzione
+    const PROD_ONLYOFFICE_PUBLIC_URL = 'https://app.nexiosolution.it/onlyoffice/';
+    const PROD_FILESERVER_PUBLIC_URL = 'https://app.nexiosolution.it/';
+    const PROD_APP_PUBLIC_URL = 'https://app.nexiosolution.it/piattaforma-collaborativa';
     
     // URL interni Docker (comunicazione container-to-container)
-    const ONLYOFFICE_DS_INTERNAL_URL = 'http://nexio-onlyoffice/';   // HTTP per comunicazione interna
-    const FILESERVER_INTERNAL_URL = 'http://nexio-fileserver/';      // Nome host del container
+    const ONLYOFFICE_DS_INTERNAL_URL = 'http://nexio-documentserver/';
+    const FILESERVER_INTERNAL_URL = 'http://nexio-fileserver/';
     
-    // URL applicazione
-    const APP_PUBLIC_URL = 'http://localhost/piattaforma-collaborativa';
-    const APP_INTERNAL_URL = 'http://host.docker.internal/piattaforma-collaborativa'; // Per Docker su Windows
+    // Host per Docker Desktop (Windows/Mac) - sempre usa host.docker.internal
+    const DOCKER_HOST_INTERNAL = 'http://host.docker.internal';
     
-    // Host per Docker Desktop (Windows/Mac)
-    const DOCUMENT_HOST_INTERNAL = 'http://host.docker.internal'; // CRITICO: Obbligatorio per Docker Desktop
-    
-    // Configurazione produzione (Cloudflare)
-    const PRODUCTION_URL = 'https://app.nexiosolution.it/piattaforma-collaborativa';
-    const PRODUCTION_DS_URL = 'https://app.nexiosolution.it/onlyoffice/';
-    
-    // Legacy aliases per retrocompatibilità
-    const DOCUMENT_SERVER_URL = self::ONLYOFFICE_DS_PUBLIC_URL;
-    const FILE_SERVER_URL = self::FILESERVER_PUBLIC_URL;
     
     /**
      * Percorso locale documenti
@@ -182,12 +176,8 @@ class OnlyOfficeConfig {
      * CRITICO: Su Docker Desktop DEVE usare host.docker.internal
      */
     public static function getDocumentUrlForContainer($path) {
-        if (self::isDockerDesktop()) {
-            // Docker Desktop Windows/Mac richiede host.docker.internal
-            return self::DOCUMENT_HOST_INTERNAL . $path;
-        }
-        // Linux nativo può usare IP host o hostname del servizio
-        return 'http://localhost' . $path;
+        // SEMPRE usa host.docker.internal per Docker Desktop Windows
+        return self::DOCKER_HOST_INTERNAL . $path;
     }
     
     /**
@@ -195,9 +185,9 @@ class OnlyOfficeConfig {
      */
     public static function getDocumentServerUrl() {
         if (self::isProduction()) {
-            return self::PRODUCTION_DS_URL;
+            return self::PROD_ONLYOFFICE_PUBLIC_URL;
         }
-        return self::ONLYOFFICE_DS_PUBLIC_URL;
+        return self::DEV_ONLYOFFICE_PUBLIC_URL;
     }
     
     /**
@@ -213,9 +203,9 @@ class OnlyOfficeConfig {
      */
     public static function getFileServerUrl() {
         if (self::isProduction()) {
-            return self::PRODUCTION_URL . '/';
+            return self::PROD_FILESERVER_PUBLIC_URL;
         }
-        return self::FILESERVER_PUBLIC_URL;
+        return self::DEV_FILESERVER_PUBLIC_URL;
     }
     
     /**
@@ -224,12 +214,12 @@ class OnlyOfficeConfig {
      * CRITICO: Su Docker Desktop deve usare host.docker.internal
      */
     public static function getDocumentUrlForDS($filename) {
-        if (self::isDockerDesktop()) {
-            // Docker Desktop RICHIEDE host.docker.internal
-            return self::DOCUMENT_HOST_INTERNAL . '/piattaforma-collaborativa/documents/onlyoffice/' . $filename;
+        if (self::isProduction()) {
+            // In produzione usa URL pubblico HTTPS
+            return self::PROD_APP_PUBLIC_URL . '/documents/onlyoffice/' . $filename;
         }
-        // OnlyOffice deve usare l'URL interno del fileserver
-        return self::FILESERVER_INTERNAL_URL . 'piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=' . urlencode($filename);
+        // In sviluppo Docker Desktop SEMPRE richiede host.docker.internal
+        return self::DOCKER_HOST_INTERNAL . '/piattaforma-collaborativa/documents/onlyoffice/' . $filename;
     }
     
     /**
@@ -238,9 +228,9 @@ class OnlyOfficeConfig {
      */
     public static function getDocumentUrlForBrowser($filename) {
         if (self::isProduction()) {
-            return self::PRODUCTION_URL . '/backend/api/onlyoffice-document-public.php?doc=' . urlencode($filename);
+            return self::PROD_APP_PUBLIC_URL . '/documents/onlyoffice/' . $filename;
         }
-        return self::FILESERVER_PUBLIC_URL . 'piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=' . urlencode($filename);
+        return self::DEV_APP_PUBLIC_URL . '/documents/onlyoffice/' . $filename;
     }
     
     /**
@@ -257,10 +247,10 @@ class OnlyOfficeConfig {
     public static function getCallbackUrl($documentId) {
         // OnlyOffice container deve poter raggiungere l'app
         if (self::isProduction()) {
-            return self::PRODUCTION_URL . '/backend/api/onlyoffice-callback.php?id=' . $documentId;
+            return self::PROD_APP_PUBLIC_URL . '/backend/api/onlyoffice-callback.php?doc=' . $documentId;
         }
-        // In sviluppo, usa host.docker.internal per Windows Docker
-        return self::APP_INTERNAL_URL . '/backend/api/onlyoffice-callback.php?id=' . $documentId;
+        // In sviluppo, SEMPRE usa host.docker.internal per Windows Docker
+        return self::DOCKER_HOST_INTERNAL . '/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=' . $documentId;
     }
     
     /**
@@ -382,11 +372,9 @@ class OnlyOfficeConfig {
         curl_setopt($ch, CURLOPT_TIMEOUT, 5);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         
-        // Per HTTPS su localhost, ignora certificati SSL (solo per sviluppo!)
-        if (strpos($url, 'https://localhost') === 0) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        }
+        // Per HTTPS su localhost, SEMPRE ignora certificati SSL (solo per sviluppo!)
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

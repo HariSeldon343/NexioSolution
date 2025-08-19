@@ -85,21 +85,17 @@ if (empty($nomeFile)) {
     }
 }
 $extension = $nomeFile ? strtolower(pathinfo($nomeFile, PATHINFO_EXTENSION)) : '';
-$documentType = 'word'; // Default
 
-if (isset($ONLYOFFICE_DOCUMENT_TYPES[$extension])) {
-    $documentType = $ONLYOFFICE_DOCUMENT_TYPES[$extension];
-} else {
-    // Map by extension groups
-    if (in_array($extension, ['docx', 'doc', 'odt', 'rtf', 'txt'])) {
-        $documentType = 'word';
-    } elseif (in_array($extension, ['xlsx', 'xls', 'ods', 'csv'])) {
-        $documentType = 'cell';
-    } elseif (in_array($extension, ['pptx', 'ppt', 'odp'])) {
-        $documentType = 'slide';
-    } elseif ($extension === 'pdf') {
-        $documentType = 'pdf';
-    }
+// Get document type from OnlyOfficeConfig
+$documentType = OnlyOfficeConfig::getDocumentType($extension);
+
+// Map to OnlyOffice document type names
+if ($documentType === 'text') {
+    $documentType = 'word';
+} elseif ($documentType === 'spreadsheet') {
+    $documentType = 'cell';
+} elseif ($documentType === 'presentation') {
+    $documentType = 'slide';
 }
 
 // Check if format is editable
@@ -116,26 +112,23 @@ $mode = (isset($_GET['mode']) && $_GET['mode'] === 'edit' && $canEdit && $hasEdi
 // Key changes when document is modified to force refresh
 $documentKey = md5($document['id'] . '_' . $document['data_modifica'] . '_v' . ($document['versione'] ?? 1));
 
-// Build document URL
+// Build document URL based on environment
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'];
 $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
 
-// IMPORTANTE: Usa host.docker.internal quando OnlyOffice è in Docker e siamo su localhost
-// Questo permette al container Docker di raggiungere l'host
-if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) {
-    // In ambiente locale con Docker, OnlyOffice deve usare host.docker.internal
-    $documentHost = 'host.docker.internal';
+// Get the correct document URL for OnlyOffice based on environment
+// Always serve documents through API for security and compatibility
+if (OnlyOfficeConfig::isProduction()) {
+    // In produzione usa URL pubblico HTTPS
+    $documentUrl = OnlyOfficeConfig::PROD_APP_PUBLIC_URL . '/backend/api/onlyoffice-document-serve.php?id=' . $documentId;
 } else {
-    // In produzione usa l'host normale
-    $documentHost = $host;
+    // In sviluppo usa host.docker.internal per Docker
+    $documentUrl = OnlyOfficeConfig::DOCKER_HOST_INTERNAL . '/piattaforma-collaborativa/backend/api/onlyoffice-document-serve.php?id=' . $documentId;
 }
 
-// TEMPORANEO: Usa API di test senza autenticazione per testing
-$documentUrl = 'http://' . $documentHost . '/piattaforma-collaborativa/backend/api/onlyoffice-document-test.php?id=' . $documentId;
-
-// Generate callback URL
-$callbackUrl = $ONLYOFFICE_CALLBACK_URL . '?id=' . $documentId;
+// Generate callback URL using OnlyOfficeConfig
+$callbackUrl = OnlyOfficeConfig::getCallbackUrl($documentId);
 
 // Build OnlyOffice configuration
 $config = [
@@ -289,8 +282,8 @@ $config = [
 
 // Generate JWT token if enabled
 $jwtToken = '';
-if ($ONLYOFFICE_JWT_ENABLED) {
-    $jwtToken = generateOnlyOfficeJWT($config);
+if (OnlyOfficeConfig::JWT_ENABLED) {
+    $jwtToken = OnlyOfficeConfig::generateJWT($config);
 }
 
 // Activity logging
@@ -514,7 +507,7 @@ $customJS = [];
     <div id="onlyoffice-editor"></div>
     
     <!-- OnlyOffice Document Server API -->
-    <script type="text/javascript" src="<?php echo $ONLYOFFICE_DS_PUBLIC_URL; ?>/web-apps/apps/api/documents/api.js"></script>
+    <script type="text/javascript" src="<?php echo OnlyOfficeConfig::getDocumentServerUrl(); ?>web-apps/apps/api/documents/api.js"></script>
     
     <!-- Editor Initialization -->
     <script type="text/javascript">
@@ -522,7 +515,7 @@ $customJS = [];
         const documentId = <?php echo json_encode($documentId); ?>;
         const config = <?php echo json_encode($config); ?>;
         const jwtToken = <?php echo json_encode($jwtToken); ?>;
-        const jwtEnabled = <?php echo json_encode($ONLYOFFICE_JWT_ENABLED); ?>;
+        const jwtEnabled = <?php echo json_encode(OnlyOfficeConfig::JWT_ENABLED); ?>;
         
         // Generate access token for document download
         async function getDocumentAccessToken() {

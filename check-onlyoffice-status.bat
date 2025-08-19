@@ -1,37 +1,43 @@
 @echo off
-echo ======================================
-echo Controllo stato OnlyOffice
-echo ======================================
+echo ==========================================
+echo    OnlyOffice Status Check
+echo ==========================================
 echo.
 
-echo Container Docker in esecuzione:
-echo ---------------------------------------
+echo [1] Verifica Container Docker:
+echo --------------------------------
 docker ps --filter "name=nexio-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-
-echo.
-echo ======================================
-echo Test connettivita servizi:
-echo ======================================
 echo.
 
-echo Test OnlyOffice (porta 8082):
-curl -s -o nul -w "HTTP Status: %%{http_code}\n" http://localhost:8082/healthcheck
-
+echo [2] Test Healthcheck HTTP (porta 8082):
+echo ----------------------------------------
+curl -s http://localhost:8082/healthcheck
 echo.
-echo Test File Server (porta 8083):
-curl -s -o nul -w "HTTP Status: %%{http_code}\n" http://localhost:8083/
-
 echo.
-echo ======================================
-echo Log recenti OnlyOffice:
-echo ======================================
-docker logs --tail 10 nexio-onlyoffice 2>&1
 
+echo [3] Test API JavaScript:
+echo ------------------------
+curl -s -o nul -w "HTTP Status Code: %%{http_code}\n" http://localhost:8082/web-apps/apps/api/documents/api.js
 echo.
-echo ======================================
-echo Utilizzo risorse:
-echo ======================================
-docker stats --no-stream --filter "name=nexio-"
 
+echo [4] Container Logs (ultime 10 righe):
+echo -------------------------------------
+docker logs --tail 10 nexio-documentserver 2>&1
+echo.
+
+echo [5] Test file di prova:
+echo -----------------------
+if exist "documents\onlyoffice\test_document_*.docx" (
+    echo File di test trovati in documents\onlyoffice\
+    dir /b documents\onlyoffice\test_document_*.docx
+) else (
+    echo Nessun file di test trovato
+)
+echo.
+
+echo ==========================================
+echo Per testare l'editor, apri nel browser:
+echo http://localhost/piattaforma-collaborativa/test-onlyoffice-fixed.php
+echo ==========================================
 echo.
 pause

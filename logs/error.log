@@ -17744,3 +17744,19 @@ Stack trace:
 [19-Aug-2025 14:58:27 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 292
 [19-Aug-2025 14:58:27 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_DS_PUBLIC_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 517
 [19-Aug-2025 14:58:27 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 525
+[19-Aug-2025 17:18:26 Europe/Rome] Dashboard error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'd.file_type' in 'field list' - Trace: #0 C:\xampp\htdocs\piattaforma-collaborativa\backend\config\config.php(104): PDO->prepare('\n            SE...')
+#1 C:\xampp\htdocs\piattaforma-collaborativa\dashboard.php(338): db_query('\n            SE...')
+#2 {main}
+[19-Aug-2025 17:18:26 Europe/Rome] User ID: 2, Azienda ID: null, Is Super Admin: yes
+[19-Aug-2025 17:18:30 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_CALLBACK_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 138
+[19-Aug-2025 17:18:30 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 292
+[19-Aug-2025 17:18:30 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_DS_PUBLIC_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 517
+[19-Aug-2025 17:18:30 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 525
+[19-Aug-2025 17:31:18 Europe/Rome] Dashboard error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'd.file_type' in 'field list' - Trace: #0 C:\xampp\htdocs\piattaforma-collaborativa\backend\config\config.php(104): PDO->prepare('\n            SE...')
+#1 C:\xampp\htdocs\piattaforma-collaborativa\dashboard.php(338): db_query('\n            SE...')
+#2 {main}
+[19-Aug-2025 17:31:18 Europe/Rome] User ID: 2, Azienda ID: null, Is Super Admin: yes
+[19-Aug-2025 17:31:50 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_CALLBACK_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 138
+[19-Aug-2025 17:31:50 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 292
+[19-Aug-2025 17:31:50 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_DS_PUBLIC_URL in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 517
+[19-Aug-2025 17:31:50 Europe/Rome] PHP Warning:  Undefined variable $ONLYOFFICE_JWT_ENABLED in C:\xampp\htdocs\piattaforma-collaborativa\onlyoffice-editor.php on line 525

@@ -23,7 +23,9 @@
       "Bash(ss:*)",
       "Bash(wget:*)",
       "Bash(chmod:*)",
-      "Bash(./setup-onlyoffice-https.sh:*)"
+      "Bash(./setup-onlyoffice-https.sh:*)",
+      "Bash(cp:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

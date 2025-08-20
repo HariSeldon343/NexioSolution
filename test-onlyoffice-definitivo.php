@@ -25,8 +25,8 @@ $docKey = 'test_definitivo_' . time() . '_' . rand(1000, 9999);
 $documentUrl = "http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=" . $docId;
 $callbackUrl = "http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=" . $docId;
 
-// OnlyOffice server URL (hardcoded for clarity)
-$onlyofficeServerUrl = "https://localhost:8443";
+// OnlyOffice server URL (HTTP on port 8082)
+$onlyofficeServerUrl = "http://localhost:8082";
 
 // Complete configuration with correct structure
 $config = [
@@ -90,7 +90,7 @@ $debugInfo = [
     'document_url' => $documentUrl,
     'callback_url' => $callbackUrl,
     'onlyoffice_server' => $onlyofficeServerUrl,
-    'api_js_url' => $onlyofficeServerUrl . '/web-apps/apps/api/documents/api.js',
+    'api_js_url' => 'http://localhost:8082/web-apps/apps/api/documents/api.js',  // Always HTTP:8082
     'document_key' => $docKey,
     'session_id' => session_id(),
     'jwt_enabled' => $ONLYOFFICE_JWT_ENABLED ? 'YES' : 'NO'
@@ -392,8 +392,8 @@ $debugInfo = [
         </div>
     </div>
 
-    <!-- CRITICAL: Full URL hardcoded, NOT using PHP variable -->
-    <script type="text/javascript" src="https://localhost:8443/web-apps/apps/api/documents/api.js"></script>
+    <!-- CRITICAL: Full URL hardcoded for HTTP on port 8082 -->
+    <script type="text/javascript" src="http://localhost:8082/web-apps/apps/api/documents/api.js"></script>
     
     <script>
         // Configuration from PHP

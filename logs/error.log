@@ -17788,3 +17788,13 @@ Stack trace:
 [20-Aug-2025 06:36:43 Europe/Rome] Document URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=22&filename=document.docx
 [20-Aug-2025 06:36:43 Europe/Rome] Callback URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=22
 [20-Aug-2025 06:36:43 Europe/Rome] API URL (pubblico): http://localhost:8082/web-apps/apps/api/documents/api.js
+[20-Aug-2025 07:04:17 Europe/Rome] === OnlyOffice Editor Configuration ===
+[20-Aug-2025 07:04:17 Europe/Rome] Environment: LOCAL
+[20-Aug-2025 07:04:17 Europe/Rome] Document URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=22&filename=document.docx
+[20-Aug-2025 07:04:17 Europe/Rome] Callback URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=22
+[20-Aug-2025 07:04:17 Europe/Rome] API URL (pubblico): http://localhost:8082/web-apps/apps/api/documents/api.js
+[20-Aug-2025 07:04:28 Europe/Rome] === OnlyOffice Editor Configuration ===
+[20-Aug-2025 07:04:28 Europe/Rome] Environment: LOCAL
+[20-Aug-2025 07:04:28 Europe/Rome] Document URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=22&filename=document.docx
+[20-Aug-2025 07:04:28 Europe/Rome] Callback URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=22
+[20-Aug-2025 07:04:28 Europe/Rome] API URL (pubblico): http://localhost:8082/web-apps/apps/api/documents/api.js

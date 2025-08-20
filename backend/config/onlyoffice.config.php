@@ -47,8 +47,12 @@ class OnlyOfficeConfig {
     /**
      * Genera URL documento per OnlyOffice (usa sempre host.docker.internal)
      */
-    public static function getDocumentUrl($docId) {
-        return self::FILESERVER_INTERNAL_BASE . 'backend/api/onlyoffice-document-public.php?doc=' . $docId;
+    public static function getDocumentUrl($docId, $filename = null) {
+        $url = self::FILESERVER_INTERNAL_BASE . 'backend/api/onlyoffice-document-public.php?doc=' . $docId;
+        if ($filename) {
+            $url .= '&filename=' . urlencode($filename);
+        }
+        return $url;
     }
     
     /**
@@ -103,4 +107,96 @@ class OnlyOfficeConfig {
         }
         return 'word'; // default
     }
+    
+    /**
+     * Genera la chiave unica per il documento
+     */
+    public static function generateDocumentKey($documentId, $version = null) {
+        $key = 'doc_' . $documentId;
+        if ($version) {
+            $key .= '_v' . $version;
+        }
+        return md5($key . '_' . time());
+    }
+    
+    /**
+     * Genera la configurazione completa per l'editor
+     */
+    public static function getEditorConfig($document, $user) {
+        $documentKey = self::generateDocumentKey($document['id']);
+        $filename = $document['filename'] ?? 'document.docx';
+        
+        $config = [
+            'document' => [
+                'fileType' => pathinfo($filename, PATHINFO_EXTENSION),
+                'key' => $documentKey,
+                'title' => $document['nome'] ?? 'Documento',
+                'url' => self::getDocumentUrl($document['id'], $filename),
+                'permissions' => [
+                    'download' => true,
+                    'edit' => true,
+                    'print' => true,
+                    'review' => true,
+                    'chat' => false // NON in customization!
+                ]
+            ],
+            'documentType' => self::getDocumentType(pathinfo($filename, PATHINFO_EXTENSION)),
+            'editorConfig' => [
+                'callbackUrl' => self::getCallbackUrl($document['id']),
+                'mode' => 'edit',
+                'lang' => 'it',
+                'user' => [
+                    'id' => (string)$user['id'],
+                    'name' => $user['nome'] ?? 'Utente'
+                ],
+                'customization' => [
+                    'autosave' => true,
+                    'compactHeader' => false,
+                    'feedback' => false,
+                    'forcesave' => false
+                ]
+            ],
+            'type' => 'desktop'
+        ];
+        
+        // Aggiungi JWT se abilitato
+        if (self::JWT_ENABLED && self::JWT_SECRET) {
+            $config['token'] = self::generateJWT($config);
+        }
+        
+        return $config;
+    }
+    
+    /**
+     * Genera il JWT token
+     */
+    public static function generateJWT($payload) {
+        if (!self::JWT_ENABLED || !self::JWT_SECRET) {
+            return null;
+        }
+        
+        require_once __DIR__ . '/../utils/SimpleJWT.php';
+        return SimpleJWT::encode($payload, self::JWT_SECRET);
+    }
+    
+    /**
+     * Verifica il JWT token
+     */
+    public static function verifyJWT($token) {
+        if (!self::JWT_ENABLED || !self::JWT_SECRET) {
+            return true; // JWT disabilitato
+        }
+        
+        require_once __DIR__ . '/../utils/SimpleJWT.php';
+        try {
+            SimpleJWT::decode($token, self::JWT_SECRET);
+            return true;
+        } catch (Exception $e) {
+            error_log("JWT verification failed: " . $e->getMessage());
+            return false;
+        }
+    }
 }
+
+// Mantieni compatibilità con vecchio codice
+class OnlyOfficeHelper extends OnlyOfficeConfig {}

@@ -17768,3 +17768,12 @@ Stack trace:
 #1 C:\xampp\htdocs\piattaforma-collaborativa\dashboard.php(338): db_query('\n            SE...')
 #2 {main}
 [19-Aug-2025 19:52:53 Europe/Rome] User ID: 2, Azienda ID: null, Is Super Admin: yes
+[20-Aug-2025 06:05:32 Europe/Rome] Dashboard error: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'd.file_type' in 'field list' - Trace: #0 C:\xampp\htdocs\piattaforma-collaborativa\backend\config\config.php(104): PDO->prepare('\n            SE...')
+#1 C:\xampp\htdocs\piattaforma-collaborativa\dashboard.php(338): db_query('\n            SE...')
+#2 {main}
+[20-Aug-2025 06:05:32 Europe/Rome] User ID: 2, Azienda ID: null, Is Super Admin: yes
+[20-Aug-2025 06:12:11 Europe/Rome] === OnlyOffice Editor Configuration ===
+[20-Aug-2025 06:12:11 Europe/Rome] Environment: LOCAL
+[20-Aug-2025 06:12:11 Europe/Rome] Document URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=22&filename=document.docx
+[20-Aug-2025 06:12:11 Europe/Rome] Callback URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=22
+[20-Aug-2025 06:12:11 Europe/Rome] API URL (pubblico): https://localhost:8443/web-apps/apps/api/documents/api.js

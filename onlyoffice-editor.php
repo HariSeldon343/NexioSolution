@@ -1,4 +1,8 @@
 <?php
+/**
+ * OnlyOffice Editor - Implementazione definitiva con host.docker.internal
+ */
+
 require_once 'backend/config/onlyoffice.config.php';
 require_once 'backend/config/config.php';
 require_once 'backend/middleware/Auth.php';
@@ -19,41 +23,42 @@ if (!$document) {
     die('Document not found');
 }
 
-// Genera configurazione OnlyOffice
-$documentKey = md5($document['id'] . '_' . time());
+// Genera configurazione usando la nuova classe
+$documentKey = OnlyOfficeConfig::generateDocumentKey($document['id']);
+$filename = $document['filename'] ?? 'document.docx';
 
-// Determina estensione file
-$fileExt = pathinfo($document['filename'] ?? 'document.docx', PATHINFO_EXTENSION);
-if (!$fileExt) {
-    $fileExt = 'docx'; // default
-}
-
-// URL per OnlyOffice (SEMPRE host.docker.internal)
-$documentUrl = OnlyOfficeConfig::getDocumentUrl($docId);
+// IMPORTANTE: Usa SEMPRE host.docker.internal per gli URL interni
+$documentUrl = OnlyOfficeConfig::getDocumentUrl($docId, $filename);
 $callbackUrl = OnlyOfficeConfig::getCallbackUrl($docId);
 
-// URL pubblico del Document Server per caricare api.js
+// URL pubblico per caricare api.js (questo va al browser)
 $onlyofficeApiUrl = OnlyOfficeConfig::getDocumentServerPublicUrl() . 'web-apps/apps/api/documents/api.js';
 
-// Determina tipo di documento
-$documentType = OnlyOfficeConfig::getDocumentType($fileExt);
+// Debug info
+error_log("=== OnlyOffice Editor Configuration ===");
+error_log("Environment: " . (OnlyOfficeConfig::isLocal() ? "LOCAL" : "PRODUCTION"));
+error_log("Document URL (interno): " . $documentUrl);
+error_log("Callback URL (interno): " . $callbackUrl);
+error_log("API URL (pubblico): " . $onlyofficeApiUrl);
 
+// Configurazione per l'editor
 $config = [
     'document' => [
-        'fileType' => $fileExt,
+        'fileType' => pathinfo($filename, PATHINFO_EXTENSION),
         'key' => $documentKey,
         'title' => $document['nome'] ?? 'Documento',
-        'url' => $documentUrl,
+        'url' => $documentUrl, // USA host.docker.internal
         'permissions' => [
             'download' => true,
             'edit' => true,
             'print' => true,
-            'review' => true
+            'review' => true,
+            'chat' => false // NON in customization!
         ]
     ],
-    'documentType' => $documentType,
+    'documentType' => OnlyOfficeConfig::getDocumentType(pathinfo($filename, PATHINFO_EXTENSION)),
     'editorConfig' => [
-        'callbackUrl' => $callbackUrl,
+        'callbackUrl' => $callbackUrl, // USA host.docker.internal
         'mode' => 'edit',
         'lang' => 'it',
         'user' => [
@@ -63,90 +68,111 @@ $config = [
         'customization' => [
             'autosave' => true,
             'compactHeader' => false,
-            'compactToolbar' => false,
             'feedback' => false,
             'forcesave' => false
         ]
     ],
     'type' => 'desktop'
 ];
+
+// Aggiungi JWT se abilitato
+if (OnlyOfficeConfig::JWT_ENABLED && OnlyOfficeConfig::JWT_SECRET) {
+    $config['token'] = OnlyOfficeConfig::generateJWT($config);
+}
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
     <title>OnlyOffice Editor - <?= htmlspecialchars($document['nome'] ?? 'Documento') ?></title>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; }
-        #placeholder { width: 100%; height: 100vh; }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        #placeholder { 
+            height: 100vh; 
+            width: 100vw;
+        }
         .loading {
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             height: 100vh;
-            font-family: Arial, sans-serif;
-            color: #666;
+            background: #f5f5f5;
         }
-        .error {
-            padding: 20px;
-            color: #d32f2f;
-            background: #ffebee;
-            border: 1px solid #ffcdd2;
-            border-radius: 4px;
-            margin: 20px;
-            font-family: Arial, sans-serif;
+        .loading-text {
+            font-size: 18px;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <div id="placeholder">
-        <div class="loading">Caricamento editor in corso...</div>
+        <div class="loading">
+            <div class="loading-text">Caricamento documento...</div>
+        </div>
     </div>
     
-    <!-- Carica API OnlyOffice con URL completo -->
+    <!-- IMPORTANTE: Carica API con URL COMPLETO -->
     <script type="text/javascript" src="<?= htmlspecialchars($onlyofficeApiUrl) ?>"></script>
     
     <script type="text/javascript">
-        // Configurazione per OnlyOffice
-        var config = <?= json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
-        
-        // Debug info (rimuovere in produzione)
-        console.log('OnlyOffice Configuration:', config);
-        console.log('API URL:', '<?= htmlspecialchars($onlyofficeApiUrl) ?>');
+        // Debug configuration
+        console.log('=== OnlyOffice Configuration ===');
         console.log('Environment:', '<?= OnlyOfficeConfig::isLocal() ? "LOCAL" : "PRODUCTION" ?>');
-        console.log('Document URL:', config.document.url);
-        console.log('Callback URL:', config.editorConfig.callbackUrl);
+        console.log('Document URL (interno per DS):', '<?= $documentUrl ?>');
+        console.log('Callback URL (interno per DS):', '<?= $callbackUrl ?>');
+        console.log('API URL (pubblico):', '<?= $onlyofficeApiUrl ?>');
+        console.log('Configuration:', <?= json_encode($config, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) ?>);
         
-        // Inizializza editor quando API è pronta
+        // Configurazione per l'editor
+        var config = <?= json_encode($config, JSON_UNESCAPED_SLASHES) ?>;
+        
+        // Inizializza editor
         window.onload = function() {
             try {
+                // Verifica che DocsAPI sia disponibile
                 if (typeof DocsAPI === 'undefined') {
-                    throw new Error('OnlyOffice API non caricata. Verificare la connessione al Document Server.');
+                    throw new Error('DocsAPI non è disponibile. Verifica che OnlyOffice Document Server sia raggiungibile.');
                 }
                 
+                // Inizializza l'editor
                 window.docEditor = new DocsAPI.DocEditor("placeholder", config);
                 console.log('Editor inizializzato con successo');
+                
+                // Eventi dell'editor
+                window.docEditor.onReady = function() {
+                    console.log('Editor pronto');
+                };
+                
+                window.docEditor.onDocumentStateChange = function(event) {
+                    console.log('Stato documento:', event.data);
+                };
+                
+                window.docEditor.onError = function(event) {
+                    console.error('Errore editor:', event);
+                    alert('Errore: ' + (event.data ? event.data.message : 'Errore sconosciuto'));
+                };
+                
             } catch (error) {
-                console.error('Errore inizializzazione OnlyOffice:', error);
+                console.error('Errore inizializzazione editor:', error);
                 document.getElementById('placeholder').innerHTML = 
-                    '<div class="error">' +
-                    '<h3>Errore caricamento editor</h3>' +
+                    '<div class="loading">' +
+                    '<div style="color: red; text-align: center;">' +
+                    '<h2>Errore di caricamento</h2>' +
                     '<p>' + error.message + '</p>' +
-                    '<p>Verificare che OnlyOffice Document Server sia raggiungibile.</p>' +
-                    '<p>URL API: <?= htmlspecialchars($onlyofficeApiUrl) ?></p>' +
+                    '<p>Verifica che OnlyOffice Document Server sia attivo e raggiungibile.</p>' +
+                    '</div>' +
                     '</div>';
             }
         };
         
-        // Gestione errori di caricamento script
-        window.onerror = function(msg, url, line, col, error) {
-            console.error('Errore JavaScript:', {
-                message: msg,
-                source: url,
-                line: line,
-                column: col,
-                error: error
-            });
+        // Gestione errori globali
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error('Errore globale:', msg, error);
             return false;
         };
     </script>

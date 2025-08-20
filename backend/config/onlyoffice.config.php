@@ -36,8 +36,8 @@ class OnlyOfficeConfig {
      */
     public static function getDocumentServerPublicUrl() {
         if (self::isLocal()) {
-            // In locale usa HTTPS porta 8443
-            return 'https://localhost:8443/';
+            // In locale usa HTTP porta 8082 (container Docker)
+            return 'http://localhost:8082/';
         } else {
             // In produzione tramite Cloudflare
             return 'https://app.nexiosolution.it/onlyoffice/';

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Nexio Platform - Enterprise multi-tenant collaborative document management system with ISO compliance automation. Features include hierarchical document management, calendar integration, ticket system, task management, and mobile applications. Built with PHP 8.0+ and MySQL, currently running on XAMPP (Windows WSL2) with 100+ database tables, 60+ API endpoints, and comprehensive security features.
+Nexio Platform - Enterprise multi-tenant collaborative document management system with ISO compliance automation. Features include hierarchical document management, calendar integration, ticket system, task management, OnlyOffice document editing integration, and mobile applications. Built with PHP 8.0+ and MySQL, currently running on XAMPP (Windows WSL2) with 100+ database tables, 60+ API endpoints, and comprehensive security features.
 
 ## Environment & Database
 
@@ -13,6 +13,14 @@ Nexio Platform - Enterprise multi-tenant collaborative document management syste
 - **URL**: `http://localhost/piattaforma-collaborativa/`
 - **PHP Version**: 8.0+ (via `/mnt/c/xampp/php/php.exe`)
 - **User Roles**: `super_admin`, `utente_speciale`, `utente`
+
+### Environment Configuration
+Copy `.env.example` to `.env` and configure:
+- `ONLYOFFICE_DS_PUBLIC_URL`: Document server URL (default: `http://localhost:8082`)
+- `ONLYOFFICE_JWT_SECRET`: JWT secret matching Docker container
+- `ONLYOFFICE_JWT_ENABLED`: Always `true` for security
+- `ONLYOFFICE_CALLBACK_HOST`: Use `host.docker.internal` for Docker
+- `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`: Database credentials
 
 ## Critical Commands
 
@@ -32,11 +40,23 @@ Nexio Platform - Enterprise multi-tenant collaborative document management syste
 /mnt/c/xampp/php/php.exe scripts/setup-nexio-documentale.php    # Complete setup
 /mnt/c/xampp/php/php.exe scripts/monitor-nexio-performance.php  # Monitor performance
 /mnt/c/xampp/php/php.exe scripts/setup-company-folders.php      # Create company folders
+/mnt/c/xampp/php/php.exe scripts/setup-onlyoffice-security.php  # Setup OnlyOffice JWT
 /mnt/c/xampp/php/php.exe backend/websocket/server.php           # Start WebSocket server
 
 # Cron Jobs
 /mnt/c/xampp/php/php.exe cron/check-password-expiry.php        # Password expiry check
 /mnt/c/xampp/php/php.exe cron/process-email-queue.php          # Process email queue
+
+# Testing
+/mnt/c/xampp/php/php.exe vendor/bin/phpunit tests/              # Run all tests
+/mnt/c/xampp/php/php.exe vendor/bin/phpunit tests/OnlyOfficeIntegrationTest.php  # Run specific test
+composer test                                       # Run PHPUnit tests via composer
+
+# OnlyOffice Docker Management
+docker ps | grep onlyoffice-ds                      # Check OnlyOffice status
+docker logs onlyoffice-ds                           # View OnlyOffice logs
+docker restart onlyoffice-ds                        # Restart OnlyOffice
+./docker/setup-onlyoffice-https.sh                  # Setup OnlyOffice with HTTPS
 
 # XAMPP Control
 /mnt/c/xampp/xampp start
@@ -45,7 +65,6 @@ Nexio Platform - Enterprise multi-tenant collaborative document management syste
 
 # Composer (when available)
 composer install --no-dev --optimize-autoloader
-composer test                                       # Run PHPUnit tests
 composer dump-autoload -o                          # Optimize autoloader
 ```
 
@@ -230,6 +249,32 @@ $stmt = db_query("SHOW STATUS LIKE 'Slow_queries'");
 - Flutter app: `/flutter_nexio_app/`
 - PWA: `/mobile/`
 
+### OnlyOffice Document Editor Integration
+OnlyOffice provides collaborative document editing capabilities via Docker container.
+
+**Configuration Files**
+- Main config: `backend/config/onlyoffice.config.php`
+- Environment: `.env` (copy from `.env.example`)
+- Docker setup: `docker/docker-compose.yml`
+
+**Key URLs & Ports**
+- Document Server: `https://localhost:8443` (local) / `https://app.nexiosolution.it/onlyoffice/` (production)
+- Internal callback: `http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php`
+- JWT enabled with HS256 algorithm
+
+**API Endpoints**
+- `backend/api/onlyoffice-document.php` - Main document endpoint
+- `backend/api/onlyoffice-callback.php` - Save callback handler
+- `backend/api/onlyoffice-auth.php` - JWT authentication
+- `backend/api/onlyoffice-prepare.php` - Document preparation
+
+**Document Flow**
+1. User clicks edit → `onlyoffice-prepare.php` generates JWT token
+2. Document served via `onlyoffice-document-serve.php`
+3. OnlyOffice loads document with JWT auth
+4. Auto-save triggers callback to `onlyoffice-callback.php`
+5. Document saved to `documents/onlyoffice/` with versioning
+
 ### Known Issues & Solutions
 
 **CSS Chaos (68 overlapping files)**
@@ -255,6 +300,40 @@ $stmt = db_query("SHOW STATUS LIKE 'Slow_queries'");
 - Hardcoded configuration values
 - Solution: Gradual refactoring plan
 
+## Specialized Agent Tools
+
+The project includes specialized agents in `.claude/agents/` for specific tasks:
+- **php-syntax-guardian**: Validates PHP 8.0+ syntax on all .php file changes
+- **backend-api-guardian**: Reviews REST API endpoints for Auth/CSRF/JSON patterns
+- **tenancy-sql-sheriff**: Ensures multi-tenant SQL queries filter by company
+- **db-migration-operator**: Manages database migrations for `nexiosol` database
+- **security-auditor**: OWASP-first security review for new features
+- **test-runner-qa**: Runs PHPUnit tests and ensures quality gates
+- **css-ui-fixer**: Manages the complex CSS layer system
+- **perf-observer**: Analyzes performance bottlenecks with PHP/SQL profiling
+
+## Database Migrations
+
+**Migration Files Pattern**
+- Location: `/database/`
+- Naming: `YYYYMMDD_HHMM_description.sql` for ordered execution
+- Rollback: `*_down.sql` files for reversing changes
+
+**Running Migrations**
+```bash
+# Apply single migration
+/mnt/c/xampp/mysql/bin/mysql.exe -u root nexiosol < database/migration_file.sql
+
+# Apply all pending migrations (ordered by filename)
+for f in database/20*.sql; do
+    echo "Applying $f..."
+    /mnt/c/xampp/mysql/bin/mysql.exe -u root nexiosol < "$f"
+done
+
+# Check migration status
+/mnt/c/xampp/mysql/bin/mysql.exe -u root nexiosol -e "SELECT * FROM migrations ORDER BY id DESC LIMIT 10;"
+```
+
 ## Important Reminders
 
 ### Development Best Practices
@@ -273,6 +352,28 @@ $stmt = db_query("SHOW STATUS LIKE 'Slow_queries'");
 3. **Fix UI issue**: Check existing CSS fixes first, avoid adding more layers
 4. **Add new feature**: Update relevant model, API, and frontend
 5. **Debug issue**: Check `/logs/`, use `error_log()`, verify database
+
+**Troubleshooting**
+```bash
+# Check if XAMPP services are running
+/mnt/c/xampp/xampp status
+
+# Test database connection
+/mnt/c/xampp/mysql/bin/mysql.exe -u root -e "SELECT 1;" nexiosol
+
+# Verify PHP configuration
+/mnt/c/xampp/php/php.exe -i | grep -E "mysqli|pdo"
+
+# Check OnlyOffice container status
+docker ps -a | grep onlyoffice
+
+# View recent error logs
+tail -f logs/error.log
+tail -f logs/onlyoffice.log
+
+# Clear session issues
+rm -rf /tmp/sess_*
+```
 
 **Performance Tips**
 - Use `db_query()` helper for prepared statements

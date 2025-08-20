@@ -17777,3 +17777,14 @@ Stack trace:
 [20-Aug-2025 06:12:11 Europe/Rome] Document URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=22&filename=document.docx
 [20-Aug-2025 06:12:11 Europe/Rome] Callback URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=22
 [20-Aug-2025 06:12:11 Europe/Rome] API URL (pubblico): https://localhost:8443/web-apps/apps/api/documents/api.js
+[20-Aug-2025 06:19:58 Europe/Rome] PHP Warning:  Undefined variable $docId in C:\xampp\htdocs\piattaforma-collaborativa\create-test-document.php on line 49
+[20-Aug-2025 06:22:22 Europe/Rome] === OnlyOffice Editor Configuration ===
+[20-Aug-2025 06:22:22 Europe/Rome] Environment: LOCAL
+[20-Aug-2025 06:22:22 Europe/Rome] Document URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=22&filename=document.docx
+[20-Aug-2025 06:22:22 Europe/Rome] Callback URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=22
+[20-Aug-2025 06:22:22 Europe/Rome] API URL (pubblico): https://localhost:8443/web-apps/apps/api/documents/api.js
+[20-Aug-2025 06:36:43 Europe/Rome] === OnlyOffice Editor Configuration ===
+[20-Aug-2025 06:36:43 Europe/Rome] Environment: LOCAL
+[20-Aug-2025 06:36:43 Europe/Rome] Document URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-document-public.php?doc=22&filename=document.docx
+[20-Aug-2025 06:36:43 Europe/Rome] Callback URL (interno): http://host.docker.internal/piattaforma-collaborativa/backend/api/onlyoffice-callback.php?doc=22
+[20-Aug-2025 06:36:43 Europe/Rome] API URL (pubblico): http://localhost:8082/web-apps/apps/api/documents/api.js

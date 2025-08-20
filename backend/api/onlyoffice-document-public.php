@@ -1,217 +1,255 @@
 <?php
 /**
  * OnlyOffice Document Public API
- * Serve i documenti al Document Server OnlyOffice
- * Accessibile via host.docker.internal dal container
+ * Endpoint pubblico per servire documenti al container Docker
+ * NON richiede autenticazione perché chiamato dal container
  */
 
-// CORS headers per permettere accesso dal container
+// Log per debug
+error_log("=== OnlyOffice Document Public Request ===");
+error_log("Method: " . $_SERVER['REQUEST_METHOD']);
+error_log("Doc ID: " . ($_GET['doc'] ?? 'none'));
+error_log("User Agent: " . ($_SERVER['HTTP_USER_AGENT'] ?? 'none'));
+error_log("Remote IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'none'));
+
+// CORS headers per Docker
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, HEAD, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: *');
 
-// Gestione richieste OPTIONS per CORS preflight
+// Handle OPTIONS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// Log della richiesta per debug
-error_log("=== OnlyOffice Document Request ===");
-error_log("Method: " . $_SERVER['REQUEST_METHOD']);
-error_log("Query String: " . $_SERVER['QUERY_STRING']);
-error_log("User Agent: " . ($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'));
+// Include config senza auth
+require_once __DIR__ . '/../config/config.php';
 
 $docId = $_GET['doc'] ?? null;
 $filename = $_GET['filename'] ?? null;
 
 if (!$docId) {
+    error_log("ERROR: No document ID provided");
     http_response_code(400);
-    error_log("ERROR: Document ID required");
+    header('Content-Type: text/plain');
     die('Document ID required');
 }
 
-error_log("Document ID: $docId");
-error_log("Filename: " . ($filename ?: 'not specified'));
+error_log("Fetching document ID: $docId");
 
 // Percorsi possibili per i documenti
 $basePaths = [
     __DIR__ . '/../../documents/onlyoffice/',
     __DIR__ . '/../../uploads/documenti/',
-    __DIR__ . '/../../documents/',
-    __DIR__ . '/../../'
 ];
 
-$filePath = null;
+// Array di possibili nomi file
+$possibleFiles = [];
+if ($filename) {
+    $possibleFiles[] = $filename;
+}
+$possibleFiles[] = 'test_document_' . $docId . '.docx';
+$possibleFiles[] = $docId . '.docx';
+$possibleFiles[] = 'doc_' . $docId . '.docx';
+$possibleFiles[] = 'new.docx'; // Fallback generico
 
 // Cerca il file
+$filePath = null;
 foreach ($basePaths as $basePath) {
-    // Se è specificato un filename, prova quello
-    if ($filename) {
-        $testPath = $basePath . $filename;
+    foreach ($possibleFiles as $file) {
+        $testPath = $basePath . $file;
         error_log("Checking: $testPath");
         if (file_exists($testPath)) {
             $filePath = $testPath;
-            error_log("Found file at: $filePath");
-            break;
-        }
-    }
-    
-    // Prova con diversi pattern basati sull'ID
-    $patterns = [
-        $basePath . $docId . '.docx',
-        $basePath . 'doc_' . $docId . '.docx',
-        $basePath . 'document_' . $docId . '.docx',
-        $basePath . 'test_document_' . $docId . '.docx',
-        $basePath . 'new_' . $docId . '.docx',
-        $basePath . $docId . '.xlsx',
-        $basePath . $docId . '.pptx',
-        $basePath . $docId . '.pdf'
-    ];
-    
-    foreach ($patterns as $pattern) {
-        error_log("Checking pattern: $pattern");
-        if (file_exists($pattern)) {
-            $filePath = $pattern;
-            error_log("Found file at: $filePath");
+            error_log("FOUND: $testPath");
             break 2;
         }
     }
 }
 
-// Se non trova il file, crea un documento di test
+// Se non troviamo il file, proviamo dal database
 if (!$filePath) {
-    error_log("File not found, creating test document");
-    
-    // Assicurati che la directory esista
-    $testDir = __DIR__ . '/../../documents/onlyoffice/';
-    if (!is_dir($testDir)) {
-        mkdir($testDir, 0777, true);
-        error_log("Created directory: $testDir");
-    }
-    
-    $filePath = $testDir . 'test_document_' . $docId . '.docx';
-    
-    // Cerca un template DOCX esistente
-    $templatePath = null;
-    $templatePaths = [
-        __DIR__ . '/../../documents/onlyoffice/template.docx',
-        __DIR__ . '/../../documents/template.docx',
-        __DIR__ . '/template.docx'
-    ];
-    
-    foreach ($templatePaths as $path) {
-        if (file_exists($path)) {
-            $templatePath = $path;
-            break;
+    error_log("File not found in filesystem, checking database");
+    try {
+        $stmt = db_query("SELECT * FROM documenti WHERE id = ?", [$docId]);
+        $document = $stmt->fetch();
+        
+        if ($document && !empty($document['percorso_file'])) {
+            $dbPath = __DIR__ . '/../../' . $document['percorso_file'];
+            error_log("Database path: $dbPath");
+            if (file_exists($dbPath)) {
+                $filePath = $dbPath;
+                error_log("Found via database: $dbPath");
+            }
         }
+    } catch (Exception $e) {
+        error_log("Database error: " . $e->getMessage());
+    }
+}
+
+// Se ancora non troviamo il file, creiamo un documento vuoto
+if (!$filePath) {
+    error_log("Creating new empty document");
+    
+    $newDocPath = __DIR__ . '/../../documents/onlyoffice/';
+    if (!is_dir($newDocPath)) {
+        mkdir($newDocPath, 0777, true);
     }
     
-    if ($templatePath) {
-        // Usa il template esistente
-        copy($templatePath, $filePath);
-        error_log("Created test document from template: $filePath");
-    } else {
-        // Crea un file DOCX minimo
-        // DOCX è un formato ZIP, quindi creiamo un file vuoto base
-        $zip = new ZipArchive();
-        if ($zip->open($filePath, ZipArchive::CREATE) === TRUE) {
-            // Contenuto minimo per un DOCX valido
-            $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    $newFilePath = $newDocPath . 'test_document_' . $docId . '.docx';
+    
+    // Crea un DOCX minimo valido
+    $zip = new ZipArchive();
+    if ($zip->open($newFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+        // Content Types
+        $contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
     <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
     <Default Extension="xml" ContentType="application/xml"/>
     <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-</Types>');
-            
-            $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+</Types>';
+        $zip->addFromString('[Content_Types].xml', $contentTypes);
+        
+        // Relationships
+        $rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
     <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-</Relationships>');
-            
-            $zip->addFromString('word/document.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+</Relationships>';
+        $zip->addFromString('_rels/.rels', $rels);
+        
+        // Document content
+        $document = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
     <w:body>
         <w:p>
             <w:r>
-                <w:t>Test Document ' . $docId . '</w:t>
+                <w:t>Nuovo Documento - Nexio Platform</w:t>
             </w:r>
         </w:p>
         <w:p>
             <w:r>
-                <w:t>This is a test document created for OnlyOffice integration.</w:t>
+                <w:t>ID Documento: ' . $docId . '</w:t>
+            </w:r>
+        </w:p>
+        <w:p>
+            <w:r>
+                <w:t>Data creazione: ' . date('d/m/Y H:i:s') . '</w:t>
             </w:r>
         </w:p>
     </w:body>
-</w:document>');
-            
-            $zip->addFromString('word/_rels/document.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-</Relationships>');
-            
-            $zip->close();
-            error_log("Created minimal DOCX file: $filePath");
-        } else {
-            // Fallback: crea un file di testo semplice
-            file_put_contents($filePath, "Test document " . $docId);
-            error_log("Created simple text file: $filePath");
-        }
+</w:document>';
+        $zip->addFromString('word/document.xml', $document);
+        
+        $zip->close();
+        $filePath = $newFilePath;
+        error_log("Created new DOCX: $filePath");
+    } else {
+        error_log("ERROR: Failed to create DOCX");
+        http_response_code(500);
+        die("Could not create document");
     }
 }
 
-// Verifica che il file esista ora
+// Verifica finale che il file esista
 if (!file_exists($filePath)) {
+    error_log("ERROR: File still doesn't exist: $filePath");
     http_response_code(404);
-    error_log("ERROR: File not found after creation attempt: $filePath");
-    die('File not found');
+    header('Content-Type: text/plain');
+    die("Document file not found");
 }
 
-// Determina il MIME type
-$finfo = finfo_open(FILEINFO_MIME_TYPE);
-$mimeType = finfo_file($finfo, $filePath);
-finfo_close($finfo);
-
-// Correzione per i file Office
-$ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-switch ($ext) {
-    case 'docx':
-        $mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        break;
-    case 'xlsx':
-        $mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-        break;
-    case 'pptx':
-        $mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-        break;
-    case 'doc':
-        $mimeType = 'application/msword';
-        break;
-    case 'xls':
-        $mimeType = 'application/vnd.ms-excel';
-        break;
-    case 'ppt':
-        $mimeType = 'application/vnd.ms-powerpoint';
-        break;
-}
-
-// Serve il file
 $fileSize = filesize($filePath);
 $fileName = basename($filePath);
+$extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-error_log("Serving file: $fileName");
-error_log("MIME Type: $mimeType");
-error_log("File Size: $fileSize bytes");
+error_log("Serving file: $fileName (size: $fileSize bytes, extension: $extension)");
 
-// Headers per servire il file
+// Determina il MIME type corretto
+$mimeTypes = [
+    'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'doc' => 'application/msword',
+    'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'xls' => 'application/vnd.ms-excel',
+    'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'ppt' => 'application/vnd.ms-powerpoint',
+    'pdf' => 'application/pdf',
+    'txt' => 'text/plain',
+    'rtf' => 'application/rtf',
+    'odt' => 'application/vnd.oasis.opendocument.text',
+    'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
+    'odp' => 'application/vnd.oasis.opendocument.presentation'
+];
+
+$mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
+
+// Headers per il download
 header('Content-Type: ' . $mimeType);
-header('Content-Length: ' . $fileSize);
 header('Content-Disposition: inline; filename="' . $fileName . '"');
-header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Content-Length: ' . $fileSize);
+header('Cache-Control: no-cache, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');
 
-// Output del file
-readfile($filePath);
+// Supporto per range requests (per file grandi)
+if (isset($_SERVER['HTTP_RANGE'])) {
+    error_log("Range request: " . $_SERVER['HTTP_RANGE']);
+    
+    $range = $_SERVER['HTTP_RANGE'];
+    list($unit, $ranges) = explode('=', $range, 2);
+    
+    if ($unit !== 'bytes') {
+        header('HTTP/1.1 416 Range Not Satisfiable');
+        header("Content-Range: bytes */$fileSize");
+        exit;
+    }
+    
+    $ranges = explode(',', $ranges)[0];
+    list($start, $end) = explode('-', $ranges);
+    
+    $start = intval($start);
+    $end = $end ? intval($end) : $fileSize - 1;
+    
+    if ($start > $end || $end >= $fileSize) {
+        header('HTTP/1.1 416 Range Not Satisfiable');
+        header("Content-Range: bytes */$fileSize");
+        exit;
+    }
+    
+    $length = $end - $start + 1;
+    
+    header('HTTP/1.1 206 Partial Content');
+    header("Content-Range: bytes $start-$end/$fileSize");
+    header("Content-Length: $length");
+    
+    $fp = fopen($filePath, 'rb');
+    fseek($fp, $start);
+    
+    $remaining = $length;
+    while ($remaining > 0 && !feof($fp)) {
+        $buffer = fread($fp, min(8192, $remaining));
+        echo $buffer;
+        $remaining -= strlen($buffer);
+        flush();
+    }
+    
+    fclose($fp);
+} else {
+    // Invia il file completo
+    $fp = fopen($filePath, 'rb');
+    if ($fp) {
+        while (!feof($fp)) {
+            echo fread($fp, 8192);
+            flush();
+        }
+        fclose($fp);
+        error_log("File sent successfully");
+    } else {
+        error_log("ERROR: Failed to open file for reading");
+        http_response_code(500);
+        die("Could not read file");
+    }
+}
 
-error_log("File served successfully");
 exit;
+?>
